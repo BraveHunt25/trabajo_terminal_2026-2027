@@ -17,8 +17,28 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
+\justifying
 \renewcommand{\listtablename}{Índice de tablas}
 \renewcommand{\tablename}{Tabla} 
+\makeatletter
+\renewcommand{\contentsname}{ÍNDICE}
+\renewcommand{\tableofcontents}{%
+  \if@twocolumn
+    \@restonecoltrue\onecolumn
+  \else
+    \@restonecolfalse
+  \fi
+  \clearpage
+  \thispagestyle{empty}%
+  {\centering
+    \vspace*{-1.5cm}
+    {\fontsize{14}{16}\selectfont\bfseries\contentsname\par}
+    \vspace{1em}
+  }
+  \@starttoc{toc}%
+  \if@restonecol\twocolumn\fi
+}
+\makeatother
 \pagenumbering{arabic}
 \input{0portada}
 \input{0resumen}
@@ -31,6 +51,7 @@
 \makeatother
 \begingroup
 \let\cleardoublepage\clearpage
+\setlength{\parskip}{0.3cm}
 \tableofcontents
 \listoffigures
 \listoftables
@@ -40,11 +61,6 @@
 \let\ps@plain\ps@documentplain
 \makeatother
 \pagestyle{fancy}
-% REVIEW
-\include{projectCharter}
-
-% TODO
-\LRCornerWallPaper{1}{theme/plecaAyD}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

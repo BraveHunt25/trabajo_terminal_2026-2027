@@ -16,7 +16,20 @@
 \RequirePackage{fancyhdr}                            % Manejo de encabezados.
 \RequirePackage[left=3cm,right=2cm,top=2cm,bottom=2cm,head=2cm]{geometry} % Manejo de márgenes del documento.
 \RequirePackage[Sonny]{fncychap}                     % Manejo de capítulos: Sonny, Lenny, Glenn, Conny, Rejne and Bjarne.
+\RequirePackage{titlesec}                            % Formato global de títulos.
+\RequirePackage{ragged2e}                            % Justificación normal del texto.
 \RequirePackage{marvosym}                            % Algunos símbolos.
+
+\AtBeginDocument{%
+  \geometry{left=3cm,right=2cm,top=2cm,bottom=2cm,head=2cm}%
+  \setlength{\parskip}{0.5cm}
+  \setlength{\parindent}{0pt}
+  \renewcommand{\baselinestretch}{1.5}
+  \normalsize
+  \justifying
+}
+
+\AtBeginDocument{\newgeometry{left=3cm,right=2cm,top=2cm,bottom=2cm,head=2cm}}
 
 %=====================================================
 % Definición de colores
@@ -80,6 +93,26 @@
 \let\LaTeX@startsection\@startsection
 \renewcommand{\@startsection}[6]{\LaTeX@startsection%
 {#1}{#2}{#3}{#4}{#5}{\color{sectionColor}\raggedright #6}} 
+
+%=====================================================
+% Jerarquía de títulos general del documento
+\titleformat{\chapter}[hang]
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont\color{sectionColor}\raggedright}
+  {\thechapter.}{0.5em}{}
+\titleformat{\section}[hang]
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont\color{sectionColor}\raggedright}
+  {\thesection.}{0.5em}{}
+\titleformat{\subsection}[hang]
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont\color{sectionColor}\raggedright}
+  {\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}[hang]
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont\color{sectionColor}\raggedright}
+  {\thesubsubsection.}{0.5em}{}
+
+\titlespacing*{\chapter}{0pt}{1.5ex}{1.2ex}
+\titlespacing*{\section}{0pt}{1.2ex}{0.8ex}
+\titlespacing*{\subsection}{0pt}{1.0ex}{0.7ex}
+\titlespacing*{\subsubsection}{0pt}{0.9ex}{0.6ex}
 
 %%=====================================================
 %% Estilo para Parte
