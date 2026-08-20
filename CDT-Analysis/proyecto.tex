@@ -19,18 +19,30 @@
 \begin{document}
 \renewcommand{\listtablename}{Índice de tablas}
 \renewcommand{\tablename}{Tabla} 
-%%\ThisLRCornerWallPaper{1}{theme/bannerAzul}
-\maketitle
-\thispagestyle{empty}
+\pagenumbering{arabic}
+\input{0portada}
+\input{0resumen}
+\input{0derechos}
+\input{0agradecimietos}
 
-\frontmatter
+\pagestyle{empty}
+\makeatletter
+\let\ps@plain\ps@indexplain
+\makeatother
+\begingroup
+\let\cleardoublepage\clearpage
 \tableofcontents
 \listoffigures
 \listoftables
+\endgroup
+\clearpage
+\makeatletter
+\let\ps@plain\ps@documentplain
+\makeatother
+\pagestyle{fancy}
 % REVIEW
 \include{projectCharter}
 
-\mainmatter
 % TODO
 \LRCornerWallPaper{1}{theme/plecaAyD}
 
