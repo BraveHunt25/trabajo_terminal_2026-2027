@@ -1,7 +1,7 @@
 % !TeX root = proyecto.tex
 
 %=========================================================
-\chapter{Introducción}
+\chapter{INTRODUCCIÓN}
 
 En las unidades del IPN, la alta demanda de alimentos durante los breves periodos de receso genera ineficiencias, largas filas y desanima a la comunidad politécnica a consumir sus alimentos en las limitadas cafeterías de sus unidades.
 
@@ -13,31 +13,49 @@ Los sistemas tradicionales de gestión de pedidos basados en papel o pizarrón y
 
 Ante esto, el presente proyecto propone el desarrollo de un Sistema de Gestión de Cocina (KMS, por sus siglas en inglés) como aplicación web, diseñada específicamente para las condiciones de las 3 cafeterías que prestan sus servicios en ESIME Zacatenco y ESFM y gestione correctamente el flujo de trabajo, la disponibilidad de insumos y la coordinación entre las estaciones de trabajo en la cocina y con las demás estaciones de carácter operativo \cite{zaenal2024commercial}. Para comprender mejor la necesidad que se trata de cubrir, a continuación, se abordan los antecedentes.
 
-\section{Presentación}
+\section{ANTECEDENTES}
 
+Anteriormente se mencionaron los datos del turno matutino en la unidad de ESCOM, pero este fenómeno no es aislado. En el turno vespertino de la misma escuela y de acuerdo con datos oficiales del Instituto Politécnico Nacional (IPN) \cite{ipn2025estadistica}, se tienen registrados 1,813 alumnos. Por parte de la Escuela Superior de Ingeniería Mecánica y Eléctrica (ESIME) se tiene registrado un total de 11,265 alumnos en ambos turnos, mientras que la Escuela Superior de Física y Matemáticas (ESFM) cuenta con 1,644 alumnos. Ambas unidades suman 12,909 alumnos que son abastecidos por 3 cafeterías y un módulo de café \cite{ipn2026convocatorias} con la diferencia de no contar con un horario estándar de receso, exigiendo eficiencia en la preparación de alimentos. 
 
-\cdtInstrucciones{
-	Presente en un par de párrafos el contexto y el problema en que se define el proytecto.
-}
+Aunado a esto, las cafeterías que prestan sus servicios no cuentan con sistemas integrales que permitan darle un seguimiento a la producción en cocina o con una herramienta que apoye con la contabilización de métricas como el tiempo promedio de preparación por producto o la suma de insumos promedio consumidos, basándose únicamente en la experiencia y habilidades de los cocineros, comprometiendo la calidad de los alimentos y comunicación con los consumidores en periodos de alta demanda y provocando incertidumbre.  
 
-\cdtInstrucciones{
-	Indique el propósito del documento, a quien va dirigido y como debe ser utilizado el documento.
-}
-	
-%---------------------------------------------------------
-\section{Organización del contenido}
+Con los antecedentes expuestos en la sección anterior, se establecen los siguientes objetivos para atender esta problemática.
 
-\cdtInstrucciones{
-	Indique el contenido y organización del documento.
-}
-	En el capítulo \ref{cap:reqUsr} ...
-	
-	En el capítulo \ref{cap:reqSist} ...
+\section{OBJETIVOS}
+Basándose en la información revisada en la sección anterior, se consideraron los siguientes objetivos.
 
-%---------------------------------------------------------
-\section{Notación, símbolos y convenciones utilizadas}
+\subsection{OBJETIVO GENERAL}
+Desarrollar un Sistema de Gestión de Cocina para digitalizar los procesos de preparación de alimentos y generación de pedidos de las cafeterías de la unidad Zacatenco del Instituto Politécnico Nacional mediante una aplicación web.  
 
-\cdtInstrucciones{
-	Indique la notacion utilizada así como nórmas o estándares de documentación utilizados en el documento.
-}	
+Derivado de este objetivo general, se establecen los siguientes objetivos específicos. 
 
+\subsection{OBJETIVOS ESPECÍFICOS}
+
+\begin{itemize}
+	\item Identificar y documentar los flujos de trabajo actuales, cuellos de botella y requerimientos funcionales y no funcionales del sistema, a partir de las necesidades del personal de las cafeterías y de los estudiantes. 
+
+	\item Diseñar la arquitectura de la aplicación web, incluyendo la base de datos para la gestión de pedidos, el gestor de inventario, y la integración de módulos. 
+
+	\item Desarrollar un módulo de pre-ordenamiento y gestión de pedidos para los usuarios. 
+
+	\item Desarrollar un módulo de gestión de producción para el flujo de la cocina que ayude a organizar los pedidos considerando la prioridad de los pedidos, la disponibilidad de insumos y las estaciones de trabajo. 
+
+	\item Desarrollar una interfaz de visualización de cocina (KDS, por sus siglas en inglés) que muestre el estado y el tiempo de espera de los pedidos. 
+\end{itemize}
+
+Tras mencionar los objetivos que se esperan alcanzar con el presente trabajo, es necesario ahondar en las razones que lo justifican. 
+
+\section{JUSTIFICACIÓN}
+La capacidad de algunas cafeterías en las unidades académicas de Zacatenco del Instituto Politécnico Nacional para ofrecer sus productos y servicios se encuentra limitada ante la alta demanda dada en horas pico como consecuencia de la alta densidad poblacional en sus unidades. Esta situación afecta a aquellos integrantes de la comunidad académica que desean adquirir sus alimentos en lapsos de tiempo definidos y estrictos para consumirlos.  
+
+Esto también afecta a los ofertantes en el desabasto de sus insumos y en la ineficiencia de la gestión de órdenes que se expresa, sobre todo, en aquellos pedidos que incluyen parcial y totalmente alimentos preparados al momento, generando pérdidas monetarias. 
+
+En respuesta a la problemática descrita en los antecedentes, disponer de una herramienta integral que gestione automáticamente la asignación de turnos y la prioridad que se le asigna a la preparación de los alimentos, así como conceder a los clientes y a las cafeterías la posibilidad de anticipar la adquisición y orden de los comestibles e insumos necesarios automáticamente, permitiría agilizar la administración del tiempo y de los insumos involucrados, mejorando el servicio disponible para la comunidad politécnica de Zacatenco. 
+
+Desarrollar un Sistema de Gestión de Cocina con estas características contribuye a la aplicación de sistemas integrales de gestión en el sector de servicios de alta rotación, explorando principios de análisis de datos y desarrollo de software que mejore el flujo de trabajo en las cocinas de las cafeterías, coordinando las estaciones de trabajo, inventario y mostradores. Esto aporta al estudio de la aplicación de ingeniería de software en la logística de servicios de las universidades del Instituto Politécnico Nacional. La originalidad de este trabajo reside en la adaptación e integración de un sistema KMS con un módulo de pre-ordenamiento por horarios y en la implementación de una gestión dinámica de recetas que permite la personalización de pedidos sin comprometer la integridad del control de inventarios en un entorno académico.  
+
+A diferencia de las soluciones comerciales, este sistema está específicamente diseñado para la logística de alta rotación y ventanas de tiempo estrictas de la comunidad estudiantil, sentando un precedente para un modelo escalable y de bajo costo para otras instituciones educativas, y un antecedente para trabajos futuros que se dediquen a optimizar el sistema y los procesos asociados. 
+
+El desarrollo de este Sistema de Gestión de Cocina es viable. En términos de tiempo, la complejidad del proyecto se ajusta al periodo establecido para un Trabajo Terminal, ya que se enfocará en la creación de un Producto Mínimo Viable completamente funcional en un entorno delimitado. En cuanto a recursos, la implementación se basará en tecnologías de código abierto, minimizando los costos de software y licencias involucradas. Además, el equipo cuenta con las competencias técnicas necesarias adquiridas a lo largo de la carrera, lo que asegura el cumplimiento de los alcances propuestos. 
+
+Este documento técnico presenta el estado del arte, el marco teórico que sustenta el proyecto, el análisis de requisitos del sistema y el diseño detallado de la arquitectura propuesta, incluyendo el modelo de base de datos.

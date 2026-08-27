@@ -1,0 +1,79 @@
+% !TeX root = proyecto.tex
+
+%=========================================================
+\chapter{ESTADO DEL ARTE}
+En las instituciones académicas es habitual que dispongan de establecimientos de comida en sus instalaciones. Estos establecimientos presentan restricciones particulares que impactan al servicio que ofrecen, mostrando ciertas deficiencias que los comercios externos resuelven con contrastante facilidad. 
+
+Sin embargo, no basta con reconocer las deficiencias del proceso manual: es igualmente importante considerar que la introducción de una herramienta tecnológica puede, por sí misma, entorpecer un proceso si no se adapta a las condiciones reales del entorno. Una herramienta mal integrada, excesivamente compleja o diseñada para un contexto distinto puede generar fricciones adicionales, aumentar la carga cognitiva del personal y agravar los mismos problemas que pretende resolver. Por ello, la selección e implementación de soluciones tecnológicas debe partir de un diagnóstico preciso del flujo de trabajo existente.
+
+\section{CASOS DE ESTUDIO EN CAFETERÍAS ESCOLARES}
+
+Por ejemplo, en el Tecnológico de Estudios Superiores de Valle de Bravo, Estado de México, García Martínez et al. \cite{garcia2024estrategia} describen el caso de una cafetería universitaria en la que se calculó un tiempo de estadía completa (espera y consumo) de 37 minutos por persona, mayor al tiempo disponible en los horarios de descanso estudiantil (de 15 a 20 minutos). 
+
+Asimismo, el artículo identifica cuellos de botella en el flujo de preparación de alimentos, pues los pedidos se van preparando paralelamente en función de la complejidad de preparación y de los recursos disponibles. Esta metodología de trabajo no garantiza calidad en el tiempo de preparación de los alimentos, siendo dependiente y variable ante la demanda. En consecuencia, durante los periodos de máxima demanda, el tiempo de entrega se incrementaba en un 250 \%, elevando la espera de 10 a 25 minutos. 
+
+Adicional a estas demoras, la distribución de las áreas de consumo, rutas de desplazamiento, horarios de descanso y áreas de atención al cliente causaban retrasos en el desplazamiento de la clientela y personal de cocina, agravando los cuellos de botella en el flujo de trabajo de la cocina. 
+
+Al notar estos fenómenos, García Martínez et al. proponen una solución logística para mitigar el tiempo de espera: reorganizar la distribución de áreas de consumo con rutas mejor definidas; establecer horarios de descanso escalonados entre unidades académicas; implementar rotación de personal según la demanda; constituir un stock de productos terminados; e incorporar tecnologías como máquinas expendedoras o sistemas de pago digital. Este caso ilustra cómo la mejora del proceso no siempre requiere una solución tecnológica sofisticada, pero también evidencia el límite de las soluciones puramente logísticas ante una demanda estructuralmente alta.
+
+El siguiente caso de estudio de interés lo desarrollaron Gelvez Jurado, A. H., et al. \cite{gelvez2024estudio}. En él se diagnosticó que las principales causas de la ineficiencia del flujo de trabajo eran la falta de procedimientos estandarizados, capacitación insuficiente y problemas de equipamiento. Considerando el principio de Pareto4, y los problemas diagnosticados, los autores propusieron la estandarización de procesos, capacitación continua, control de inventarios y reorganización del espacio, estimando una reducción del 20 \%, 15 \%, 10 \% y 5 \% respectivamente.
+
+Sin embargo, en ambas soluciones propuestas se incita a usar herramientas digitales que reduzcan el error humano y la variabilidad que una cocina puede abarcar. En este sentido, siguiendo el principio de Pareto y con el fin de mejorar las soluciones logísticas previas, se analizan a continuación las alternativas digitales que existen tanto en el mercado como en la literatura.
+
+\section{TRANSICIÓN DE SOLUCIONES ANALÓGICAS A DIGITALES}
+
+Las soluciones analógicas por años han sido de utilidad para los servicios de cocina, permitiendo la prestación de servicios en donde la interacción humana es determinante para cumplir con los procesos operativos y la satisfacción del cliente.  
+
+No obstante, en la pandemia por COVID-19, el sector alimentario fue uno de los más afectados debido a protocolos de contacto mínimo y, tras superar la pandemia, los restaurantes y cafeterías fueron obligados a implementar software para cubrir los requisitos. 
+
+Diversos autores han investigado este impacto; por ejemplo, Ismail, et al \cite{ismail2025perceived}, en su artículo, definen la digitalización del servicio como el proceso de transformar la experiencia del cliente en una experiencia digital que crea un entorno sin el uso de papeles (originalmente usando el término en inglés paperless). Y es bajo esta definición que entrevistan a 8 propietarios de restaurantes en las zonas de Bukit Jalil y Bukit Bintang. 
+
+Siguiendo una metodología cualitativa, aplican entrevistas personales semiestructuradas para conocer los beneficios y costos percibidos de la digitalización a través de puntos de interés como la gestión de reservaciones, el control de inventario, automatización (tanto de la línea de producción como de recursos), reducción de costos, retención del cliente y la comodidad con la experiencia tras el uso de tecnología. 
+
+Entre los resultados más destacables para este trabajo se encuentran la utilidad para permitirle al cliente encontrar disponibilidad en los establecimientos de antemano, la conveniencia de permitir una comunicación digital con los clientes para anticipar su consumo, la reducción de carga de trabajo en horarios de alta demanda, la optimización de recursos y la simplificación de procesos que pueden resultar estresantes. 
+
+En contraste, algunas de las consecuencias desfavorables fueron las tasas de inversión altas, un costo de mantenimiento creciente por la necesidad de actualizar equipos, cargos por servicios subutilizados, volatilidad en la disponibilidad del servicio, dependencia tecnológica, desconexión social y problemas de adaptabilidad.  
+
+En este caso en particular, los autores establecen 3 puntos críticos en la digitalización del servicio en orden de relevancia: la adquisición de un Punto de Venta (POS, por sus siglas en inglés Point of Sale), sistemas de reserva online y chatbots para la retención del cliente.  
+
+Este estudio, entonces, ofrece una perspectiva del impacto percibido por los involucrados directos en la implementación de software para mejorar el servicio en el sector alimentario, pero para comprender mejor el impacto de esta transición desde otros puntos de vista, en las siguientes secciones se profundizarán los beneficios y retos que implica.
+
+\subsection{BENEFICIOS DE LA DIGITALIZACIÓN EN EL SECTOR ALIMENTARIO}
+
+La digitalización de los servicios, de acuerdo con Kansakar, et al. \cite{kansakar2018technology}, es imperativo para apelar a la oportunidad de establecer un contacto más directo con los clientes tecnófilos\footnote{Tecnófilo. De tecnofilia, que presenta afición por la tecnología. \cite{rae2024tecnofilia}}; involucrando tecnologías como el Internet de las Cosas (IoT, por sus siglas en inglés Internet of Things), interconexiones con dispositivos físicos (sensores, actuadores y móviles) o tecnologías que facilitan la comunicación por internet y que benefician no solo al sector alimentario, también impactan positivamente en la industria de servicios.  
+
+Kansakar, et al. estudian casos de éxito en los que la digitalización ofrece beneficios específicos: una mejor integración del cliente mediante la personalización y seguridad; la recolección de datos operativos precisos (difíciles de obtener con métodos analógicos); y mayor visibilidad y alcance de los negocios para clientes fuera de su alcance local habitual. 
+
+En el artículo, incluso, se mencionan nuevas posibilidades con sensores en el cuerpo como accesorios, prendas o zapatos inteligentes que permitan recolectar datos sobre fenómenos físicos relacionados a la experiencia del usuario o de procesos coordinados al servicio, permitiendo la optimización en el uso de recursos involucrados mediante la automatización. 
+
+Y no solo este estudio abarca los beneficios. Kulthe y Landge \cite{kulthe2025adoption}, con un contexto similar al de Ismail, et al. \cite{ismail2025perceived}, consideran tecnologías como software de Gestión de Relaciones con el Cliente (CRM, por sus siglas en inglés Customer Relationship Management), software de gestión de inventario, Sistemas de Visualización de Cocina (KDS, por sus siglas en inglés Kitchen Display Systems) y herramientas digitales de marketing para el sector de catering. 
+
+Entre los beneficios diagnosticados se encuentran la reducción de costos internos operacionales, mejora en la productividad, toma de decisiones basado en datos, control de calidad, rapidez y precisión en la satisfacción del cliente.
+
+Complementariamente, Lee, et al. \cite{woojin2024effect} desarrollan un análisis similar que introduce los términos en inglés front-of-house (FoH) y back-of-house (BoH) para clasificar el impacto de la transición digital. El término FoH hace alusión a aquellos procesos en los que el cliente interactúa directamente con el servicio, mientras que BoH abarca aquellos procesos internos en los que, contrastantemente, el cliente no interactúa directamente pero que influye en la organización y producción del servicio o producto provisto. 
+
+Con estos términos, el estudio destaca que la transformación digital en el FoH aporta flexibilidad y estabilidad en los ingresos financieros, proponiendo que esta transformación debiera estabilizar y acelerar la recuperación de los ingresos. 
+
+Por otro lado, para los beneficios de la transformación digital en el BoH, establecen que tiene un impacto relevante en la estabilidad de la rentabilidad y este cambio se debe usar para reforzar la estabilidad basada en el costo. 
+
+En conjunto, la transformación en ambos aspectos mejora firmemente la estabilidad y aporta valor en la resiliencia de la industria. Y es por esto por lo que desarrollar soluciones que digitalicen el proceso de producción de cocina de las cafeterías de las unidades académicas de interés no solo propicia un beneficio en la experiencia de la comunidad politécnica que tiene una tendencia tecnófila, también se propiciarán cambios operativos y económicos positivos para los proveedores que prestan sus servicios y que adopten esta transición. 
+
+Sin embargo, para comprender la transición digital por completo, es necesario hablar de los retos operativos, técnicos y culturales que implica este proceso por la naturaleza de las soluciones, mismas que se abarcarán en la siguiente sección.
+
+\subsection{RETOS DE LA DIGITALIZACIÓN}
+
+Pese a todos los impactos positivos, en los 3 artículos (Kansakar et al. \cite{kansakar2018technology}, Kulthe y Landge \cite{kulthe2025adoption} y Lee et al. \cite{woojin2024effect}\cite{woojin2026multifaceted}) se mencionan los retos que implicó la integración de software en procesos originalmente analógicos.
+
+Entre las desventajas descritas por Kansakar et al. \cite{kansakar2018technology} se encuentran: la falta de interoperabilidad y estandarización (limitando la capacidad de compartir procesos y perfiles entre unidades y negocios); el crecimiento exponencial de datos recolectados (generando desafíos para gestionarlos); la vulnerabilidad de seguridad y privacidad de los datos; y la dificultad para responder inmediatamente a fallas ocasionadas por el mantenimiento del software o la falta de servicios esenciales para su funcionamiento (como suele ser la provisión de internet).  
+
+Kulthe y Landge \cite{kulthe2025adoption}, enfocan las desventajas que tienen las Pequeñas y Medianas Empresas (PyME) a causa de que sistemas avanzados que cubren los requerimientos operativos mínimos exigen una inversión inicial significativa; la escasez de personal calificado para operar y mantener los sistemas; la resistencia del personal al cambio por miedo e incertidumbre que esta transición implica; y la incompatibilidad con la infraestructura existente y disponible para efectuar los cambios. 
+
+Adicionalmente, Lee et al. \cite{woojin2024effect}\cite{woojin2026multifaceted} mencionan que, si los negocios cuentan con varias sedes, la digitalización agrega capas organizacionales que aumentan el costo de la coordinación y procesamiento de datos del sistema, anulando incluso el beneficio que trata de ofrecer la digitalización.  
+
+Otro punto de vista relevante del impacto de la digitalización es la que narran Seyito\u{g}lu et al. \cite{seyitoglu2025role}. En los cocineros, la tecnología desarrolla un rol dual: como facilitador y como destructor. Bajo el estudio de los autores, describen que la tecnología permite mejorar las habilidades vocacionales de los cocineros al reducir la carga cognitiva en tareas repetitivas que pueden consumir mucho tiempo y agiliza la producción de platillos de mayor calidad visual y gustativa. 
+
+Por otro lado, existe un riesgo real de ``descalificar'' (traducción estimada del inglés deskilling) ocasionada por el mismo efecto que causa beneficios: automatizar procesos manuales. En el estudio menciona la pérdida de destreza manual, de coordinación, y de técnicas tradicionales de cocina.  
+
+Es por esto por lo que, al desarrollar el sistema, el diseño debe mantener un equilibrio entre la automatización de tareas repetitivas y la autonomía del personal para ejercer sus profesiones con calidad y destreza.
+
+Agregado a estos desafíos, y lo que puede ocasionar un fallo sistemático de la solución, se presenta las limitaciones frente al factor humano y los riesgos técnicos, es decir, si la solución no le proporciona al personal la usabilidad, flexibilidad y estabilidad que los métodos analógicos ya ofrecían, las desventajas podrían anular y superar las ventajas deseadas. 
