@@ -2,7 +2,7 @@
 
 %=========================================================
 \chapter{ESTADO DEL ARTE}
-\setcounter{table}{0}
+
 En las instituciones académicas es habitual que dispongan de establecimientos de comida en sus instalaciones. Estos establecimientos presentan restricciones particulares que impactan al servicio que ofrecen, mostrando ciertas deficiencias que los comercios externos resuelven con contrastante facilidad. 
 
 Sin embargo, no basta con reconocer las deficiencias del proceso manual: es igualmente importante considerar que la introducción de una herramienta tecnológica puede, por sí misma, entorpecer un proceso si no se adapta a las condiciones reales del entorno. Una herramienta mal integrada, excesivamente compleja o diseñada para un contexto distinto puede generar fricciones adicionales, aumentar la carga cognitiva del personal y agravar los mismos problemas que pretende resolver. Por ello, la selección e implementación de soluciones tecnológicas debe partir de un diagnóstico preciso del flujo de trabajo existente.
@@ -170,3 +170,55 @@ Para complementar la literatura científica disponible, resulta indispensable to
 Entre los beneficios documentados por esta plataforma está la reducción de errores entre un 60 \% y un 80 \% al sustituir tickets de papel por tickets digitales, facilitar la gestión de inventario en tiempo real, y la optimización del flujo de trabajo.
 
 Paralelamente a estas métricas operativas, se garantiza una disponibilidad del servicio del 99.99 \%, mitigando la incertidumbre tecnológica durante las horas de alta demanda. Asimismo, LAVU añade valor analítico mediante herramientas de procesamiento de datos de ventas como "Marty"\cite{lavu2026demo}, la cual genera resúmenes predictivos y reportes financieros automatizados para optimizar la toma de decisiones directivas.
+
+Sin embargo, los costos de este servicio no son transparentes. Gracias a un análisis que Lavi \cite{lavi2026lavu} realiza a los productos de LAVU el precio ronda entre los 99 USD hasta los 279 USD mensuales, lo cual representa una inversión inicial fuerte para cafeterías estudiantiles. Es por esto por lo que Lavi considera este software ideal para clientes que necesiten características particulares y personalizables, en contraste con competidores como Square, Toast o TouchBistro cuyas inversiones iniciales pueden ser desde versiones gratuitas hasta los 149 USD por mes. Además, se menciona que sus interfaces no son adecuadas para personal diverso. 
+
+Al revisar las características de estos competidores nos encontramos con Square y Toast \cite{block2026square}\cite{toast2026opciones}. Dos alternativas POS con KDS que ofrecen servicios con requisitos mínimos como gestión de inventario y artículos, impresión, escaneo de código de barras, venta en línea y reservaciones, con servicios con costo de instalación de equipos. Aunque Square ofrece el servicio gratuito, la plataforma limita el número de operaciones y dispositivos, por lo que resulta inconveniente para cafeterías escolares.
+
+En cambio, si los negocios optaran por pagar para tener acceso a las características mínimas sin limitaciones, Square asegura que no solo elimina el límite, también compensa el costo con características para todas las industrias que tiene disponibles, incluye programas de lealtad, agrega automatización de comunicación masiva para fines de marketing y permite la gestión de personal. Pero su cuota por operación es del 2.5 \% sobre el costo + 15 centavos fijos para operaciones físicas, mientras que para operaciones en línea la cuota es de 2.9 \% sobre el total más 30 centavos fijos.
+
+Un competidor más directo de los servicios de LAVU es el que ofrece TouchBistro \cite{lavi2026lavu}\cite{touchbistro2026pricing}, un servicio modular de soluciones para restaurantes que incluye soluciones FoH como POS, pasarelas de pago y pantallas de visualización para el cliente; y soluciones BoH como gestión de inventario, gestión de personal, KDS y gestión de ganancias. Adicionalmente agregan servicios de marketing como gestión de pedidos en línea, reservaciones, programas de lealtad y gestión de marketing para campañas y promociones.
+
+La ventaja de TouchBistro es que sus servicios son completamente modulares, no requieren de terceros para funcionar y se pueden seleccionar los servicios que el cliente necesite. Por otro lado, en la práctica es necesario mínimo el servicio POS para gestionar toda una cafetería y el precio mínimo es de 69 USD por mes, suponiendo un costo algo para servicios que, si bien necesitan de un sistema complejo, no requieren de funciones tan especializadas como las que ofrece sin opciones de ajustes personalizados. 
+
+El último servicio disponible en el mercado relevante por estudiar es el que ofrece Oracle \cite{oracle2020micros}. Un KDS especializado no solo en sus funciones operativas, también en el soporte para usuarios de diversidad cultural y con integración a hardware dedicado para uso en cocinas. Entre las características operativas más destacables se encuentran: temporización inteligente para pedidos con variabilidad en el tiempo de preparación, gestión de tiempos de mesa, enrutamiento de estaciones, comunicación paperless, actualizaciones instantáneas y monitoreo de estaciones.
+
+Aunque Oracle MICROS puede cubrir con las necesidades de las cafeterías escolares, el software solo se incluye en equipos físicos de la marca, los cuales rondan los 50 USD \cite{micros2026pos} sin instalación y sin POS. En la Tabla \ref{tab:comparativa-soluciones-existentes}, se muestra una tabla comparativa de las soluciones descritas con las características necesarias para una cafetería de alta rotación con alta demanda en horarios específicos.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l c c p{3cm} p{3cm} p{2cm}}
+\caption{\textsc{Comparativa entre soluciones existentes en el mercado.}} \label{tab:comparativa-soluciones-existentes} \\
+\toprule
+\textbf{Solución} & \textbf{KDS} & \textbf{POS} & \textbf{Ventajas} & \textbf{Desventajas} & \textbf{Costo} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Solución} & \textbf{KDS} & \textbf{POS} & \textbf{Ventajas} & \textbf{Desventajas} & \textbf{Costo} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+LAVU \cite{lavu2026demo}\cite{lavu2025kds} & Sí & Sí & Arquitectura altamente personalizable e integración con delivery externo. & Tarifas mensuales con cargos ocultos e interfaz gráfica anticuada. & + \$ 99 USD / mes  \\
+\addlinespace
+Toast \cite{toast2026opciones} & Sí & Sí & Escalabilidad vertical y módulo nativo para pedidos en línea de clientes. & Las características avanzadas requieren de pagos costosos. & + \$ 69 USD / mes \\
+\addlinespace
+Square \cite{block2026square} & Sí & Sí & Implementación ágil en dispositivos comerciales comunes. & El KDS se factura por pantalla conectada; el plan gratuito limita el volumen de transacciones. & + \$ 49 USD / mes (más comisiones por transacción)  \\
+\addlinespace
+TouchBistro \cite{touchbistro2026pricing} & Sí & Sí & Especializado en restaurantes e incluye gestión de inventario y personal en la nube. & Esquema de precios a la carta; incluye características avanzadas innecesarias y rígidas. & + \$ 69 USD / mes  \\
+\addlinespace
+Oracle MICROS \cite{oracle2020micros}\cite{micros2026pos} & Sí & Sí & Hardware rudo de grado industrial, temporización inteligente y enrutamiento dinámico. & Alta complejidad de configuración, nula flexibilidad local y dependencia estricta de hardware propietario. & Costo de entrada (~ \$ 1,500 USD por terminal) + Licencia de software \\
+\end{longtable}
+\endgroup
+
+Es por esto por lo que una solución adaptada a la medida para las condiciones de las cafeterías escolares no es viable usando las opciones ofertadas comercialmente; estas presentan tasas de entrada económicas altas y comisiones restrictivas para negocios que requieren la agilidad y flexibilidad de un software especializado, pero con la facilidad de implementación de aplicaciones accesibles. En contraste, el desarrollo de soluciones personalizadas y los beneficios operativos que estas conllevan quedan plenamente respaldados por la literatura científica analizada, justificando el diseño de una alternativa propia y contextualizada a la realidad institucional.  
+
+En el siguiente capítulo se abordarán los fundamentos teóricos sobre los cuales se desarrollará el trabajo. 

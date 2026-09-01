@@ -23,6 +23,7 @@
 \renewcommand{\listtablename}{Índice de tablas}
 \renewcommand{\tablename}{Tabla}
 \renewcommand{\thetable}{\arabic{table}}
+\renewcommand{\thefigure}{\arabic{figure}}
 \makeatletter
 \renewcommand{\contentsname}{ÍNDICE}
 \renewcommand{\tableofcontents}{%
@@ -63,6 +64,8 @@
 \let\ps@plain\ps@documentplain
 \makeatother
 \pagestyle{fancy}
+\setcounter{table}{0}
+\setcounter{figure}{0}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -76,7 +79,7 @@
 
 %=========================================================
 % TODO
-\include{3ModeloDelNegocio}
+\include{3MarcoTeorico}
 
 %=========================================================
 % TODO
