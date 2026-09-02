@@ -1,0 +1,77 @@
+% !TeX root = proyecto.tex
+
+%=========================================================
+\chapter{ANÁLISIS DEL SISTEMA}
+Este capítulo detalla el proceso analítico y metodológico seguido para transformar las necesidades detectadas en las cafeterías de la ESCOM en una solución de software estructurada. Se fundamenta en la captura de requisitos a través de la interacción directa con los operadores y el modelado sistemático del flujo de información. 
+
+\section{METODOLOGÍA}
+Para el desarrollo de este Trabajo Terminal se ha seleccionado el Modelo de Ciclo de Vida en Cascada (Waterfall). Esta elección se justifica por la necesidad de contar con una estructura secuencial y disciplinada que garantice que cada fase del diseño de ingeniería esté plenamente documentada antes de proceder a la construcción del software. 
+
+El proceso se divide en las siguientes etapas: fase inicial donde se realizaron las entrevistas y observaciones directas para identificar las ineficiencias del modelo manual; análisis del sistema donde se registran los requerimientos funcionales y no funcionales, reglas de negocio y casos de uso; el diseño donde se contempla la arquitectura, el modelo entidad relación y el diseño de interfaces basado en las reglas de Shneiderman y Plaisant \cite{shneiderman2005designing}; la implementación; y las pruebas para evaluar el impacto del sistema. 
+
+\subsection{RECOPILIACIÓN DE DATOS}
+La fase de levantamiento de información se centró en una metodología de investigación cualitativa mediante entrevistas semiestructuradas. Estas fueron aplicadas a los encargados y personal de las cafeterías con el fin de obtener un diagnóstico profundo de la problemática operativa actual. Los entrevistados fueron cajeros y cocineros de las cafeterías Gamaretzi, In Kafen y Uni Café, concesionados actuales de los espacios dedicados para cafetería de las unidades académicas. 
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{p{5cm} p{9cm}}
+\caption{\textsc{Tabla de objetivos de las preguntas realizadas en entrevistas.}} \label{tab:objetivos-entrevistas} \\
+\toprule
+\textbf{Pregunta} & \textbf{Objetivo} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Pregunta} & \textbf{Objetivo} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{2}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+¿Cómo gestionan actualmente la recepción de órdenes? (A papel, tickets, libretas)  & Identificar las fricciones en la comunicación verbal o por papel que provocan errores de preparación. \\
+\addlinespace
+¿Cómo gestionan los cambios en pedidos cuando ya están en proceso de preparación?  & Identificar fallas en la comunicación FoH-BoH. \\
+\addlinespace
+¿Cómo se le notifica a la cocina de este cambio? & Identificar las fricciones en la comunicación verbal o por papel que provocan errores de preparación. \\
+\addlinespace
+¿Cuáles son los principales errores al tomar un pedido? & Diagnosticar las ineficiencias de los sistemas manuales actuales en las cafeterías. \\
+\addlinespace
+¿Cómo afectan estos errores en el proceso de venta y preparación? & Evaluar el impacto en la fluidez operativa y la pérdida de ingresos. \\
+\addlinespace
+¿Cómo les indican a los clientes que ya está listo el pedido? & Modelar el flujo de notificaciones al usuario. \\
+\addlinespace
+¿Cómo deciden qué platillo cocinar primero? (¿Respetan el orden de llegada o por la facilidad de preparación?) & Establecer la línea base para la configuración del algoritmo MLFQ, detectando si el actual modelo FCFS es eficiente o genera bloqueos. \\
+\addlinespace
+¿Cuáles son los platillos que más tienden a atrasar la fila en horas pico y por qué? & Establecer la línea base para la configuración del algoritmo MLFQ, detectando si el actual modelo FCFS es eficiente o genera bloqueos. \\
+\addlinespace
+¿Cómo gestionan la cocina? ¿Por estaciones separadas? & Mapear la arquitectura física de producción para el enrutamiento de pedidos (plancha, barra fría, panes). \\
+\addlinespace
+¿En qué momento del proceso, sobre todo en horas pico, consideran que ``pierden el control'' de los pedidos? & Identificar el punto crítico donde la tasa de llegada supera la capacidad de servicio. \\
+\addlinespace
+¿Con qué frecuencia se quedan sin insumos para preparar los alimentos? & Fundamentar la necesidad de un módulo de gestión de inventarios con alertas críticas para evitar ventas de productos no disponibles \\
+\addlinespace
+¿Cómo gestionan esta falta de insumos y los pedidos que van llegando? & Justificar el módulo de gestión de inventarios con alertas críticas. \\
+\addlinespace
+¿Qué productos o ingredientes son más difíciles de mantener un conteo? & Fundamentar la necesidad de un módulo de gestión de inventarios con alertas críticas para evitar ventas de productos no disponibles \\
+\addlinespace
+En horas pico ¿Cuánto tiempo mínimo y máximo han notado que transcurre desde que el cliente hace una orden hasta que ustedes entregan el pedido? & Obtener datos para comparar el rendimiento actual contra los beneficios esperados de la digitalización \\
+\addlinespace
+En las mismas horas ¿Cuántos pedidos han llegado a acumularse? & Obtener datos para comparar el rendimiento actual contra los beneficios esperados de la digitalización \\
+\addlinespace
+¿Qué les facilitaría más el trabajo: saber qué pedidos vienen en los próximos 15 minutos o tener una pantalla que les organice los pedidos actuales por tipo de alimento? & Determinar si la prioridad del personal es el agrupamiento lógico (KDS) o la anticipación (pre-ordenamiento), lo que rige la jerarquía de información en las pantallas \\
+\addlinespace
+¿Qué tan fácil consideran que sería la integración de pantallas o pantallas táctiles mientras trabajan? & Validar la viabilidad del hardware (pantallas no táctiles) y del módulo de pre-ordenamiento para los estudiantes \\
+\addlinespace
+¿Han considerado o ya implementado un sistema de pedidos programados o por adelantado? & Validar la viabilidad del hardware (pantallas no táctiles) y del módulo de pre-ordenamiento para los estudiantes \\
+\addlinespace
+¿Cuál es la tarea que más les quita tiempo y que no tiene nada que ver con cocinar? & Identificar tareas administrativas para su automatización. \\
+\end{longtable}
+\endgroup
+
+Con estas herramientas, entonces, se procederá al análisis del sistema.

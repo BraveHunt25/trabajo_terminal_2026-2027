@@ -36,8 +36,31 @@ En el estudio de Nwekori e Ignatius \cite{nwekori2025design} se propone una arqu
 
 \begin{figure}[htbp]
     \begin{center}
-        \fbox{\includegraphics[width=.8\textwidth]{cdt/images/Arquitectura_Nwekori-Ignatius}}
+        \fbox{\includegraphics[width=.6\textwidth]{cdt/images/Arquitectura_Nwekori-Ignatius}}
         \caption{Arquitectura del sistema de Nwekori e Ignatius \cite{nwekori2025design}.}
         \label{fig:arquitecturaNwekoriIgnatius}
     \end{center}
 \end{figure}
+
+Por otro lado, Ghelani y Hua \cite{ghelani2022perspective} dividen su sistema con 4 módulos centralizados con respecto a la base de datos: el sistema web de pedidos, la base de datos, el módulo de gestión del menú y el módulo de recuperación de pedidos. Algo destacable de esta arquitectura propuesta es el énfasis en el sistema web de pedidos ya que proporcionan al cliente una oportunidad de verificar su pedido antes de realizar su compra con el flujo propuesto en su arquitectura (véase la Figura \ref{fig:arquitecturaGhelaniHua}).
+
+\begin{figure}[htbp]
+    \begin{center}
+        \fbox{\includegraphics[width=.6\textwidth]{cdt/images/Arquitectura_Ghelani-Hua}}
+        \caption{Arquitectura del sistema de Ghelani y Hua \cite{ghelani2022perspective}.}
+        \label{fig:arquitecturaGhelaniHua}
+    \end{center}
+\end{figure}
+
+Ghelani y Hua también considera un flujo particular para los empleados con una trifurcación desde el árbol de navegación que deriva en las pantallas de caja, visualización del menú con los alimentos categorizados, y para ver productos específicos del menú.  
+
+A partir del análisis de estas arquitecturas, el KMS propuesto adoptará un enfoque híbrido: retomará el modelo de almacenamiento centralizado en base de datos con segregación de interfaces basadas en roles de interacción (cliente y personal de producción) postulado por Nwekori e Ignatius, e incorporará las pautas de flujo de navegación detalladas por Ghelani y Hua para estructurar la experiencia de usuario de manera predictiva, fluida y eficiente. 
+
+\section{ALGORITMOS DE PRIORIZACIÓN}
+La gestión eficiente de las órdenes en un entorno de alta demanda, como las cafeterías de la ESCOM, requiere un sustento matemático que permita transitar de un modelo empírico a uno optimizado. Por ello, se ha seleccionado el modelo de Colas Multinivel con Retroalimentación (MLFQ, por sus siglas en inglés), fundamentado en principios de la Teoría de Colas para el diagnóstico del problema y en la planificación de procesos para su solución técnica. 
+
+En el trabajo de Goswami et al. \cite{goswami2023use}, afirma que se puede anticipar la longitud de las filas y los tiempos de retraso, factores críticos que, de no ser gestionados, resultan en la pérdida de clientes y la insatisfacción del usuario. Habitualmente, las cafeterías operan con el método Primero en llegar - Primero en ser servido (FCFS, por sus siglas en inglés \textit{First-Come-First-Served}).
+
+Por ello, con base en el artículo de Solomo et al. \cite{salomo2019multilevel} para superar las limitaciones del modelo FCFS manual, se implementará el algoritmo Cola de Retroalimentación Multinivel (MLFQ, por sus siglas en inglés \textit{Multilevel Feedback Queue}) el cual organizará los pedidos en diferentes niveles de prioridad. Todos los pedidos nuevos ingresarán a la Cola 0, la cual posee la prioridad más alta. Cada nivel de prioridad tendrá asignado un tiempo de procesamiento máximo o quantum. Si la preparación de un platillo excede el tiempo definido para su nivel (por ejemplo, 8 ms en una simulación de CPU o un tiempo proporcional en el flujo de cocina), el sistema lo moverá automáticamente a una cola de menor prioridad.
+
+Con esto se asegura que los platillos de preparación rápida sean entregados en menor tiempo, evitando que queden atrapados detrás de órdenes de alta complejidad y, así, se minimizaría el tiempo de respuesta definido como la diferencia entre la hora de llegada del pedido y el inicio de su preparación. De esta forma, y de acuerdo con Solomo et al., se mantiene una equidad del 83 \% en la entrega del pedido, garantizando un equilibrio entre rapidez del servicio y respecto al turno del estudiante. 
