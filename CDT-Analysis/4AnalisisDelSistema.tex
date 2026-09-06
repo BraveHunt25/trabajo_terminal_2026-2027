@@ -321,3 +321,995 @@ El requerimiento RNFU-08 precargado se establece con prioridad Alta para el acto
 
 \subsubsection{RNFU-11 CONTROL DE CONDICIÓN DE CARRERA EN ASIGNACIÓN DE CAPACIDAD POR VENTANA HORARIA}
 El requerimiento RNFU-11 precargado se establece con prioridad Alta para el actor Global. El sistema debe ejecutar una validación de capacidad en el servidor de manera síncrona al momento de la confirmación de la ventana horaria, tanto en el flujo de caja (CAJ-26) como en el de cliente (CLI-10 / CLI-11), garantizando que dos peticiones concurrentes que compitan por la última plaza disponible resulten exactamente en una aprobación y una denegación, impidiendo que la ocupación total exceda el parámetro ConfiguracionSistema.capacidad\_maxima\_ventana. El criterio de aceptación determina que, ante el arribo simultáneo de dos solicitudes de reserva, una de ellas sea aceptada con éxito y la otra reciba un código de error por capacidad insuficiente, asegurando que la expresión COUNT(Pedido WHERE ventana = slot AND estado NOT IN ('CANCELADO')) permanezca siempre por debajo o igual al límite configurado. Se justifica en que el control estricto de las condiciones de carrera evita el sobrecupo operacional en la cocina, protegiendo la calidad del servicio y garantizando el cumplimiento de los tiempos de entrega comprometidos.
+
+\subsection{MÓDULO DEL CLIENTE}
+\subsubsection{RNFUN-13 ADAPTABILIDAD DE LA INTERFAZ}
+El requerimiento RNFUN-13 precargado se establece con prioridad Alta para el actor Cliente. La interfaz gráfica de usuario debe poseer propiedades de adaptabilidad frente a diversas resoluciones y arquitecturas de hardware, facilitando su correcta renderización y operabilidad en entornos multiplataforma. El criterio de aceptación estipula que los componentes visuales del sistema mantengan una distribución armónica, accesible y funcional independientemente de las dimensiones de la pantalla del dispositivo utilizado. Se justifica bajo la premisa de que un diseño responsivo optimiza de forma transversal la experiencia del usuario final sin restringir los canales de acceso tecnológicos.
+
+\subsection{MÓDULO DEL MÁNAGER}
+\subsubsection{RNFU-07 GESTIÓN DE ROLES}
+El requerimiento RNFU-07 precargado se establece con prioridad Alta para el actor mánager. El sistema debe incorporar un esquema estructurado de control de acceso basado en roles que discrimine con precisión los privilegios y las vistas operativas correspondientes a cada tipología de usuario. El criterio de aceptación determina que cada entidad de usuario posea un rol unívoco dentro de la persistencia de datos, de modo que las funcionalidades del sistema se habiliten o restrinjan de manera automatizada según dicha asignación. Se justifica bajo la necesidad de descentralizar y gobernar las operaciones del sistema, garantizando la restricción estricta de acciones con base en las responsabilidades del perfil institucional.
+
+\subsubsection{RNFU-08 RESTRICCIÓN DE CONFIGURACIONES CRÍTICAS}
+El requerimiento RNFU-08 precargado se establece con prioridad Alta para el actor mánager. Se determina que cualquier modificación relacionada con los niveles de inventario, configuraciones globales del sistema o parámetros operativos críticos quede restringida de forma exclusiva a los usuarios que posean el rol de administrador. El criterio de aceptación establece que solo los perfiles administrativos estén autorizados para invocar las interfaces y servicios de modificación crítica, bloqueando dichos privilegios al resto de los actores de la plataforma. Se justifica en que el aislamiento de las configuraciones del núcleo previene alteraciones accidentales o maliciosas que pongan en riesgo la continuidad de la operación comercial.
+
+\subsubsection{RNFU-09 REGISTRO DE ACTIVIDADES}
+El requerimiento RNFU-09 precargado se establece con prioridad Alta para el actor mánager. El sistema debe integrar un mecanismo persistente de bitácora de auditoría encargado de registrar cronológicamente los eventos significativos y las transacciones críticas ejecutadas por los usuarios. El criterio de aceptación estipula que las acciones relevantes se almacenen en un repositorio histórico inmutable que faculte la posterior consulta y trazabilidad de las operaciones efectuadas en la plataforma. Se justifica debido a que disponer de un registro detallado de actividades es indispensable para auditar el comportamiento del sistema, diagnosticar fallos técnicos y mantener la rendición de cuentas operativa.
+
+\subsection{MÓDULO DE COCINA}
+\subsubsection{RNFUN-10 OPERACIÓN CON CONECTIVIDAD LIMITADA}
+El requerimiento RNFUN-10 precargado se establece con prioridad Alta para el actor Cocinero. El módulo orientado a la cocina debe asegurar la persistencia visual y la consulta de los pedidos previamente sincronizados bajo escenarios de degradación de red o conectividad intermitente. El criterio de aceptación determina que las órdenes registradas sigan expuestas en la interfaz de usuario de forma ininterrumpida hasta que ocurra una mutación de su estado o se marquen explícitamente como concluidas por el personal. Se justifica en que la disponibilidad constante de la cola de producción previene la paralización de las actividades del personal y resguarda la integridad de los datos frente a contingencias de infraestructura local.
+
+\subsubsection{RNFUN-11 INTERACCIÓN MEDIANTE DIPOSITIVOS TÁCTILES}
+El requerimiento RNFUN-11 precargado se establece con prioridad Alta para el actor Cocinero. La interfaz gráfica del módulo de cocina debe estar optimizada para interactuar mediante pantallas táctiles o periféricos de control simplificados acordes al entorno industrial de trabajo. El criterio de aceptación establece que los elementos de control en pantalla respondan con precisión a eventos táctiles y que la navegación resulte intuitiva y ágil para el operario. Se justifica bajo la premisa de que las condiciones ambientales de un área de producción culinaria exigen interfaces dinámicas que reduzcan la fricción operativa y aceleren los tiempos de respuesta manual.
+
+\subsubsection{RNFUN-12 LEGIBILIDAD EN EL ENTORNO DE TRABAJO}
+El requerimiento RNFUN-12 precargado se establece con prioridad Alta para el actor Cocinero. Se exige que el diseño visual del entorno de cocina garantice un contraste y tamaño tipográfico óptimos que aseguren la legibilidad remota de la información bajo las condiciones lumínicas del área de trabajo. El criterio de aceptación determina que los datos de los pedidos e insumos puedan ser reconocidos e interpretados sin ambigüedades por el personal durante el transcurso de la jornada. Se justifica en que una legibilidad adecuada disminuye drásticamente los errores humanos de interpretación en las comandas, optimizando el flujo de preparación.
+
+\subsection{MÓDULO DE CAJA}
+\subsubsection{RUSA-01: USABILIDAD EN EL REGISTRO DE PEDIDOS}
+El requerimiento RUSA-01 precargado cuenta con prioridad Alta para el actor Cajero. La interfaz del módulo de caja debe estar diseñada para permitir el registro de pedidos de manera clara, intuitiva y eficiente para el operador. El criterio de aceptación estipula que el operador de caja puede registrar pedidos mediante los controles disponibles en la interfaz, seleccionando productos y confirmando pedidos de forma clara. Su justificación técnica indica que una interfaz sencilla facilita la operación del sistema por parte del personal de caja y reduce errores durante el registro de pedidos.
+
+\subsection{MÓDULO DEL CLIENTE}
+%% TODO
+
+\newpage
+\begin{landscape}
+\section{REGLAS DE NEGOCIO}
+\subsection{MÓDULO DEL MÁNAGER}
+\subsubsection{AUTENTICACIÓN Y CONTROL DE SESIÓN}
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} c}
+\caption{\textsc{Reglas de negocio del módulo del mánager para autenticación y control de sesión.}} \label{tab:reglas-negocio-manager-sesion} \\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-MGR-001 & Verificación de rol mánager en autenticación & [Control de Acceso] & El sistema emite un token de sesión con perfil mánager única y exclusivamente cuando las credenciales provistas corresponden a un registro Usuario con rol = mánager y estado activo. Si el registro existe, pero el rol difiere, la autenticación es rechazada. & Usuario (id, correo, hash\_contrasena, rol) & MGR-01 \\
+\addlinespace
+RN-MGR-002 & Registro obligatorio de inicio de sesión en bitácora & [Restricción Operacional] & Toda autenticación exitosa del perfil mánager genera de forma síncrona un registro en HistorialDeMovimientos con concepto INICIO\_SESION y el identificador del usuario autenticado como responsable. El fallo de este registro invalida la sesión. & HistorialDeMovimientos (concepto, id\_responsable, fecha) & MGR-01 \\
+\addlinespace
+RN-MGR-003 & Invalidación de sesión con registro en bitácora & [Restricción Operacional] & La acción de cierre de sesión invalida el token activo del mánager y genera de forma síncrona un registro en HistorialDeMovimientos con concepto CIERRE\_SESION antes de redirigir al login. & HistorialDeMovimientos & MGR-02 \\
+\addlinespace
+RN-MGR-024 & Invalidación de sesión activa al cambiar contraseña del mánager & [Restricción Operacional] & El cambio de contraseña del mánager en MGR-28 es aceptado únicamente si la contraseña actual provista coincide con Usuario.hash\_contrasena. Tras persistir la nueva contraseña, el sistema invalida el token de sesión activo del mánager e inicia un nuevo proceso de autenticación. Comportamiento estándar de seguridad para prevenir el uso de sesiones activas comprometidas tras cambio de credenciales. & Usuario (hash\_contrasena), token de sesión & MGR-28 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{GESTIÓN DE ALERTAS E INVENTARIO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} c}
+\caption{\textsc{Reglas de negocio del módulo del mánager para gestión de alerta e inventario.}} \label{tab:reglas-negocio-manager-alertas}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-MGR-004 & Cálculo de disponibilidad de producto por stock & [Derivación / Algorítmica] & El sistema clasifica un producto como no disponible cuando existe al menos un insumo con es\_opcional = false en la relación IngredienteProducto cuya Insumo.cantidad\_stock $<$ IngredienteProducto.cantidad\_requerida. La evaluación se realiza individualmente para cada producto sobre el inventario en tiempo real. & Producto, IngredienteProducto, Insumo (cantidad\_stock, cantidad\_requerida, es\_opcional) & MGR-02, MGR-06 \\
+\addlinespace
+RN-MGR-005 & Umbral de alerta de insumo configurable por registro & [Derivación / Algorítmica] & Un insumo se incluye en el panel de alertas cuando su cantidad\_stock $\le$ umbral\_alerta. El campo umbral\_alerta es configurable individualmente por registro de insumo en MGR-16. El umbral global de ConfiguracionSistema opera como valor predeterminado cuando el umbral individual no está definido. & Insumo (cantidad\_stock, umbral\_alerta), ConfiguracionSistema (umbral\_alerta\_global) & MGR-02, MGR-16 \\
+\addlinespace
+RN-MGR-006 & Los insumos opcionales no bloquean la disponibilidad del producto & [Restricción Operacional] & Los insumos vinculados a un producto con IngredienteProducto.es\_opcional = true no participan en el cálculo de disponibilidad del producto. Un producto se considera disponible, aunque todos sus insumos opcionales tengan stock = 0, siempre que los insumos con es\_opcional = false sean suficientes. & IngredienteProducto (es\_opcional), Insumo & MGR-02, MGR-07 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{GESTIÓN DE PERSONAL Y ESTACIONES}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del mánager para gestión de personal y de estaciones.}} \label{tab:reglas-negocio-manager-personal}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-MGR-007 & Unicidad de tipo de estación por empleado & [Restricción Operacional] & Una vez que un empleado tiene al menos una AsignacionEstacion con estación de tipo COCINA, el sistema rechaza toda nueva asociación con estaciones de tipo CAJA para ese empleado, y viceversa. Esta restricción aplica con independencia del rol del actor que realiza la asignación (Manager o cocinero con permiso de sub-asignación). & AsignacionEstacion (id\_empleado, id\_estacion), Estacion (tipo) & MGR-04, MGR-05 \\
+\addlinespace
+RN-MGR-008 & Expiración automática de asignaciones temporales a las 23:59:59 & [Derivación / Algorítmica] & Las asignaciones de tipo TEMPORAL expiran a las 23:59:59 del día calendario en que se crean. A partir de ese instante, el sistema no considera esa asignación como activa en ningún proceso de validación de acceso o autorización. & AsignacionEstacion (tipo\_temporalidad, fecha\_inicio, fecha\_fin) & MGR-04 \\
+\addlinespace
+RN-MGR-009 & Estado PENDIENTE\_CONTRASENA al crear empleado & [Validación Estructural] & Todo nuevo registro de Empleado es creado con estado PENDIENTE\_CONTRASENA. El estado no cambia a ACTIVO hasta que el empleado completa el flujo de establecimiento de contraseña mediante el enlace de onboarding de único uso enviado al correo registrado. & Empleado (estado) & MGR-04 \\
+\addlinespace
+RN-MGR-010 & Unicidad de correo electrónico de empleado & [Validación Estructural] & El campo Empleado.correo debe ser único en el sistema. El servidor rechaza el alta o edición de un empleado cuando el correo provisto ya existe en otro registro activo de la entidad Empleado. & Empleado (correo) & MGR-04 \\
+\addlinespace
+RN-MGR-011 & Alcance del permiso de sub-asignación & [Control de Acceso] & El permiso Empleado.permite\_sub\_asignacion = true habilita al empleado para acceder a la interfaz de gestión de personal de su módulo operativo y modificar asignaciones de estaciones de otros empleados. El tipo de temporalidad que puede asignar está limitado al conjunto habilitado en Empleado.tipo\_sub\_asignacion. No puede exceder los permisos definidos para él por el mánager. & Empleado (permite\_sub\_asignacion, tipo\_sub\_asignacion) & MGR-04 \\
+\addlinespace
+RN-MGR-012 & Alta de empleados restringida al perfil mánager & [Control de Acceso] & La creación de nuevos registros de empleados (INSERT en la entidad Empleado) es una operación exclusiva del perfil mánager. Los usuarios con perfil COCINERO con permiso de sub-asignación pueden modificar asignaciones de estaciones, pero no pueden crear, eliminar ni modificar los atributos de identidad de un empleado. & Empleado & MGR-03, MGR-04, COC-03 \\
+\addlinespace
+RN-MGR-030 & Modelo de autenticación diferenciado e incompatible por tipo de estación & [Control de Acceso] & Las estaciones de tipo ENTREGA operan exclusivamente mediante credenciales compartidas almacenadas en CredencialEstacion y no tienen personal asignado nominalmente en AsignacionEstacion. Las estaciones de tipo COCINA y CAJA son autenticadas mediante credenciales individuales de Empleado y no poseen registro en CredencialEstacion. Los dos modelos de autenticación son mutuamente excluyentes por tipo de estación. & Estacion (tipo), CredencialEstacion, AsignacionEstacion, Empleado & MGR-29, MGR-30-A, MGR-30-B \\
+\addlinespace
+RN-MGR-031 & Eliminación de estación bloqueada por dependencias activas en recetas & [Restricción Operacional] & El sistema rechaza la eliminación de una estación cuando existen registros en EstacionPaso que la referencian como estación asignada a pasos de receta vigentes, o cuando existen registros en PasoPedidoEstado con estado IN (PENDIENTE, BLOQUEADO) asignados a esa estación. La eliminación solo procede cuando la estación no tiene dependencias activas en ninguna entidad que la referencie. & Estacion, EstacionPaso, PasoPedidoEstado & MGR-30-A \\
+\addlinespace
+RN-MGR-032 & Etiquetas de estación como criterio de filtrado en asignación de pasos de receta & [Derivación / Algorítmica] & Las etiquetas (EtiquetaEstacion) asociadas a una estación de tipo COCINA actúan como atributos de clasificación utilizados como criterio de filtrado en la interfaz de asignación de estaciones a pasos de receta (MGR-13). El mánager puede filtrar el catálogo de estaciones disponibles por etiquetas para localizar estaciones specializadas según el tipo de preparación de cada paso. Las etiquetas no restringen la asignación; son únicamente un mecanismo de filtrado de catálogo. & EtiquetaEstacion, Etiqueta, EstacionPaso & MGR-30-A \\
+\addlinespace
+RN-MGR-033 & Credenciales de estación no replicadas en operación de duplicado & [Restricción Operacional] & Al duplicar una estación de tipo ENTREGA, el sistema genera el nuevo registro de Estacion sin incluir ni copiar el registro de CredencialEstacion de la estación origen. Las credenciales de la nueva estación deben ser definidas explícitamente por el mánager antes de que el acceso a la estación sea posible. La reutilización de credenciales entre estaciones distintas violaría el principio de trazabilidad de sesión por estación; cada estación debe tener credenciales únicas. & Estacion, CredencialEstacion & MGR-30-B \\
+\addlinespace
+RN-MGR-034 & Actualización de credenciales de estación como operación atómica independiente & [Restricción Operacional] & El sistema permite actualizar los campos de CredencialEstacion (usuario y hash\_contrasena) de una estación de tipo ENTREGA de forma atómica e independiente de la modificación de los demás atributos de la estación (nombre, tipo). La operación de actualización de credenciales se persiste sin requerir que el formulario completo esté en estado de guardado. & CredencialEstacion (usuario, hash\_contrasena) & MGR-30-B \\
+\end{longtable}
+\endgroup
+
+\subsubsection{GESTIÓN DE PRODUCTOS Y RECETAS}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del mánager para gestión de productos y de recetas.}} \label{tab:reglas-negocio-manager-recetas}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-MGR-013 & Invariante de distribución completa de ingredientes en receta & [Validación Estructural] & El sistema inhabilita la transición de estado a GUARDADO de un producto mientras la suma de cantidades de cada ingrediente distribuida en los pasos de la receta no sea exactamente igual a la cantidad total declarada para ese ingrediente en la ficha maestra del producto. La condición se evalúa por ingrediente de forma independiente. Formalmente:$\forall$ ingrediente\_i: SUM(IngredientePaso.cantidad WHERE id\_insumo = i) = IngredienteProducto.cantidad WHERE id\_insumo = i. & IngredienteProducto (cantidad), IngredientePaso (id\_paso, id\_insumo, cantidad) & MGR-08, MGR-11 \\
+\addlinespace
+RN-MGR-014 & Ingredientes opcionales como personalizaciones del módulo Cliente & [Control de Acceso] & Solo los ingredientes de un producto con IngredienteProducto.es\_opcional = true son presentados como opciones de personalización al cliente en el módulo Cliente (CLI-07). El módulo Caja puede agregar como extra cualquier insumo del inventario sin restricción de opcionalidad. & IngredienteProducto (es\_opcional) & MGR-08 \\
+\addlinespace
+RN-MGR-015 & Los insumos desechables no cuentan en el contador de distribución de receta & [Restricción Operacional] & Los insumos asociados a un producto con categoría DESECHABLE son gestionados en la entidad InsumoDesechableProducto y no afectan el contador de ingredientes pendientes de distribución en la pestaña ``Receta''. El invariante de distribución completa (RN-MGR-013) aplica únicamente sobre ingredientes con categoría INGREDIENTE. & InsumoDesechableProducto, IngredienteProducto, Insumo (categoria) & MGR-08 \\
+\addlinespace
+RN-MGR-016 & Preservación de dependencias al reordenar pasos & [Restricción Operacional] & Cuando el mánager reordena los pasos de una receta mediante arrastre, el sistema evalúa si algún paso predecesor declarado en DependenciaPaso quedaría posicionado después de su paso dependiente. En caso afirmativo, el sistema relocaliza automáticamente los predecesores a la posición inmediatamente anterior al paso dependiente para preservar la integridad de la cadena de dependencias. & PasoReceta (orden), DependenciaPaso (id\_paso, id\_paso\_predecesor) & MGR-11 \\
+\addlinespace
+RN-MGR-017 & Prohibición de auto-referencia en dependencias de pasos & [Validación Estructural] & El sistema rechaza el registro de una DependenciaPaso donde id\_paso = id\_paso\_predecesor. No se admite que un paso se declare predecesor de sí mismo. El sistema debe adicionalmente validar ausencia de dependencias circulares (e.g. A→B, B→A) que generarían deadlocks en el KDS. La detección de ciclos sobre un DAG (Directed Acyclic Graph) debe ejecutarse al persistir cualquier nueva relación de dependencia. & DependenciaPaso (id\_paso, id\_paso\_predecesor) & MGR-13 \\
+\addlinespace
+RN-MGR-018 & Cargo por extra activo solo en ingredientes opcionales & [Restricción Operacional] & El campo IngredienteProducto.precio\_extra solo es habilitado para captura y persistencia cuando IngredienteProducto.es\_opcional = true. Para ingredientes no opcionales, el campo permanece en estado nulo y no se transfiere al cálculo del precio del ítem en ningún módulo. & IngredienteProducto (es\_opcional, precio\_extra) & MGR-08 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{GESTIÓN DE PROMOCIONES}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del mánager para gestión de promociones.}} \label{tab:reglas-negocio-manager-promociones}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-MGR-019 & Inmutabilidad de la composición de promoción en flujos de pedido & [Restricción Operacional] & Los productos que conforman una promoción (ProductoPromocion) no pueden ser modificados durante el flujo de creación de un pedido desde ningún módulo (Caja o Cliente). La promoción se oferta y se procesa como una unidad atómica e indivisible. La única variable configurable durante el pedido es la cantidad de unidades de la promoción a ordenar. & Promocion, ProductoPromocion & MGR-18, CAJ-15, CLI-04 \\
+\addlinespace
+RN-MGR-020 & Vigencia temporal automática de promoción & [Derivación / Algorítmica] & Una promoción con es\_temporal = true es visible y seleccionable en los módulos de pedido únicamente cuando fecha\_inicio $\le$ fecha\_actual $\le$ fecha\_fin. Fuera de ese rango, la promoción se clasifica automáticamente como inactiva sin intervención del mánager. & Promocion (es\_temporal, fecha\_inicio, fecha\_fin, activa) & MGR-18 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{HISTORIAL Y TRAZABILIDAD}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del mánager para historial y trazabilidad.}} \label{tab:reglas-negocio-manager-historial-trazabilidad}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-MGR-021 & Snapshot inmutable de precios e ingredientes al confirmar pedido & [Validación Estructural] & Al confirmar el pago de un pedido (desde Caja o Cliente), el sistema persiste en las entidades ItemPedido / PedidoItem y IngredientePedidoItem los precios unitarios, la configuración de ingredientes y la composición de promociones vigentes en el instante exacto de la confirmación. Estos valores son inmutables post-confirmación: cambios posteriores en las entidades maestras (Producto, Insumo, Promocion) no afectan los registros históricos. & ItemPedido (precio\_snapshot, tiene\_variacion), IngredientePedidoItem, PromocionPedido & MGR-21, CAJ-14, CLI-11 \\
+\addlinespace
+RN-MGR-022 & Indicador de variación por modificación de receta base & [Derivación / Algorítmica] & El sistema activa el campo ItemPedido.tiene\_variacion = true cuando la configuración de ingredientes del ítem en el pedido difiere de la receta base del producto en las entidades maestras (ingredientes eliminados, agregados o con cantidades modificadas desde el módulo Caja o el módulo Cliente). & ItemPedido (tiene\_variacion), IngredientePedidoItem, IngredienteProducto & MGR-21 \\
+\addlinespace
+RN-MGR-023 & Snapshot de receta en historial de pedidos & [Validación Estructural] & Las entidades PasoRecetaPedido, IngredientePasoPedido, EstacionPasoPedido y DependenciaPasoPedido almacenan el estado de la receta en el momento exacto del pedido. Cualquier modificación posterior a la receta base del producto (PasoReceta, IngredientePaso) no altera los snapshots históricos. & PasoRecetaPedido, IngredientePasoPedido, EstacionPasoPedido, DependenciaPasoPedido & MGR-23, MGR-24, MGR-25-A, MGR-25-B \\
+\end{longtable}
+\endgroup
+
+\subsubsection{CONFIGURACIÓN DEL SISTEMA}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del mánager para configuración del sistema.}} \label{tab:reglas-negocio-manager-configuracion-sistema}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-MGR-025 & Conjunto de métodos de pago habilitados no puede quedar vacío & [Validación Estructural] & El sistema rechaza el guardado de la configuración cuando el conjunto ConfiguracionSistema.metodos\_pago\_habilitados resulta vacío. Debe estar habilitado al menos un elemento del enumerado (EFECTIVO, TRANSFERENCIA, TARJETA\_DEBITO, TARJETA\_CREDITO). Esta configuración aplica al módulo Caja y al módulo Entrega cuando permite\_pago\_en\_entrega = true. El módulo Cliente siempre opera con pago contra entrega con independencia de esta configuración. & ConfiguracionSistema (metodos\_pago\_habilitados) & MGR-28 \\
+\addlinespace
+RN-MGR-026 & Validación de integridad temporal en definición de turnos & [Validación Estructural] & El sistema rechaza el registro de un Turno donde hora\_fin $\leq$ hora\_inicio. Cada turno debe representar un intervalo de tiempo con duración estrictamente positiva. Los turnos son utilizados por el sistema para (1) asociar acciones de empleados a su franja horaria activa y (2) delimitar las franjas de ventanas de recolección del módulo Cliente. & Turno (hora\_inicio, hora\_fin) & MGR-28 \\
+\addlinespace
+RN-MGR-027 & Granularidad de ventanas de recolección determinada por parámetro de configuración & [Derivación / Algorítmica] & Los bloques de recolección generados para el módulo Cliente se calculan dividiendo el horario de operación activo en intervalos de ConfiguracionSistema.tamanio\_ventanas\_tiempo minutos. El campo no puede ser nulo ni igual a cero. Un valor de 30 minutos produce bloques ``HH:00-HH:30'', ``HH:30-(HH+1):00'', etc., a lo largo del horario de operación. & ConfiguracionSistema (tamanio\_ventanas\_tiempo), VentanaRecoleccion & MGR-28 \\
+\addlinespace
+RN-MGR-028 & Encolamiento diferido de pedidos en KDS según anticipación configurada & [Derivación / Algorítmica] & Un pedido confirmado desde el módulo Cliente para una ventana futura es creado en el sistema, pero sus PasoPedidoEstado no son generados en el KDS hasta que ventana.hora\_inicio - NOW() $\leq$ ConfiguracionSistema.anticipacion\_encolamiento\_minutos. Antes de ese umbral, el pedido existe con estado EN\_PREPARACION pero no aparece en el tablero del módulo Cocina.: El mecanismo de activación diferida requiere un scheduler del lado del servidor que evalúe periódicamente los pedidos pendientes de encolar. & Pedido (ventana\_inicio, estado), ConfiguracionSistema (anticipacion\_encolamiento\_minutos), PasoPedidoEstado & MGR-28 \\
+\addlinespace
+RN-MGR-029 & Cargo por pedido para llevar condicionado a doble configuración booleana & [Derivación / Algorítmica] & El cargo adicional por pedido ``para llevar'' se aplica al total únicamente cuando ConfiguracionSistema.permite\_para\_llevar = true AND ConfiguracionSistema.tiene\_cargo\_para\_llevar = true. Si alguna de las dos condiciones es falsa, Pedido.cargo\_para\_llevar = 0 con independencia del monto configurado. El campo ConfiguracionSistema.tiene\_cargo\_para\_llevar solo puede activarse cuando permite\_para\_llevar = true. & ConfiguracionSistema (permite\_para\_llevar, tiene\_cargo\_para\_llevar, cargo\_para\_llevar), Pedido (cargo\_para\_llevar) & MGR-28 \\
+\end{longtable}
+\endgroup
+
+\subsection{MÓDULO DE CAJA}
+\subsubsection{AUTENTICACIÓN}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de caja para autenticación.}} \label{tab:reglas-negocio-caja-autenticacion}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CAJ-001 & Autenticación de caja mediante credenciales de estación & [Control de Acceso] & El sistema emite un token de sesión con perfil CAJERO únicamente cuando las credenciales provistas corresponden a un registro CredencialEstacion con tipo = CAJA y la estación está activa. Si las credenciales son válidas pero el tipo es distinto de CAJA, la sesión no se establece. & CredencialEstacion (usuario, hash\_contrasena, tipo), Estacion (tipo) & CAJ-01 \\
+\addlinespace
+RN-CAJ-002 & Sesión de caja vinculada al id\_estacion & [Control de Acceso] & El token de sesión del módulo Caja incluye el id\_estacion de la estación autenticada. Todas las operaciones ejecutadas durante la sesión (pedidos, ajustes de inventario, corte de caja) quedan asociadas a ese id\_estacion como identificador de trazabilidad. & CredencialEstacion, Estacion, HistorialDeMovimientos & CAJ-01 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{CATÁLOGO Y CREACIÓN DE PEDIDOS}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de caja para el catálogo y creación de pedidos.}} \label{tab:reglas-negocio-caja-catalogo-creacion-pedidos}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CAJ-003 & Exclusión de productos en combos de la pestaña de productos individuales & [Restricción Operacional] & En la interfaz de creación de nuevo pedido, el catálogo de la pestaña ``Productos'' excluye los productos que están asociados a al menos una promoción activa y vigente. Un producto es excluido si existe al menos un registro en ProductoPromocion cuya promoción tenga activa = true y fecha\_actual $\in$ [fecha\_inicio, fecha\_fin]. & Producto, ProductoPromocion, Promocion (activa, fecha\_inicio, fecha\_fin) & CAJ-09 \\
+\addlinespace
+RN-CAJ-004 & Carrito de compra es estado de sesión temporal no persistido & [Restricción Operacional] & El conjunto de ítems seleccionados durante la creación de un pedido existe exclusivamente en el estado de sesión temporal. No se genera ningún registro en las entidades persistidas hasta la confirmación del pago en CAJ-14. La acción de cancelar el pedido en cualquier punto del flujo elimina el estado temporal sin efecto en el modelo de datos. & Pedido, ItemPedido & CAJ-09, CAJ-10, CAJ-13 \\
+\addlinespace
+RN-CAJ-005 & Personalización de ingredientes del pedido sin modificar entidades maestras & [Restricción Operacional] & Las modificaciones de ingredientes realizadas desde CAJ-11 (agregar extras, eliminar ingredientes, cambiar cantidades) aplican exclusivamente al ítem del pedido en construcción. Las entidades Producto, IngredienteProducto y PasoReceta no son modificadas por estas operaciones. & Producto, IngredienteProducto, PasoReceta & CAJ-11 \\
+\addlinespace
+RN-CAJ-006 & El cajero puede agregar cualquier insumo del inventario como extra & [Control de Acceso] & Desde el módulo Caja, el cajero puede seleccionar como ingrediente extra de un ítem cualquier insumo registrado en Insumo, sin restricción de la categoría (INGREDIENTE / DESECHABLE) ni del campo ofrecer\_como\_extra. Esta capacidad supera las restricciones del módulo Cliente, donde solo se presentan los insumos con ofrecer\_como\_extra = true. & Insumo & CAJ-11, CAJ-11-A \\
+\addlinespace
+RN-CAJ-007 & Receta del pedido inicializada como copia de la receta base & [Derivación / Algorítmica] & Al abrir el detalle de receta de un ítem durante la creación del pedido (CAJ-12), el sistema inicializa la receta del pedido como una copia en sesión de los registros PasoReceta, IngredientePaso y EstacionPaso del producto. Las modificaciones a esta copia no alteran las entidades maestras. & PasoReceta, IngredientePaso, EstacionPaso & CAJ-12 \\
+\addlinespace
+RN-CAJ-008 & Inmutabilidad de composición de combo durante el pedido & [Restricción Operacional] & El cajero puede ajustar únicamente la cantidad de unidades de una promoción / combo a ordenar. La modificación de los productos o ingredientes que conforman el combo está prohibida desde el flujo de pedido de Caja. & Promocion, ProductoPromocion & CAJ-15 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{CONFIRMACIÓN DE PAGO Y STOCK}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de caja para confirmación de pago y stock.}} \label{tab:reglas-negocio-caja-confirmacion-pago-stock}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CAJ-009 & Decremento atómico de stock al confirmar pago & [Derivación / Algorítmica] & El decremento de Insumo.cantidad\_stock se ejecuta de forma atómica con la creación del registro Pedido y sus ItemPedido en el momento en que el cajero confirma el pago en CAJ-14. El decremento aplica la fórmula: $\text{nuevo\_stock} = \text{stock\_actual} - (\text{cantidad\_requerida\_por\_porcion} \times \text{cantidad\_unidades\_pedidas})$ para cada insumo de cada ítem del pedido. No existe decremento de stock al agregar ítems al carrito temporal. & Insumo (cantidad\_stock), ItemPedido, IngredienteProducto, InsumoDesechableProducto & CAJ-14 \\
+\addlinespace
+RN-CAJ-010 & El método de pago está restringido a los métodos habilitados en la configuración & [Control de Acceso] & El selector de método de pago en CAJ-13 presenta únicamente los métodos incluidos en ConfiguracionSistema.metodos\_pago\_habilitados. El cajero no puede seleccionar ni registrar un método que no esté habilitado por el mánager. & ConfiguracionSistema (metodos\_pago\_habilitados), Pedido (metodo\_pago) & CAJ-13 \\
+\addlinespace
+RN-CAJ-011 & Cargo por pedido para llevar sobre el subtotal & [Derivación / Algorítmica] & Cuando el cajero marca un pedido como ``para llevar'' y ConfiguracionSistema.cargo\_para\_llevar $> 0$, el sistema aplica el cargo adicional sobre el subtotal. El total del pedido se calcula como: $\text{total} = \text{subtotal} + \text{cargo\_para\_llevar}$. El cargo es fijo o porcentual según la configuración del mánager. & Pedido (subtotal, cargo\_para\_llevar, total, es\_para\_llevar), ConfiguracionSistema & CAJ-13 \\
+\addlinespace
+RN-CAJ-012 & Encolamiento del pedido en KDS al confirmar pago & [Restricción Operacional] & La confirmación del pago en CAJ-14 dispara el encolamiento del pedido en el módulo Cocina (KDS). Los pasos de la receta del pedido son creados en PasoPedidoEstado con el estado inicial según su posición en la cadena de dependencias: PENDIENTE para pasos sin predecesores y BLOQUEADO para pasos con predecesores no completados. & Pedido, PasoPedidoEstado (estado: PENDIENTE, BLOQUEADO), DependenciaPaso & CAJ-14 \\
+\addlinespace
+RN-CAJ-013 & Historial de caja filtrado por id\_estacion de sesión & [Control de Acceso] & El historial de pedidos visible en CAJ-16 incluye únicamente los pedidos cuyo id\_estacion coincide con el de la estación activa en la sesión del cajero. El cajero no tiene acceso al historial de pedidos de otras estaciones de caja. & Pedido (id\_estacion), CredencialEstacion & CAJ-16 \\
+\addlinespace
+RN-CAJ-014 & Registro de pago pendiente desde historial & [Restricción Operacional] & El cajero puede registrar el pago de un pedido con estado\_pago = NO\_PAGADO desde CAJ-17. La operación cambia Pedido.estado\_pago a PAGADO y genera un registro en HistorialDeMovimientos. Esta operación está disponible únicamente para pedidos con estado NO\_PAGADO; los pedidos ya pagados no presentan la acción de registro de pago. & Pedido (estado\_pago), HistorialDeMovimientos & CAJ-17 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{CORTE DE CAJA Y TURNO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de caja para corte de caja y turno.}} \label{tab:reglas-negocio-caja-corte-caja-turno}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CAJ-015 & Cálculo del monto esperado por método de pago en corte & [Derivación / Algorítmica] & El monto esperado por cada método de pago en el corte de caja se calcula como la suma de los campos Pedido.total de todos los registros de Pedido con metodo\_pago = [método], estado\_pago = PAGADO y pertenecientes al turno activo de la estación. Formalmente: $\text{monto\_esperado\_metodo\_M} = \sum (\text{Pedido.total} \text{ WHERE } \text{metodo\_pago} = M \land \text{estado\_pago} = \text{PAGADO} \land \text{id\_turno} = \text{turno\_activo})$. & Pedido (metodo\_pago, total, estado\_pago, id\_turno), CorteDeCaja & CAJ-22 \\
+\addlinespace
+RN-CAJ-016 & Monto contabilizado igual a monto esperado más ajustes & [Derivación / Algorítmica] & El monto contabilizado por método de pago en el corte se calcula como: $\text{monto\_contabilizado\_M} = \text{monto\_esperado\_M} + \sum (\text{AjusteCorteCaja.monto} \text{ WHERE } \text{id\_metodo\_pago} = M)$. Los ajustes pueden ser positivos (excedente) o negativos (faltante). & AjusteCorteCaja (monto, id\_metodo\_pago), CorteDeCaja & CAJ-22 \\
+\addlinespace
+RN-CAJ-017 & Bloqueo del cierre de turno por inconsistencias de inventario & [Restricción Operacional] & El sistema bloquea la transición al diálogo de confirmación de cierre definitivo del turno cuando existen insumos en el corte de inventario (CAJ-23) con diferencias entre el stock del sistema y el conteo físico que no han sido justificadas mediante ajustes. El cajero debe resolver todas las inconsistencias pendientes antes de poder finalizar el turno. & CorteDeCaja, Insumo (cantidad\_stock), AjusteCorteInventario & CAJ-22, CAJ-23 \\
+\addlinespace
+RN-CAJ-018 & Cierre de sesión automático al finalizar turno & [Restricción Operacional] & La confirmación del cierre de turno en CAJ-24-B invalida el token de sesión activo del cajero y registra el evento en HistorialDeMovimientos con concepto FIN\_DE\_TURNO. La sesión no puede ser reutilizada después del cierre; se requiere un nuevo proceso de autenticación. & HistorialDeMovimientos (FIN\_DE\_TURNO), CorteDeCaja & CAJ-22 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{PEDIDOS ANTICIPADOS}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de caja para pedidos anticipados.}} \label{tab:reglas-negocio-caja-pedidos-anticipados}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CAJ-019 & Condicionalidad del modal de programación por tipo de pedido & [Restricción Operacional] & El modal CAJ-26 se presenta exclusivamente cuando se satisfacen simultáneamente dos condiciones: Pedido.tipo = ANTICIPADO y el pago ha sido registrado exitosamente en CAJ-14. Si Pedido.tipo = INMEDIATO, el flujo omite el modal y navega directamente a la pantalla de emisión del ticket. La condición se evalúa de forma automática; el operador no puede forzar la aparición del modal para pedidos de tipo INMEDIATO. & Pedido (tipo: ANTICIPADO $|$ INMEDIATO, estado\_pago) & CAJ-26 \\
+\addlinespace
+RN-CAJ-020 & Identificación del intervalo activo y conversión operativa de pedido anticipado & [Derivación / Algorítmica] & En el modal CAJ-26, el intervalo activo se identifica mediante: $\text{horario\_inicio} \le \text{fecha\_hora\_actual} < \text{horario\_fin}$. La selección de este intervalo por parte del cajero registra en el servidor Pedido.ventana\_recoleccion = intervalo\_activo, lo que hace que el pedido sea encolado en el KDS con comportamiento operativamente equivalente al de un pedido inmediato, sin modificar el valor persistido de Pedido.tipo. & Pedido (tipo, ventana\_recoleccion), ConfiguracionSistema (tamanio\_ventanas\_tiempo) & CAJ-26 \\
+\addlinespace
+RN-CAJ-021 & Revalidación de capacidad de ventana en el servidor al momento del commit & [Validación Estructural] & Al ejecutar ``Programar'' en CAJ-26, el servidor verifica que $\text{capacidad\_disponible} > 0$ para la ventana seleccionada en el instante exacto de la transacción, independientemente del valor mostrado al cargar el modal. Si la capacidad es cero al confirmar, el servidor rechaza la operación sin modificar Pedido.ventana\_recoleccion ni incrementar el contador de ocupación. El modal permanece activo para una nueva selección. Esta validación en commit es el mecanismo de resolución de la condición de carrera entre operadores concurrentes. & Pedido (ventana\_recoleccion), ConfiguracionSistema (capacidad\_maxima\_ventana) & CAJ-26 \\
+\addlinespace
+RN-CAJ-022 & Pedido anticipado pagado sin ventana asignada como estado huérfano & [Restricción Operacional] & Si el operador abandona el flujo después de que el pago fue registrado en CAJ-14 sin completar la selección de ventana en CAJ-26, el pedido permanece en el sistema con estado\_pago = PAGADO y ventana\_recoleccion = NULL. Este estado no es recuperable desde ninguna interfaz del módulo Caja. La resolución de pedidos en estado huérfano es responsabilidad del mánager mediante acceso directo al modelo de datos o interfaz de gestión específica: Se recomienda implementar un mecanismo de alertas en el panel del mánager para detectar pedidos con tipo = ANTICIPADO, estado\_pago = PAGADO y ventana\_recoleccion IS NULL con antigüedad superior a un umbral configurable. & Pedido (tipo, estado\_pago, ventana\_recoleccion) & CAJ-26 \\
+\end{longtable}
+\endgroup
+
+\subsection{MÓDULO DEL CLIENTE}
+\subsubsection{AUTENTICACIÓN}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del cliente para autenticación.}} \label{tab:reglas-negocio-cliente-autenticacion}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CLI-001 & Autenticación individual del cliente por correo y contraseña & [Control de Acceso] & El sistema emite un token de sesión con perfil CLIENTE únicamente cuando el correo ingresado corresponde a un registro Cliente con estado = ACTIVO y el hash de la contraseña ingresada coincide con Cliente.hash\_contrasena. Las credenciales de estación compartida no se utilizan en este módulo. & Cliente (correo, hash\_contrasena, estado) & CLI-01 \\
+\addlinespace
+RN-CLI-002 & Diferenciación de mensaje de error entre cuenta inactiva y credenciales inválidas & [Validación Estructural] & Cuando las credenciales corresponden a un Cliente con estado = INACTIVO, el sistema retorna un mensaje de error que distingue explícitamente esta condición de un fallo de credenciales inválidas. Los dos casos son tratados con mensajes distintos. & Cliente (estado) & CLI-01 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{CATÁLOGO Y DISPONIBILIDAD}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del cliente para catálogo y disponibilidad.}} \label{tab:reglas-negocio-cliente-catalogo-disponibilidad}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CLI-003 & Visibilidad de ítems no disponibles sin acción de navegación & [Restricción Operacional] & Los productos y promociones con estado de no disponibilidad se renderizan en el catálogo del cliente con indicador visual diferenciado. El sistema inhabilita la navegación al detalle del ítem: la interacción del usuario sobre la tarjeta no dispara ninguna transición de estado ni navegación. & Producto (disponible), Promocion (activa), Insumo (stock\_actual) & CLI-02, CLI-03, CLI-04, CLI-05 \\
+\addlinespace
+RN-CLI-004 & Condición de disponibilidad de promoción por rango de fechas & [Derivación / Algorítmica] & Una promoción se clasifica como disponible en el módulo Cliente cuando Promocion.activa = true y $\text{Promocion.fecha\_inicio} \le \text{fecha\_actual} \le \text{Promocion.fecha\_fin}$. Fuera de cualquiera de estas condiciones, la promoción se clasifica como no disponible con indicador visual rojo. & Promocion (activa, fecha\_inicio, fecha\_fin) & CLI-04 \\
+\addlinespace
+RN-CLI-005 & Cálculo de capacidad disponible en banner & [Derivación / Algorítmica] & La capacidad disponible mostrada en el banner de CLI-02 y CLI-04 se calcula como: $\text{capacidad\_disponible} = \text{ConfiguracionSistema.capacidad\_maxima\_ventana} - \text{COUNT}(\text{Pedido WHERE } \text{ventana\_recoleccion} = \text{proxima\_ventana} \land \text{estado NOT IN ('CANCELADO')})$. La ventana más próxima es la primera ventana del día con $\text{hora\_inicio} > \text{fecha\_hora\_actual}$. & ConfiguracionSistema (capacidad\_maxima\_ventana, tamaño\_ventanas\_tiempo), Pedido (ventana\_recoleccion, estado) & CLI-02 \\
+\addlinespace
+RN-CLI-006 & Ruta de navegación al detalle determinada por presencia de extras & [Derivación / Algorítmica] & El sistema dirige al cliente a CLI-06 (detalle sin extras) cuando el ítem seleccionado no posee ningún ingrediente con Ingrediente.es\_extra = true. Dirige a CLI-07 (detalle con extras) cuando el ítem posee al menos un ingrediente con Ingrediente.es\_extra = true habilitado para el módulo Cliente. & Ingrediente (es\_extra), IngredienteProducto & CLI-02, CLI-03, CLI-04, CLI-05 \\
+\addlinespace
+RN-CLI-007 & Búsqueda insensible a mayúsculas con coincidencia parcial & [Derivación / Algorítmica] & El motor de búsqueda del módulo Cliente ejecuta la comparación sobre los campos nombre de las entidades Producto, Combo y Promocion aplicando una función de normalización de cadena (case-insensitive, trim de espacios) y verificando coincidencia de subcadena. & Producto (nombre), Promocion (nombre) & CLI-03 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{CARRITO Y PERSONALIZACIÓN}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del cliente para carrito y personalización.}} \label{tab:reglas-negocio-cliente-carrito-personalizacion}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CLI-008 & Precio total con extras calculado en tiempo real & [Derivación / Algorítmica] & En CLI-07, el precio total mostrado al cliente se recalcula de forma continua ante cualquier cambio en la selección de extras siguiendo la fórmula: $\text{precio\_total} = \text{precio\_base\_item} + \sum (\text{Ingrediente.precio\_extra}_i \times \text{cantidad\_extra}_i)$, donde la sumatoria aplica exclusivamente sobre los extras con checkbox activo en la interfaz. & Ingrediente (precio\_extra), CarritoSesion & CLI-07 \\
+\addlinespace
+RN-CLI-009 & Snapshot de extras en CarritoSesion al agregar al carrito & [Validación Estructural] & Al agregar un ítem con extras al carrito, el sistema almacena la configuración de extras como un snapshot en CarritoSesion.item\_config. Cambios posteriores en Ingrediente.precio\_extra en las entidades maestras no afectan el precio del ítem ya incorporado al carrito hasta que el ítem sea removido y re-agregado. & CarritoSesion (item\_config), Ingrediente (precio\_extra) & CLI-07 \\
+\addlinespace
+RN-CLI-010 & Incremento acumulativo al agregar ítem existente en carrito & [Derivación / Algorítmica] & Cuando el cliente ejecuta ``Agregar a la orden'' sobre un ítem que ya existe en CarritoSesion, la cantidad acumulada del ítem en el carrito se incrementa en el valor del control de cantidad de la pantalla de detalle. No se reemplaza la cantidad existente. & CarritoSesion & CLI-06, CLI-07 \\
+\addlinespace
+RN-CLI-011 & Eliminación implícita del ítem al decrementar cantidad a cero en carrito & [Derivación / Algorítmica] & En CLI-08, cuando el cliente decrementa la cantidad de un ítem desde 1 mediante el control de decremento, el sistema elimina automáticamente el ítem de CarritoSesion sin solicitar confirmación adicional. & CarritoSesion & CLI-08 \\
+\addlinespace
+RN-CLI-012 & Vaciado del carrito requiere confirmación explícita & [Restricción Operacional] & La acción de vaciar completamente el carrito en CLI-08 requiere una confirmación explícita del usuario. Sin dicha confirmación, el sistema no ejecuta la eliminación masiva de ítems de CarritoSesion. & CarritoSesion & CLI-08 \\
+\addlinespace
+RN-CLI-013 & La disponibilidad de ítems del carrito no se re-verifica en CLI-08 & [Restricción Operacional] & El sistema no evalúa la disponibilidad de stock de los ítems presentes en el carrito durante la visualización de CLI-08. La verificación de stock y disponibilidad se ejecuta en el servidor al momento de la confirmación del pedido en CLI-11. & CarritoSesion, Insumo & CLI-08 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{POLÍTICA DE PAGO Y RECOLECCIÓN}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del cliente para política de pago y recolección.}} \label{tab:reglas-negocio-cliente-politica-pago-recoleccion}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CLI-014 & Exclusividad del esquema de pago contra entrega & [Restricción Operacional] & El módulo Cliente opera bajo el esquema de pago contra entrega de forma exclusiva. No existe integración con pasarela de pagos en línea en ninguna interfaz del módulo. Los métodos aceptados (efectivo, transferencia bancaria) se documentan al momento de la recolección en el módulo Entrega. & Pedido (metodo\_pago), ConfiguracionSistema & CLI-09 \\
+\addlinespace
+RN-CLI-015 & Aceptación de política de pago como precondición de selección de horario & [Restricción Operacional] & El sistema inhabilita la transición a CLI-10 (selección de horario) mientras el cliente no haya seleccionado el radio button ``Aceptar'' en CLI-09. La selección ``Rechazar'' mantiene la transición inhabilitada. & ConfiguracionSistema (penalizacion\_impuntualidad, metodos\_pago\_contra\_entrega) & CLI-09 \\
+\addlinespace
+RN-CLI-016 & Generación dinámica de slots de recolección & [Derivación / Algorítmica] & Las ventanas de recolección se generan dividiendo el rango de ConfiguracionSistema.horario\_operacion en bloques de ConfiguracionSistema.tamaño\_ventanas\_tiempo minutos. Las ventanas cuya $\text{hora\_inicio} \le \text{fecha\_hora\_actual}$ son excluidas del listado. La capacidad disponible por slot se calcula como: $\text{capacidad} = \text{ConfiguracionSistema.capacidad\_maxima\_ventana} - \text{COUNT}(\text{Pedido WHERE } \text{ventana\_recoleccion} = \text{slot} \land \text{estado NOT IN ('CANCELADO')})$. & ConfiguracionSistema (horario\_operacion, tamaño\_ventanas\_tiempo, capacidad\_maxima\_ventana), Pedido & CLI-10 \\
+\addlinespace
+RN-CLI-017 & La selección de slot no reserva capacidad hasta la confirmación & [Restricción Operacional] & La selección de una ventana de recolección en CLI-10 no genera ningún bloqueo ni reserva de capacidad en el servidor. La capacidad se descuenta únicamente al confirmar el pedido en CLI-11. Si al confirmar la ventana seleccionada ya no tiene capacidad disponible, el servidor rechaza la creación del pedido y el sistema redirige al cliente a CLI-10. & Pedido (ventana\_recoleccion), ConfiguracionSistema (capacidad\_maxima\_ventana) & CLI-10 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{CONFIRMACIÓN Y ENTREGA}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del cliente para confirmación y entrega.}} \label{tab:reglas-negocio-cliente-confirmacion-entrega}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CLI-018 & Secuencia de validaciones transaccionales al confirmar pedido & [Derivación / Algorítmica] & Al ejecutar ``Finalizar el pedido'' en CLI-11, el servidor ejecuta en secuencia las siguientes validaciones: (a) CarritoSesion no vacío; (b) para cada ítem, $\text{Insumo.stock\_actual} \ge \text{cantidad\_requerida} \times \text{cantidad\_en\_carrito}$; (c) ventana seleccionada con $\text{capacidad\_disponible} > 0$; (d) vigencia del token de sesión. La primera condición fallida detiene la cadena y retorna el error correspondiente sin persistir el pedido. & Pedido, PedidoItem, Insumo (stock\_actual), CarritoSesion & CLI-11 \\
+\addlinespace
+RN-CLI-019 & Precio aplicado en PedidoItem es el vigente al momento de confirmación & [Restricción Operacional] & El precio unitario que se persiste en PedidoItem.precio\_unitario\_snapshot es el precio del producto o combo vigente en el instante de la solicitud de confirmación, no el precio en el momento en que el ítem fue agregado al carrito. & PedidoItem (precio\_unitario\_snapshot), Producto (precio), Promocion (precio) & CLI-11 \\
+\addlinespace
+RN-CLI-020 & CarritoSesion se limpia únicamente tras confirmación exitosa del servidor & [Restricción Operacional] & El sistema elimina el contenido de CarritoSesion únicamente después de recibir una respuesta de confirmación exitosa del servidor. Si el servidor retorna un error, el carrito conserva todos sus ítems para que el cliente pueda corregir o reintentar. & CarritoSesion & CLI-11 \\
+\addlinespace
+RN-CLI-021 & Progreso de pedido calculado como ratio de pasos completados & [Derivación / Algorítmica] & La barra de progreso de cada pedido en CLI-13 se calcula como: $\text{progreso} = \frac{\text{COUNT}(\text{PasoPedido WHERE } \text{estado} = \text{'COMPLETADO'})}{\text{COUNT}(\text{PasoPedido})} \times 100$. Un pedido con todos los pasos completados tiene $\text{progreso} = 100\%$ y corresponde al estado PREPARADO. & PasoPedido (estado: COMPLETADO), Pedido & CLI-13 \\
+\addlinespace
+RN-CLI-022 & Token QR es de un solo uso y no contiene datos del pedido & [Validación Estructural] & El token almacenado en CodigoVerificacionQR.token es un identificador opaco (UUID) que no incorpora el id\_pedido ni ningún atributo del pedido en su payload. La resolución del mapeo $\text{token} \rightarrow \text{Pedido}$ se realiza exclusivamente en el servidor mediante la tabla CodigoVerificacionQR. Una vez que el token cambia a estado = CONSUMIDO, cualquier intento de reutilización retorna un error de token ya consumido. & CodigoVerificacionQR (token, estado, id\_pedido, id\_cliente) & CLI-14 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{GESTIÓN DE PERFIL}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del cliente para gestión de perfil.}} \label{tab:reglas-negocio-cliente-gestion-perfil}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CLI-023 & Unicidad de correo al actualizar perfil & [Validación Estructural] & Al actualizar Cliente.correo, el servidor verifica que no exista otro registro Cliente con el mismo valor de correo antes de persistir el cambio. Si existe duplicado, la operación es rechazada con mensaje de error específico. & Cliente (correo) & CLI-15 \\
+\addlinespace
+RN-CLI-024 & Hash de contraseña calculado en servidor & [Validación Estructural] & El valor de Cliente.hash\_contrasena es calculado por el servidor antes de persistirse. El hash nunca se transmite al cliente ni se calcula en el dispositivo del usuario. Si el campo de nueva contraseña se deja vacío, la contraseña no es modificada en el servidor. & Cliente (hash\_contrasena) & CLI-15 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{ACCESO ANÓNIMO A PEDIDO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo del cliente para acceso anónimo a pedido.}} \label{tab:reglas-negocio-cliente-acceso-anonomo-pedido}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-CLI-025 & Generación automática de token de acceso anónimo al registrar pago sin cuenta asociada & [Derivación / Algorítmica] & Al completar el registro de pago en CAJ-14 para un pedido con Pedido.cliente\_id IS NULL, el servidor genera de forma automática y síncrona un registro PedidoAccesoAnonimo con un token UUID criptográficamente opaco. El token es retornado al módulo Caja para ser presentado como URL de acceso y como código QR de resumen. Si Pedido.cliente\_id IS NOT NULL, el token no se genera y la URL de acceso anónimo no existe para ese pedido. & PedidoAccesoAnonimo (token, pedido\_id), Pedido (cliente\_id, estado\_pago) & CLI-16, CAJ-14 \\
+\addlinespace
+RN-CLI-026 & Denegación de acceso anónimo a pedidos vinculados a cuenta de cliente & [Control de Acceso] & Al resolver un PedidoAccesoAnonimo.token, el servidor evalúa Pedido.cliente\_id: si el campo no es nulo, la respuesta deniega el acceso (HTTP 403) y no transmite ningún atributo del pedido al solicitante anónimo. El token de acceso permanece en el sistema, pero no puede ser utilizado para obtener información del pedido. El cliente propietario accede al mismo pedido mediante CLI-14 con sesión activa. & Pedido (cliente\_id), PedidoAccesoAnonimo (token) & CLI-16 \\
+\addlinespace
+RN-CLI-027 & Opacidad del token de acceso anónimo para prevención de enumeración de pedidos & [Validación Estructural] & El token PedidoAccesoAnonimo.token es un UUID criptográficamente opaco que no incorpora Pedido.id, Timestamp ni ningún atributo derivable del pedido en su estructura. El servidor resuelve internamente el mapeo $\text{token} \rightarrow \text{Pedido.id}$ sin exponerlo en la respuesta. El acceso mediante valores secuenciales, numéricos o estructuralmente predecibles en la URL retorna HTTP 404 sin revelar la existencia del recurso. & PedidoAccesoAnonimo (token), Pedido (id) & CLI-16 \\
+\addlinespace
+RN-CLI-028 & Cálculo de tiempo transcurrido desde la creación del pedido & [Derivación / Algorítmica] & El campo ``tiempo transcurrido'' visualizado en CLI-16 se calcula mediante: $\text{tiempo\_transcurrido} = \text{fecha\_hora\_actual} - \text{Pedido.Timestamp\_creacion}$, expresado en unidades temporales de granularidad adaptativa (segundos si $< 60$ s, minutos si $< 60$ min, horas en caso contrario). El valor se actualiza de forma periódica en la interfaz sin requerir recarga manual por parte del usuario. & Pedido (Timestamp\_creacion) & CLI-16 \\
+\addlinespace
+RN-CLI-029 & Equivalencia del protocolo de verificación QR entre acceso autenticado y anónimo & [Restricción Operacional] & El proceso de verificación de entrega iniciado desde CLI-16 (acceso anónimo) ejecuta exactamente el mismo protocolo de validación definido en RN-ENT-013 a RN-ENT-018 que el proceso iniciado desde CLI-14 (acceso autenticado). El servidor no diferencia el origen de la solicitud de validación; la verificación se ejecuta exclusivamente sobre los atributos del CodigoVerificacionQR.token recibido, sin requerir un token de sesión de cliente para procesar la validación en ENT-05. & CodigoVerificacionQR, Pedido, PedidoAccesoAnonimo & CLI-16, ENT-05 \\
+\addlinespace
+RN-CLI-030 & Ciclo de vida del token de acceso anónimo acoplado al estado terminal del pedido & [Restricción Operacional] & El registro PedidoAccesoAnonimo permanece resuelto por el servidor mientras $\text{Pedido.estado} \notin \{\text{ENTREGADO}, \text{CANCELADO}\}$. Una vez que el pedido alcanza un estado terminal, el servidor no retorna los datos del pedido en respuesta a solicitudes con ese token. El comportamiento exacto post-terminal (HTTP 404, HTTP 410 Gone, o mensaje informativo ``pedido ya entregado / cancelado'') debe definirse explícitamente en la implementación para evitar ambigüedad en la experiencia del usuario anónimo. Se recomienda HTTP 410 por su semántica de ``recurso existió, pero ya no está disponible''. & PedidoAccesoAnonimo (token), Pedido (estado) & CLI-16 \\
+\end{longtable}
+\endgroup
+
+\subsection{MÓDULO DE COCINA}
+\subsubsection{AUTENTICACIÓN Y ACCESO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de cocina para autenticación y acceso.}} \label{tab:reglas-negocio-cocina-autenticacion-acceso}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-COC-001 & Autenticación individual del cocinero con validación de estación activa & [Control de Acceso] & El sistema emite un token de sesión con perfil COCINERO únicamente cuando las credenciales corresponden a un registro Empleado activo y ese empleado tiene al menos una AsignacionEstacion activa con Estacion.tipo = COCINA. Si el empleado existe, pero no tiene estaciones de cocina activas asignadas, la sesión no se establece. & Empleado (hash\_contrasena), AsignacionEstacion (id\_empleado, tipo\_temporalidad, fecha\_fin), Estacion (tipo) & COC-01 \\
+\addlinespace
+RN-COC-002 & Vigencia de asignaciones temporales evaluada en el login & [Derivación / Algorítmica] & Al autenticar, el sistema evalúa la vigencia de cada AsignacionEstacion del empleado. Las asignaciones de tipo TEMPORAL se consideran inactivas si $\text{fecha\_hora\_actual} > \text{23:59:59 del día de creación}$. Si todas las asignaciones del empleado son temporales y han expirado, el empleado no tiene estaciones activas y la sesión no se establece. & AsignacionEstacion (tipo\_temporalidad, fecha\_fin), Estacion & COC-01 \\
+\addlinespace
+RN-COC-003 & Visibilidad del botón de sub-asignación condicionada al atributo del empleado & [Control de Acceso] & La acción de navegación hacia la gestión de personal (COC-03) es renderizada en el KDS únicamente cuando Empleado.permite\_sub\_asignacion = true para el empleado autenticado en la sesión activa. Si el atributo es false, la acción no existe en la interfaz. & Empleado (permite\_sub\_asignacion) & COC-02-B \\
+\end{longtable}
+\endgroup
+
+\subsubsection{ALGORITMO DEL KDS}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de cocina para el algoritmo del KDS.}} \label{tab:reglas-negocio-cocina-algoritmo-kds}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-COC-004 & Condición triple de visibilidad de paso en el KDS & [Derivación / Algorítmica] & Un paso es visible en el KDS de una estación si y solo si se cumplen simultáneamente las tres siguientes condiciones: (1) EstacionPaso.id\_estacion = estacion\_activa\_sesion; (2) PasoPedidoEstado.estado = PENDIENTE; (3) todos los registros en DependenciaPasoPedido donde id\_paso\_pedido = paso\_actual tienen PasoPedidoEstado.estado = COMPLETADO. El incumplimiento de cualquier condición excluye el paso del display. & PasoPedidoEstado (estado), EstacionPaso (id\_paso, id\_estacion), DependenciaPasoPedido (id\_paso\_pedido, id\_paso\_predecesor) & COC-02 \\
+\addlinespace
+RN-COC-005 & Algoritmo de cálculo de urgencia de paso & [Derivación / Algorítmica] & El nivel de urgencia de un paso se determina mediante la expresión: $\text{nivel\_urgencia} = \text{URGENTE}$ si $\frac{t_{\text{transcurrido\_seg}}}{\text{PasoReceta.tiempo\_estimado} \times 60} \ge \text{ConfiguracionSistema.porcentaje\_urgencia}$; $\text{NO\_URGENTE}$ en caso contrario. La variable $t_{\text{transcurrido\_seg}}$ se calcula como $\text{NOW}() - \text{PasoPedidoEstado.Timestamp\_inicio}$ en segundos. El cálculo se ejecuta de forma continua y periódica. & PasoPedidoEstado (Timestamp\_inicio), PasoReceta (tiempo\_estimado), ConfiguracionSistema (porcentaje\_urgencia) & COC-02 \\
+\addlinespace
+RN-COC-006 & Liberación de pasos bloqueados al completar su predecesor & [Derivación / Algorítmica] & Al cambiar el paso $P$ a $\text{PasoPedidoEstado.estado} = \text{COMPLETADO}$, el sistema evalúa el conjunto de pasos $Q$ donde existe un registro $\text{DependenciaPasoPedido.id\_paso\_predecesor} = P$. Para cada $Q$ donde todos sus predecesores tengan $\text{estado} = \text{COMPLETADO}$, el sistema cambia el $\text{PasoPedidoEstado.estado}$ de BLOQUEADO a PENDIENTE. Esta transición hace visible $Q$ en el KDS de su estación asignada. & PasoPedidoEstado (estado: BLOQUEADO $\rightarrow$ PENDIENTE), DependenciaPasoPedido & COC-02 \\
+\addlinespace
+RN-COC-007 & La marca de tiempo de inicio del paso se establece en la transición BLOQUEADO $\rightarrow$ PENDIENTE & [Derivación / Algorítmica] & El campo PasoPedidoEstado.Timestamp\_inicio se asigna en el momento en que el paso cambia de estado BLOQUEADO a PENDIENTE (es decir, cuando sus dependencias quedan resueltas), no cuando el cocinero comienza activamente a ejecutarlo. Esta marca de tiempo es la referencia para el cálculo del nivel de urgencia (RN-COC-005). Este comportamiento es consistente con la descripción de ``tiempo transcurrido desde que se inició dicho paso'' y con la práctica estándar de KDS donde el reloj comienza al liberarse el paso. & PasoPedidoEstado (Timestamp\_inicio, estado) & COC-02 \\
+\addlinespace
+RN-COC-008 & Filtros de urgencia son mutuamente excluyentes & [Restricción Operacional] & Los filtros ``Urgentes'' y ``No urgentes'' de COC-02 son mutuamente excluyentes: la activación de uno inhabilita visualmente el otro y deshabilita las tarjetas que no cumplen el criterio activo, manteniéndolas visibles en el display. La desactivación del filtro activo restaura todas las tarjetas al estado habilitado. & PasoPedidoEstado (nivel\_urgencia) & COC-02 \\
+\addlinespace
+RN-COC-009 & El filtro de producto opera por intersección AND con el filtro de urgencia & [Restricción Operacional] & La selección de un producto en el drawer de resumen de pedidos aplica un resaltado selectivo que es independiente de los filtros de urgencia. Cuando ambos están activos simultáneamente, el sistema aplica la intersección lógica AND: solo las tarjetas que cumplen tanto el criterio de urgencia como el de producto seleccionado permanecen habilitadas. & PasoPedidoEstado, Producto & COC-02 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{GESTIÓN DE PERSONAL(VISTA DE COCINERO)}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de cocina para gestión de personal.}} \label{tab:reglas-negocio-cocina-gestion-personal}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-COC-010 & Alcance de temporalidad en sub-asignación limitado al perfil del cocinero & [Control de Acceso] & El cocinero con permiso de sub-asignación puede asignar estaciones con los tipos de temporalidad (TEMPORAL, FIJO o ambos) que estén habilitados en su propio registro Empleado.tipo\_sub\_asignacion. No puede asignar un tipo de temporalidad que no esté incluido en ese conjunto. & Empleado (tipo\_sub\_asignacion), AsignacionEstacion (tipo\_temporalidad) & COC-04 \\
+\addlinespace
+RN-COC-011 & Datos de identidad del empleado son de solo lectura para el cocinero & [Control de Acceso] & El cocinero con permiso de sub-asignación puede modificar únicamente los registros de AsignacionEstacion para el empleado seleccionado. Los campos de identidad del empleado (Empleado.puesto, Empleado.turno, Empleado.nombre, Empleado.correo) son de solo lectura y no pueden ser modificados desde COC-04. & Empleado (puesto, turno, nombre, correo), AsignacionEstacion & COC-04 \\
+\addlinespace
+RN-COC-012 & Modal de receta del pedido es de solo lectura y no sincronizado en tiempo real & [Restricción Operacional] & La interfaz COC-06 presenta una instantánea del estado de PasoPedidoEstado.estado en el momento de apertura del modal. El modal no se actualiza en tiempo real mientras está abierto. El estado mostrado no es modificable desde esta interfaz; la transición de pasos solo puede ejecutarse desde la tarjeta correspondiente en COC-02. & PasoPedidoEstado (estado), PasoReceta & COC-06 \\
+\end{longtable}
+\endgroup
+
+\subsection{MÓDULO DE ENTREGA}
+\subsubsection{AUTENTICACIÓN}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de entrega para autenticación.}} \label{tab:reglas-negocio-entrega-autenticacion}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-ENT-001 & Autenticación de entrega mediante credenciales de estación con tipo ENTREGA & [Control de Acceso] & El sistema emite un token de sesión con perfil OPERADOR\_ENTREGA únicamente cuando las credenciales corresponden a un registro CredencialEstacion con tipo = ENTREGA y la estación está activa. Si el tipo de estación no es ENTREGA, la sesión no se establece, aunque las credenciales sean válidas. & CredencialEstacion (usuario, hash\_contrasena, tipo), Estacion (tipo) & ENT-01 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{TABLERO Y ALGORITMOS DE URGENCIA}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de entrega para tablero y algoritmos de urgencia.}} \label{tab:reglas-negocio-entrega-tablero-urgencia}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-ENT-002 & Algoritmo de urgencia para pedidos EN\_PREPARACION & [Derivación / Algorítmica] & El nivel de urgencia de un pedido con $\text{estado} = \text{EN\_PREPARACION}$ se determina mediante: $\text{nivel} = \text{URGENTE}$ si $\frac{t_{\text{transcurrido\_seg}}}{t_{\text{estimado\_total\_seg}}} \ge \text{ConfiguracionSistema.porcentaje\_urgencia}$; $\text{NO\_URGENTE}$ en caso contrario. Donde $t_{\text{transcurrido\_seg}} = \text{NOW}() - \text{PedidoEstadoTimestamp.Timestamp\_inicio\_estado\_actual}$ y $t_{\text{estimado\_total\_seg}} = \sum (\text{PasoReceta.tiempo\_estimado} \times 60)$ para todos los pasos del pedido. & PedidoEstadoTimestamp (Timestamp\_inicio\_estado\_actual), PasoReceta (tiempo\_estimado), ConfiguracionSistema (porcentaje\_urgencia) & ENT-02 \\
+\addlinespace
+RN-ENT-003 & Algoritmo de urgencia por riesgo de merma para pedidos PREPARADO & [Derivación / Algorítmica] & El nivel de alerta de un pedido con $\text{estado} = \text{PREPARADO}$ se determina mediante: $\text{nivel} = \text{RIESGO\_MERMA}$ si $\frac{t_{\text{transcurrido\_preparado\_seg}}}{\text{ConfiguracionSistema.limite\_tiempo\_entrega\_seg}} \ge \text{ConfiguracionSistema.porcentaje\_merma}$; $\text{NORMAL}$ en caso contrario. Donde $t_{\text{transcurrido\_preparado\_seg}} = \text{NOW}() - \text{PedidoEstadoTimestamp.Timestamp\_preparado}$. & PedidoEstadoTimestamp (Timestamp\_preparado), ConfiguracionSistema (limite\_tiempo\_entrega, porcentaje\_merma) & ENT-02 \\
+\addlinespace
+RN-ENT-004 & Los cinco filtros del tablero son mutuamente excluyentes & [Restricción Operacional] & Los filtros ``En proceso'', ``Preparado'', ``No urgentes'', ``Urgentes'' y ``Para llevar'' de ENT-02 son mutuamente excluyentes: la activación de cualquiera de ellos desactiva el filtro previamente activo. Las tarjetas que no cumplen el criterio del filtro activo son deshabilitadas visualmente, pero permanecen en el display. & Pedido (estado, es\_para\_llevar), PedidoEstadoTimestamp & ENT-02 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{FLUJO DE CANCELACIÓN}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de entrega para flujo de cancelación.}} \label{tab:reglas-negocio-entrega-flujo-cancelacion}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-ENT-005 & Motivo De Cancelación & [Validación Estructural] & El Sistema Inhabilita La Confirmación De Cancelación De Un Pedido Mientras El Campo De Motivo Esté Vacío. La Transición Pedido.Estado $\rightarrow$ Cancelado No Puede Ejecutarse Sin Un Motivo De Cancelación Registrado. & Cancelacionentrega (Id\_Motivo), Motivocancelacionentrega & ENT-03 \\
+\addlinespace
+RN-ENT-006 & Normalización Del Catálogo De Motivos De Cancelación & [Derivación / Algorítmica] & Al Confirmar La Cancelación, El Sistema Verifica Si El Motivo Ingresado Existe En Motivocancelacionentrega Mediante Comparación De Cadena Normalizada (Insensible A Mayúsculas, Sin Espacios Redundantes). Si No Existe, Se Crea Un Nuevo Registro. Si Existe, Se Referencia El Registro Existente. Este Mecanismo Evita Duplicados Semánticos En El Catálogo. & Motivocancelacionentrega (Descripcion), Cancelacionentrega & ENT-03 \\
+\addlinespace
+RN-ENT-007 & La Cancelación De Pedido Es Irreversible Desde Las Interfaces Del Sistema & [Restricción Operacional] & La Transición Pedido.Estado $\rightarrow$ Cancelado Ejecutada Desde Ent-03 Es Permanente E Irreversible Desde Cualquier Interfaz Del Sistema. El Estado Cancelado Es Un Estado Terminal En La Máquina De Estados Del Pedido. La Reversión Solo Es Posible Mediante Intervención Directa En La Base De Datos Por Parte De Un Administrador Del Sistema. & Pedido (Estado: Cancelado) & ENT-03 \\
+\addlinespace
+RN-ENT-008 & Propagación De Cancelación Al KDS Para Pedidos En\_Preparacion & [Restricción Operacional] & Cuando Se Cancela Un Pedido Con $\text{Estado} = \text{En\_Preparacion}$, El Sistema Cambia a Todos Los Registros Pasopedidoestado Del Pedido Con Estado In (Pendiente, Bloqueado) Al Estado Cancelado. Estos Pasos Desaparecen Del Display Del KDS En Todas Las Estaciones Involucradas. La Propagación Se Implementa Mediante El Mismo Canal De Comunicación En Tiempo Real (WebSocket / Sse) Utilizado Para La Liberación De Pasos, Garantizando Coherencia Sin Intervención Del Cocinero. & Pasopedidoestado (Estado: Cancelado), Pedido & ENT-03 \\
+\addlinespace
+RN-ENT-009 & Snapshot Del Estado Del Pedido Al Momento De Cancelación & [Validación Estructural] & El Registro Cancelacionentrega Almacena El Campo Estado\_Al\_Cancelar Que Captura El Estado Del Pedido (En\_Preparacion O Preparado) En El Momento Exacto De La Cancelación. Este Snapshot Distingue El Contexto Operativo De La Cancelación: Los Insumos De Un Pedido Preparado Ya Fueron Consumidos; Los De Un Pedido En\_Preparacion Pueden Aún Estar Disponibles. & Cancelacionentrega (Estado\_Al\_Cancelar), Pedido (Estado) & ENT-03 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{FLUJO DE PAGO Y DESPACHO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de entrega para flujo de pago y despacho.}} \label{tab:reglas-negocio-entrega-pago-despacho}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-ENT-010 & Árbol de decisión de sub-vista de despacho basado en estado de pago & [Derivación / Algorítmica] & La sub-vista activa del drawer ENT-04 se determina por la siguiente lógica condicional evaluada al abrir el drawer: si $\text{Pedido.estado\_pago} = \text{PAGADO} \rightarrow \text{sub-vista ENT-04-C}$; si $\text{estado\_pago} = \text{NO\_PAGADO}$ y $\text{ConfiguracionSistema.permite\_pago\_en\_entrega} = \text{true} \rightarrow \text{sub-vista ENT-04-B}$; si $\text{estado\_pago} = \text{NO\_PAGADO}$ y $\text{permite\_pago\_en\_entrega} = \text{false} \rightarrow \text{sub-vista ENT-04-A}$. & Pedido (estado\_pago), ConfiguracionSistema (permite\_pago\_en\_entrega) & ENT-04 \\
+\addlinespace
+RN-ENT-011 & Pedido no pagado no puede avanzar al flujo de verificación QR & [Restricción Operacional] & La transición hacia ENT-05 (confirmación de identidad por QR) está condicionada a que $\text{Pedido.estado\_pago} = \text{PAGADO}$. El sistema inhabilita la acción ``Proceder con la entrega'' mientras el pedido tenga $\text{estado\_pago} = \text{NO\_PAGADO}$, independientemente de cualquier otra condición. & Pedido (estado\_pago) & ENT-04 \\
+\addlinespace
+RN-ENT-012 & Métodos de pago en entrega restringidos a los habilitados en configuración & [Control de Acceso] & El selector de método de pago en ENT-04-B presenta únicamente los métodos incluidos en ConfiguracionSistema.metodos\_pago\_habilitados, de forma consistente con el módulo Caja. El operador de entrega no puede registrar un método que no esté habilitado por el mánager. & ConfiguracionSistema (metodos\_pago\_habilitados), Pedido (metodo\_pago) & ENT-04 \\
+\end{longtable}
+\endgroup
+
+\subsubsection{PROTOCOLO DE VERIFICACIÓN DE QR}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio del módulo de entrega para protocolo de verificación QR.}} \label{tab:reglas-negocio-entrega-verificacion-qr}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-ENT-013 & Generación de token QR criptográficamente seguro por pedido & [Validación Estructural] & Al abrir ENT-05, el servidor genera un token único mediante un algoritmo criptográficamente seguro (UUID v4 o equivalente) y lo persiste en CodigoVerificacionQR con los campos: id\_pedido, id\_cliente, token, Timestamp\_generacion y estado = ACTIVO. El token no incorpora en su payload ningún atributo del pedido o del cliente. & CodigoVerificacionQR (token, id\_pedido, id\_cliente, Timestamp\_generacion, estado) & ENT-05 \\
+\addlinespace
+RN-ENT-014 & Secuencia de validación del token QR en el servidor & [Derivación / Algorítmica] & Al recibir un token escaneado desde CLI-14, el servidor valida las siguientes condiciones en secuencia: (1) El token existe en CodigoVerificacionQR con estado = ACTIVO; (2) el id\_pedido vinculado al token coincide con el pedido en proceso de entrega; (3) el id\_cliente del token coincide con el id\_cliente del pedido; (4) $\text{Timestamp\_generacion} + \text{TTL\_token} > \text{NOW}()$. La primera condición fallida detiene la validación y retorna el código de error correspondiente. & CodigoVerificacionQR (token, id\_pedido, id\_cliente, estado, Timestamp\_generacion), Pedido (id\_cliente) & ENT-05 \\
+\addlinespace
+RN-ENT-015 & Caducidad del token QR con TTL corto & [Restricción Operacional] & El token QR tiene un tiempo de vida (TTL) limitado desde su generación. Transcurrido el TTL, el token cambia automáticamente a estado = EXPIRADO y no puede ser utilizado para completar la verificación. Se adopta un TTL de 5 minutos como valor predeterminado, dado el contexto operativo de entrega presencial en mostrador. Este valor debe ser configurable en ConfiguracionSistema.ttl\_token\_qr\_segundos para adaptarlo a las condiciones operativas de cada cafetería. & CodigoVerificacionQR (estado: EXPIRADO, Timestamp\_generacion), ConfiguracionSistema & ENT-05 \\
+\addlinespace
+RN-ENT-016 & Token QR fallido es invalidado independientemente del tipo de error & [Validación Estructural] & Un token que provoca un resultado de validación fallida (cualquier condición de RN-ENT-014 no cumplida) cambia a estado = CONSUMIDO o estado = EXPIRADO según el tipo de fallo, inhabilitando su reutilización en intentos posteriores. El operador debe iniciar un nuevo ciclo de generación de QR desde ENT-04-C para reintentar la entrega. & CodigoVerificacionQR (estado: CONSUMIDO / EXPIRADO) & ENT-05 \\
+\addlinespace
+RN-ENT-017 & Transición a ENTREGADO ocurre antes de renderizar la confirmación exitosa & [Restricción Operacional] & La transición Pedido.estado $\rightarrow$ ENTREGADO y el registro de Pedido.Timestamp\_entrega son ejecutados y persistidos en el servidor en el momento en que la validación del QR resulta exitosa, antes de que ENT-06 sea renderizado. El cierre del modal ENT-06 no dispara ninguna acción adicional de estado; el pedido ya está en estado ENTREGADO al visualizarse el modal. & Pedido (estado: ENTREGADO, Timestamp\_entrega), HistorialDeMovimientos (ENTREGA\_PEDIDO) & ENT-06 \\
+\addlinespace
+RN-ENT-018 & La transición a ENTREGADO es irreversible desde las interfaces del sistema & [Restricción Operacional] & El estado ENTREGADO es un estado terminal en la máquina de estados del pedido. Ninguna interfaz del sistema permite revertir un pedido de ENTREGADO a un estado previo. La gestión de incidencias post-entrega debe resolverse fuera del flujo de interfaces del sistema. & Pedido (estado: ENTREGADO) & ENT-06 \\
+\end{longtable}
+\endgroup
+
+\section{REGLAS TRANSVERSALES(APLICABLES A MÚLTIPLES MÓDULOS)}
+Estas reglas no están contenidas en un único módulo; son variantes del sistema que deben ser respetadas por cualquier módulo que interactúe con las entidades afectadas.
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
+\caption{\textsc{Reglas de negocio transversales para múltiples módulos.}} \label{tab:reglas-negocio-transversales-multiples-modulos}\\
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{6}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+RN-SYS-001 & Consistencia de disponibilidad de producto entre módulos & [Validación Estructural] & La evaluación de disponibilidad de un producto (RN-MGR-004) se ejecuta en el servidor con base en el inventario centralizado. Todos los módulos que consultan el catálogo (Manager, Caja, Cliente) reciben el mismo resultado de disponibilidad para un mismo producto en un mismo instante. No existen cachés de disponibilidad independientes por módulo. & Producto, IngredienteProducto, Insumo (cantidad\_stock) & MGR-02, CAJ-02, CLI-02 \\
+\addlinespace
+RN-SYS-002 & Registro obligatorio de todo evento operativo trazable en HistorialDeMovimientos & [Restricción Operacional] & Los siguientes eventos generan de forma síncrona un registro en HistorialDeMovimientos con el identificador del responsable (empleado o estación) y la fecha / hora exacta: INICIO\_SESION, CIERRE\_SESION, AJUSTE\_INVENTARIO, ASOCIACION\_PERSONAL\_ESTACION, CANCELACION\_ENTREGA, ENTREGA\_PEDIDO, REGISTRO\_PAGO\_ENTREGA, FIN\_DE\_TURNO. & HistorialDeMovimientos (concepto, id\_responsable, fecha) & Todos los módulos \\
+\addlinespace
+RN-SYS-003 & Propagación de transiciones de estado de pedido en tiempo real & [Restricción Operacional] & Las transiciones de estado del pedido que afectan a múltiples módulos simultáneamente ($\text{EN\_PREPARACION} \rightarrow \text{PREPARADO}$ disparada por el KDS; $\text{PREPARADO} \rightarrow \text{ENTREGADO}$ o $\rightarrow \text{CANCELADO}$ disparadas por Entrega; propagación de cancelación al KDS) se propagan a todos los módulos afectados mediante un mecanismo de notificación en tiempo real. La implementación mediante WebSocket o SSE (Server-Sent Events) es la arquitectura recomendada para garantizar la coherencia del estado entre módulos sin requerir recarga manual por parte de los operadores. & Pedido (estado), PasoPedidoEstado & COC-02, ENT-02, CLI-13 \\
+\addlinespace
+RN-SYS-004 & Sesión activa del módulo correspondiente como precondición global & [Control de Acceso] & En todos los módulos del sistema, el servidor verifica la vigencia del token de sesión con el perfil correspondiente (MANAGER, CAJERO, COCINERO, OPERADOR\_ENTREGA, CLIENTE) en cada solicitud. Una solicitud con token inválido o expirado es rechazada con código de error de autenticación, independientemente de la operación solicitada. & Usuario, Empleado, CredencialEstacion, Cliente & Todos los módulos \\
+\addlinespace
+RN-SYS-005 & Máquina de estados del pedido con transiciones definidas & [Restricción Operacional] & La entidad Pedido sigue una máquina de estados con las siguientes transiciones válidas: $\text{EN\_PREPARACION} \rightarrow \text{PREPARADO}$ (por completado del KDS); $\text{EN\_PREPARACION} \rightarrow \text{CANCELADO}$ (desde ENT-03); $\text{PREPARADO} \rightarrow \text{ENTREGADO}$ (desde ENT-06 tras validación QR exitosa); $\text{PREPARADO} \rightarrow \text{CANCELADO}$ (desde ENT-03). Cualquier otra transición de estado es inválida y debe ser rechazada por el servidor. & Pedido (estado) & CAJ-14, COC-02, ENT-03, ENT-06 \\
+\end{longtable}
+\endgroup
+
+\end{landscape}
+\section{DIAGRAMAS DE CASO DE USO}
+Los diagramas de casos de uso constituyen el artefacto de modelado que permite representar gráficamente las interacciones entre los actores del sistema y las funcionalidades que este provee, con independencia de los mecanismos internos de implementación. Siguiendo la notación UML 2.5, cada diagrama identifica a los actores como entidades externas que interactúan con el sistema, y a los casos de uso como unidades de funcionalidad observable que aportan valor a dichos actores. Las relaciones de inclusión (<<include>>) modelan secuencias de pasos comunes obligatorias compartidas por múltiples casos de uso; las relaciones de extensión (<<extend>>) representan comportamientos opcionales o condicionales que amplían el flujo de un caso de uso base. Las jerarquías de generalización de actores representan la especialización de roles cuando un actor hereda las capacidades de un actor más general y añade restricciones o permisos adicionales. 
+
+El sistema KMS se compone de cinco módulos funcionales con fronteras de responsabilidad delimitadas: mánager, Caja (POS), Cocina (KDS), Entrega y Cliente. Cada módulo expone un conjunto de casos de uso accesible mediante un perfil de actor específico y se comunica con los demás módulos mediante eventos asíncronos propagados a través del canal de tiempo real del servidor (WebSocket / SSE) o mediante consultas directas a la base de datos local. Los actores humanos se ubican a la izquierda de cada diagrama; los sistemas externos, hardware periférico e interfaces entre módulos se representan a la derecha. 
+
+\subsection{DIAGRAMA GENERAL DEL SISTEMA}
+El diagrama de contexto presenta la totalidad de los actores humanos y sistemas externos que interactúan con el KMS, junto con los cinco módulos que lo componen y los flujos de información inter-modulares de mayor relevancia arquitectónica.

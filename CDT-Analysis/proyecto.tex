@@ -25,6 +25,7 @@
 \renewcommand{\thetable}{\arabic{table}}
 \renewcommand{\thefigure}{\arabic{figure}}
 \makeatletter
+\@removefromreset{table}{chapter}
 \renewcommand{\contentsname}{ÍNDICE}
 \renewcommand{\tableofcontents}{%
   \if@twocolumn
@@ -64,7 +65,6 @@
 \let\ps@plain\ps@documentplain
 \makeatother
 \pagestyle{fancy}
-\setcounter{table}{0}
 \setcounter{figure}{0}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
