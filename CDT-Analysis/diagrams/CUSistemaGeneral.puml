@@ -1,0 +1,50 @@
+@startuml "Casos de Uso Generales del Sistema"
+left to right direction
+
+actor "Cliente anónimo" as anon
+actor "Manager" as manager
+actor "Cajero" as casher
+actor "Cocinero" as kitchen
+actor "Personal de entrega" as delivery
+actor "Cliente" as cliente
+actor "Servidor SMTP" as smtp <<System>>
+actor "Lector QR" as lectorQR <<System>>
+
+rectangle "KMS - Kitchen Management System" {
+    usecase "Configurar Sistema" as confSistema
+    usecase "Enviar Correo Onboarding" as onboarding
+    usecase "Generar Reportes" as generarReportes
+    usecase "Registrar Pedidos" as regPedidos
+    usecase "Gestionar Estado de Preparación" as estadoPreparacion
+    usecase "Verificar Token QR" as tokenQR
+    usecase "Gestionar Cancelación" as gestionarCancelacion
+    usecase "Confirmar Entrega" as confirmarEntrega
+    usecase "Generar Ticket Digital" as ticketDigital
+
+    regPedidos .> ticketDigital : <<include>>
+}
+
+anon --> regPedidos
+anon -- ticketDigital
+
+manager --> confSistema 
+manager --> onboarding
+manager --> generarReportes
+
+casher --> generarReportes
+casher --> regPedidos
+
+kitchen --> estadoPreparacion
+
+delivery --> tokenQR
+delivery --> gestionarCancelacion
+delivery --> confirmarEntrega
+delivery -- estadoPreparacion
+
+cliente --> regPedidos
+cliente --> gestionarCancelacion
+cliente --> confirmarEntrega
+
+smtp -- onboarding
+lectorQR -- tokenQR
+@enduml

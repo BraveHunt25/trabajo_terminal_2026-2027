@@ -1313,3 +1313,26 @@ El sistema KMS se compone de cinco módulos funcionales con fronteras de respons
 
 \subsection{DIAGRAMA GENERAL DEL SISTEMA}
 El diagrama de contexto presenta la totalidad de los actores humanos y sistemas externos que interactúan con el KMS, junto con los cinco módulos que lo componen y los flujos de información inter-modulares de mayor relevancia arquitectónica.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth]{diagrams/CUSistemaGeneral/Casos de Uso Generales del Sistema.svg}
+    \caption{Flujo general del sistema.}
+    \label{fig:casos_uso_general_sistema}
+\end{figure}
+
+El diagrama de contexto expone cinco categorías de interacción entre actores y sistema. En primer lugar, cada actor humano interactúa exclusivamente con el módulo que corresponde a su perfil operativo: el mánager accede al Módulo mánager mediante credenciales individuales de rol mánager; el Cajero y el Operador de Entrega acceden a sus respectivos módulos mediante credenciales de estación compartidas; el Cocinero accede al KDS mediante credenciales individuales de empleado; el Cliente accede al módulo de autoservicio mediante credenciales de registro propio. 
+
+En segundo lugar, el Módulo mánager emite parámetros de configuración global hacia todos los demás módulos, estableciéndose como rector del comportamiento del sistema. En tercer lugar, los módulos Caja y Cliente son las únicas fuentes de generación de pedidos, ambos dirigidos al Módulo Cocina para su procesamiento en el KDS. En cuarto lugar, el Módulo Entrega consume el estado de preparación publicado por el Módulo Cocina y, al confirmar la entrega, actualiza el estado del pedido visible para el Cliente. Finalmente, el Módulo mánager interactúa con el servidor SMTP para el envío de correos de onboarding del personal; el Módulo Caja genera un ticket digital (URL con código QR) que apunta a la interfaz de Acceso Anónimo CLI-16, utilizado como comprobante del pedido presencial cuando no existe cliente autenticado; y el Módulo Entrega utiliza hardware lector de QR para el protocolo de verificación de identidad.
+
+\subsection{DIAGRAMA DEL MÓDULO DEL MÁNAGER (MGR)}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Manager/Flujo Detallado del Módulo del Mánager.svg}
+    \caption{Flujo detallado del módulo de mánager (MGR).}
+    \label{fig:casos_uso_manager}
+\end{figure}
+
+El Módulo mánager concentra la mayor densidad de casos de uso del sistema (10 en total), correspondiente a su rol como rector de todas las entidades maestras. El mánager es el único actor de este módulo y accede mediante credenciales individuales de rol mánager (CU-MGR-001). Los casos de uso de gestión de empleados (CU-MGR-003) incluyen de forma obligatoria la asociación de estaciones de trabajo (CU-MGR-004), modelada como relación <<include>> dado que ningún alta de empleado tiene sentido funcional sin al menos una estación asignada.  
+
+De forma análoga, la gestión de productos del menú (CU-MGR-005) incluye la definición de receta (CU-MGR-006), dado que el invariante de distribución completa de ingredientes en pasos de preparación es una precondición obligatoria para persistir cualquier producto. La configuración global del sistema (CU-MGR-009) actúa como proveedor de parámetros para los cuatro módulos operativos restantes, estableciendo la dependencia de configuración representada en el diagrama de contexto. 

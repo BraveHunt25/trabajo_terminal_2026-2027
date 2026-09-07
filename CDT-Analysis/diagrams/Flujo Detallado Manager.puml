@@ -1,0 +1,49 @@
+@startuml "Flujo Detallado del Módulo del Mánager"
+left to right direction
+
+skinparam linetype ortho
+
+actor "Manager" as manager
+
+rectangle "Módulo de Mánager (MGR)" {
+    usecase "CU-MGR-001:\nAutenticar en el\nSistema" as CUMGR001
+    usecase "CU-MGR-002:\nConsultar Dashboard" as CUMGR002
+    usecase "CU-MGR-003:\nGestionar Empleado" as CUMGR003
+    usecase "CU-MGR-004:\nAsociar Estación" as CUMGR004
+    usecase "CU-MGR-005:\nGestionar Producto" as CUMGR005
+    usecase "CU-MGR-006:\nDefinir Receta" as CUMGR006
+    usecase "CU-MGR-007:\nGestionar Promociones" as CUMGR007
+    usecase "CU-MGR-008:\nGestionar Inventario" as CUMGR008
+    usecase "CU-MGR-009:\nConfigurar Sistema\nGlobal" as CUMGR009
+    usecase "CU-MGR-010:\nGestionar Estaciones" as CUMGR010
+
+    CUMGR003 .> CUMGR004 : <<include>>
+    CUMGR005 .> CUMGR006 : <<include>>
+}
+
+rectangle "Sistemas Externos"{
+    actor "Servidor SMTP" as SMTP <<System>>
+    actor "Módulo de Cocina\n(KDS)" as KDS <<System>>
+    actor "Módulo del Cliente" as cliente <<System>>
+    actor "Módulo de Caja\n(POS)" as pos <<System>>
+    actor "Módulo de Entrega" as entrega <<System>>
+}
+
+manager -- CUMGR001
+manager -- CUMGR002
+manager -- CUMGR003
+manager -- CUMGR005
+manager -- CUMGR007
+manager -- CUMGR008
+manager -- CUMGR009
+manager -- CUMGR010
+
+CUMGR003 -- SMTP
+CUMGR006 -- KDS
+CUMGR007 -- cliente
+CUMGR007 -- pos
+CUMGR009 -- KDS
+CUMGR009 -- cliente
+CUMGR009 -- pos
+CUMGR009 -- entrega
+@enduml
