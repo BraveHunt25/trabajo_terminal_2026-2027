@@ -1372,3 +1372,142 @@ La consulta de receta completa (CU-COC-004) se modela como extensión de la visu
 El Módulo Entrega gestiona el ciclo de despacho de pedidos preparados. La autenticación (CU-ENT-001) sigue el mismo modelo de credencial de estación compartida que el Módulo Caja. El tablero de despacho (CU-ENT-002) consume en tiempo real los estados publicados por el Módulo Cocina, aplicando dos algoritmos independientes de prioridad: urgencia (para pedidos EN\_PREPARACION) y merma (para pedidos LISTO\_PARA\_DESPACHO), cuyos umbrales son configurables desde el Módulo mánager.  
 
 La gestión de pago y despacho (CU-ENT-004) incluye obligatoriamente la verificación de identidad por QR (CU-ENT-005), modelada como <<include>> dado que ningún pedido puede ser entregado sin validar el protocolo de cuatro pasos sobre el CodigoVerificacionQR. La cancelación (CU-ENT-003) propaga notificaciones tanto al Módulo Cocina como, condicionalmente, al Módulo Cliente cuando el pedido fue originado por la aplicación de autoservicio.
+
+\subsection{Diagrama del módulo del cliente (CLI)}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Cliente/Flujo Detallado del Módulo del Cliente.svg}
+    \caption{Flujo detallado del módulo del cliente (CLI).}
+    \label{fig:casos_uso_cliente}
+\end{figure}
+
+El Módulo Cliente expone dos vías de acceso diferenciadas por el perfil del actor. El Cliente autenticado accede mediante credenciales individuales a través del puerto público del servidor KMS, lo que le permite explorar el catálogo, gestionar su carrito, seleccionar ventana de recolección y realizar el seguimiento de su pedido. La exploración del catálogo (CU-CLI-002) puede extenderse con la configuración y adición de ítems al carrito (CU-CLI-003), modelada como <<extend>> dado que la navegación por el catálogo no requiere obligatoriamente agregar productos.
+
+La gestión del carrito (CU-CLI-004) incluye la selección de ventana y confirmación del pedido (CU-CLI-005), que a su vez incluye la validación transaccional de stock y capacidad de slot para prevenir condiciones de carrera. El seguimiento del pedido (CU-CLI-006) incluye la generación del token QR, el cual actúa como único mecanismo de verificación de identidad en el protocolo de recolección coordinado con el Módulo Entrega (CU-ENT-005). El Cliente Anónimo, segundo actor del módulo, accede sin sesión a CU-CLI-008 mediante el token UUID opaco contenido en la URL del ticket digital generado por Caja al momento del pago; este caso de uso también incluye la generación de un CodigoVerificacionQR siguiendo el mismo protocolo ENT-05, manteniendo la equivalencia de flujos entre acceso autenticado y anónimo.
+
+\section{CASOS DE USO EXTENDIDOS}
+\subsection{MÓDULO DE CAJA}
+\subsubsection{CU-CAJ-001: AUTENTICACIÓN DEL CAJERO MEDIANTE CREDENCIAL DE ESTACIÓN}
+\paragraph{Descripción:} Permite al cajero acceder al módulo de Caja mediante la autenticación con la credencial compartida de la estación. El sistema valida las credenciales y establece la sesión operativa del turno, habilitando el acceso a todas las funciones del puesto de trabajo.
+
+\paragraph{Actor Principal:} Cajero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema de gestión de sesiones (servidor local KMS).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] La estación de trabajo de Caja está operativa y conectada a la red intranet.
+    \item[II.] Existe al menos un registro CredencialEstacion activo con tipo = CAJA en la base de datos.
+    \item[III.] El servidor KMS está en línea y el servicio de autenticación responde dentro del tiempo de espera configurado.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cajero navega a la URL del módulo de Caja en el navegador del puesto de trabajo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla CAJ-01 con los campos de entrada para identificador y contraseña de la estación.
+    \item[II.] El cajero introduce el identificador de la credencial de estación (E: campo identificador).
+    \item[III.] El cajero introduce la contraseña de la estación (E: campo contraseña, con máscara de caracteres).
+    \item[IV.] El cajero activa la acción de inicio de sesión.
+    \item[V.] El sistema envía las credenciales al servidor de autenticación mediante una solicitud segura sobre la red intranet.
+    \item[VI.] El servidor valida que el par identificador / contraseña corresponde a un registro CredencialEstacion con tipo = CAJA y estado = ACTIVO.
+    \item[VII.] El servidor genera un token de sesión y lo asocia a la estación de trabajo.
+    \item[VIII.] El sistema registra el evento de inicio de sesión en HistorialDeMovimientos con marca de tiempo y origen.
+    \item[IX.] El sistema redirige al cajero al Dashboard Operativo (CAJ-02) con la sesión plenamente activa.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CAJ-001-A1: La estación no tiene credencial asignada.
+    \begin{itemize}
+        \item En el paso 6, si no existe ninguna CredencialEstacion de tipo CAJA configurada en el sistema, el sistema muestra un mensaje informativo indicando que la estación no está configurada y presenta instrucciones para contactar al mánager. El flujo termina sin crear sesión.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CAJ-001-E1: Credenciales incorrectas.
+    \begin{itemize}
+        \item En el paso 6, si el par identificador / contraseña no corresponde a ningún registro activo, el sistema incrementa el contador de intentos fallidos para la estación, presenta un mensaje de error genérico (``Credenciales inválidas'') y retorna al paso 1. Se aplica un contador de intentos para mitigar ataques de fuerza bruta en la intranet; tras superar el umbral configurable, la estación puede requerir intervención manual del mánager para ser desbloqueada.
+    \end{itemize}
+    \item CU-CAJ-001-E2: Servidor KMS no disponible.
+    \begin{itemize}
+        \item En el paso 5, si la solicitud al servidor no recibe respuesta dentro del tiempo de espera definido, el sistema muestra un mensaje de error de conectividad (``No se pudo conectar con el servidor. Verifique la conexión de red.'') y habilita un botón de reintento. El flujo retorna al paso 4 sin limpiar los campos. Patrón de resiliencia timeout + retry para sistemas POS críticos sobre intranet.
+    \end{itemize}
+    \item CU-CAJ-001-E3: Credencial de estación desactivada.
+    \begin{itemize}
+        \item En el paso 6, si la CredencialEstacion existe en la base de datos, pero su estado $\neq$ ACTIVO, el sistema rechaza el acceso con el mensaje ``La credencial de esta estación ha sido desactivada. Contacte al mánager.'' sin revelar si el identificador existe. El flujo termina.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Se crea o actualiza un registro de sesión activa asociado a la CredencialEstacion de tipo CAJA.
+    \item El evento de inicio de sesión queda persistido en HistorialDeMovimientos con marca de tiempo.
+    \item El cajero tiene acceso completo al Dashboard Operativo (CAJ-02) y a todas las demás funciones del módulo.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CAJ-001, REQ-CAJ-002, REQ-SYS-001.
+    \item Reglas de Negocio Aplicadas: RN-CAJ-001, RN-CAJ-002.
+\end{itemize}
+
+\subsubsection{CU-CAJ-002: CONSULTA DEL DASHBOARD OPERATIVO DEL TURNO}
+\paragraph{Descripción:} Permite al cajero visualizar el estado operativo global del turno activo, incluyendo la disponibilidad de productos, alertas de insumos en nivel crítico y métricas agregadas de pedidos. Este caso de uso es el punto de entrada para la toma de decisiones operativas del cajero durante el turno.
+
+\paragraph{Actor Principal:} Cajero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema KMS (actualizaciones en tiempo real vía WebSocket / SSE).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cajero tiene una sesión activa en el módulo de Caja (postcondición de CU-CAJ-001).
+    \item[II.] Existe configuración vigente de productos activos (Producto.estado = ACTIVO) en la base de datos.
+    \item[III.] Los datos de inventario de insumos están inicializados y disponibles para el turno.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cajero completa el proceso de autenticación (CU-CAJ-001) exitosamente, o navega manualmente al dashboard desde cualquier sección del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla CAJ-02 con el dashboard operativo del turno activo.
+    \item[II.] El sistema consulta el estado de disponibilidad de todos los productos activos y los presenta agrupados por categoría (S: listado de productos con indicador de disponibilidad calculado en función del stock de sus insumos).
+    \item[III.] El sistema evalúa el nivel de inventario de cada insumo activo; para aquellos donde stock\_actual $\le$ stock\_minimo, el sistema genera y muestra una alerta de insumo crítico (S: lista de alertas con nombre del insumo, stock actual y nivel mínimo).
+    \item[IV.] El sistema muestra las métricas consolidadas del turno: número de pedidos tomados, total recaudado, y pedidos con pago pendiente (S: panel de métricas del turno).
+    \item[V.] El sistema establece una conexión de tiempo real (WebSocket / SSE) para recibir actualizaciones automáticas de disponibilidad y nuevas alertas sin necesidad de recargar la página.
+    \item[VI.] El cajero utiliza la navegación del módulo para acceder a las demás funciones del sistema.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CAJ-002-A1: No existen productos activos configurados.
+    \begin{itemize}
+        \item En el paso 2, si la consulta no retorna ningún producto con estado = ACTIVO, el sistema muestra el mensaje ``No hay productos disponibles. Configure el catálogo desde el módulo mánager.'' El panel de métricas del turno continúa siendo visible.
+    \end{itemize}
+    \item CU-CAJ-002-A2: Todos los insumos están por encima del nivel mínimo.
+    \begin{itemize}
+        \item En el paso 3, si ningún insumo cumple la condición stock\_actual $\le$ stock\_minimo, la sección de alertas se omite o muestra el indicador ``Sin alertas de insumos activas.''
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CAJ-002-E1: Pérdida de la conexión de tiempo real.
+    \begin{itemize}
+        \item En el paso 5, si la conexión WebSocket / SSE se interrumpe, el sistema muestra un indicador de ``Actualización en tiempo real no disponible'' y ejecuta reconexión automática con backoff exponencial. El dashboard continúa mostrando el último estado conocido hasta que la conexión se reestablezca. Patrón de resiliencia para entornos de red intranet con posibles interrupciones momentáneas; el estado congelado es preferible a una pantalla de error que bloquee la operación.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item No se producen modificaciones en la base de datos durante la operación de consulta.
+    \item El estado del dashboard refleja el estado actual del sistema al momento de la carga y se mantiene sincronizado mediante la conexión de tiempo real.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CAJ-003, REQ-CAJ-004, REQ-MGR-004.
+    \item Reglas de Negocio Aplicadas: RN-MGR-004, RN-MGR-005, RN-CAJ-003.
+\end{itemize}
+
