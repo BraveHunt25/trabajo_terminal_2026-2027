@@ -1511,3 +1511,934 @@ La gestión del carrito (CU-CLI-004) incluye la selección de ventana y confirma
     \item Reglas de Negocio Aplicadas: RN-MGR-004, RN-MGR-005, RN-CAJ-003.
 \end{itemize}
 
+\subsubsection{CU-CAJ-003: CREACIÓN DE NUEVO PEDIDO CON PERSONALIZACIÓN DE INGREDIENTES}
+\paragraph{Descripción:} Permite al cajero registrar un nuevo pedido en nombre de un cliente presencial, seleccionando productos del catálogo, personalizando ingredientes según la configuración permitida y capturando el método de pago. Es el caso de uso de mayor criticidad del módulo de Caja, ya que genera el ciclo de vida del pedido e inicia la cadena de preparación en el KDS.
+
+\paragraph{Actor Principal:} Cajero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo de Cocina (KDS, receptor de la notificación del nuevo pedido), Interfaz de Acceso Anónimo CLI-16 (destino del ticket digital URL / QR generado al confirmar el pago para pedidos sin cliente autenticado).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cajero tiene una sesión activa en el módulo de Caja.
+    \item[II.] Existen productos activos en el catálogo con stock de insumos suficiente para al menos una unidad.
+    \item[III.] El módulo de Cocina (KDS) está operativo para recibir nuevos pedidos vía WebSocket / SSE.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cajero selecciona la opción ``Nuevo Pedido'' desde el dashboard CAJ-02 o desde la navegación del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema navega a la pantalla de creación de pedido (CAJ-09) e inicializa un objeto CarritoSesion vacío en memoria de sesión (no persistido en base de datos).
+    \item[II.] El sistema presenta el catálogo de productos activos agrupados por categoría con indicadores de disponibilidad (S: CAJ-09).
+    \item[III.] El cajero selecciona un producto del catálogo (E: selección de producto).
+    \item[IV.] El sistema carga la pantalla de detalle y personalización del producto (CAJ-10), mostrando los ingredientes base configurados y las opciones de personalización disponibles según el atributo IngredienteProducto.permite\_personalizacion de cada ingrediente (extras, exclusiones, sustituciones).
+    \item[V.] El cajero ajusta los ingredientes según la solicitud del cliente (E: selección de extras, marcado de exclusiones, selección de sustituciones).
+    \item[VI.] El sistema calcula el precio del ítem en tiempo real: precio base del producto más los incrementos de precio definidos para cada extra seleccionado.
+    \item[VII.] El cajero confirma la adición del ítem al carrito.
+    \item[VIII.] El sistema agrega el ítem al CarritoSesion con un snapshot inmutable del precio calculado y las personalizaciones seleccionadas.
+    \item[IX.] El sistema presenta el resumen actualizado del carrito (S: CAJ-12 con lista de ítems, precios individuales con personalizaciones y total acumulado).
+    \item[X.] El cajero repite los pasos 3--8 para cada ítem adicional requerido por el pedido.
+    \item[XI.] El cajero confirma la finalización del pedido e introduce el monto de pago recibido del cliente (E: monto recibido).
+    \item[XII.] El sistema valida que monto\_recibido $\ge$ total\_carrito.
+    \item[XIII.] El sistema inicia una transacción atómica: crea el registro Pedido con estado = EN\_PROCESO, persiste cada PedidoItem con el precio snapshot y las personalizaciones del CarritoSesion, y decrementa el stock\_actual de cada insumo afectado por los productos del pedido.
+    \item[XIV.] El sistema confirma la transacción y descarta el objeto CarritoSesion de la memoria de sesión.
+    \item[XV.] El sistema genera el comprobante del pedido: si Pedido.cliente\_id IS NULL, el servidor crea el registro PedidoAccesoAnonimo con token UUID opaco y retorna la URL de acceso a CLI-16 junto con un código QR. El sistema muestra el ticket digital al cajero para que lo comparta con el cliente (S: URL + QR imprimible en pantalla).
+    \item[XVI.] El sistema envía la notificación del nuevo pedido al módulo de Cocina (KDS) mediante WebSocket / SSE para iniciar la preparación.
+    \item[XVII.] El sistema calcula y muestra el monto de cambio al cajero (S: monto\_recibido - total\_pedido).
+    \item[XVIII.] El sistema retorna al dashboard CAJ-02 con el contador de pedidos del turno incrementado.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CAJ-003-A1: El cajero elimina un ítem del carrito antes de confirmar.
+    \begin{itemize}
+        \item En el paso 9, el cajero selecciona un ítem del carrito y activa la opción de eliminar. El sistema remueve el ítem del CarritoSesion y recalcula el total acumulado. El flujo continúa en el paso 9.
+    \end{itemize}
+    \item CU-CAJ-003-A2: El cajero vacía el carrito completo.
+    \begin{itemize}
+        \item En cualquier momento antes del paso 11, el cajero selecciona ``Vaciar carrito''. El sistema presenta una confirmación explícita. Al confirmar, el CarritoSesion se reinicia a estado vacío y el flujo retorna al paso 2.
+    \end{itemize}
+    \item CU-CAJ-003-A3: El producto seleccionado no tiene ingredientes personalizables.
+    \begin{itemize}
+        \item En el paso 4, si ningún IngredienteProducto del producto tiene permite\_personalizacion = true, el sistema omite la pantalla de personalización y agrega el ítem al carrito directamente con la composición estándar. El flujo continúa en el paso 8.
+    \end{itemize}
+    \item CU-CAJ-003-A4: El cajero registra el pedido con pago pendiente.
+    \begin{itemize}
+        \item En el paso 11, si el cliente no dispone del monto en el momento de la toma del pedido, el cajero activa la opción ``Pago Pendiente''. El sistema crea el Pedido con la bandera pago\_pendiente = true y excluye el monto del total recaudado del turno hasta que se registre el pago mediante CU-CAJ-005. El flujo continúa desde el paso 13.
+    \end{itemize}
+    \item CU-CAJ-003-A5: El pedido es de tipo ANTICIPADO --- programación de ventana de entrega obligatoria.
+    \begin{itemize}
+        \item Tras el paso 15, si Pedido.tipo = ANTICIPADO y la ventana de recolección seleccionada no corresponde al intervalo activo en curso, el sistema pausa el flujo antes de enviar la notificación al KDS (paso 16) y activa CU-CAJ-007 para que el cajero programe la ventana de entrega. Una vez que CU-CAJ-007 confirma la asignación de la ventana (Pedido.ventana\_recoleccion queda persistido), el flujo reanuda en el paso 16 y continúa de forma normal. Si el cajero cierra el modal de CU-CAJ-007 sin confirmar, el Pedido queda en estado huérfano (estado = PAGADO, ventana\_recoleccion = NULL) y solo puede ser resuelto por el mánager.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CAJ-003-E1: Stock insuficiente al confirmar el pedido.
+    \begin{itemize}
+        \item En el paso 13, si la validación transaccional detecta que el stock\_actual de algún insumo es insuficiente para completar el pedido, el sistema aborta la transacción íntegramente, no crea ningún registro en base de datos y notifica al cajero indicando el insumo específico con stock insuficiente. El flujo retorna al paso 9 con el carrito intacto para que el cajero ajuste el pedido.
+    \end{itemize}
+    \item CU-CAJ-003-E2: Error de comunicación con el módulo de Cocina.
+    \begin{itemize}
+        \item En el paso 15, si el envío de la notificación al KDS falla, el sistema persiste el pedido correctamente en la base de datos (la transacción del paso 13 ya fue confirmada) y marca la notificación como pendiente. El sistema encola la notificación para reintento automático. El cajero recibe un aviso no bloqueante sobre el retraso en la notificación a cocina. Patrón de entrega eventual (eventual delivery) para garantizar que el KDS reciba la notificación del pedido incluso ante fallos transitorios de red en la intranet.
+    \end{itemize}
+    \item CU-CAJ-003-E3: Monto de pago insuficiente.
+    \begin{itemize}
+        \item En el paso 12, si monto\_recibido $<$ total\_carrito, el sistema muestra un mensaje de error indicando el faltante y retorna al paso 11 manteniendo el carrito intacto para que el cajero corrija el monto.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Se crea un registro Pedido en la base de datos con estado = EN\_PROCESO (o pago\_pendiente = true).
+    \item Se crean los registros PedidoItem con snapshot inmutable del precio al momento de confirmación y las personalizaciones aplicadas.
+    \item El stock\_actual de los insumos afectados es decrementado en la tabla Insumo.
+    \item El evento de creación del pedido queda registrado en HistorialDeMovimientos.
+    \item El KDS recibe (o tiene encolada) la notificación del nuevo pedido para iniciar la preparación.
+    \item Si Pedido.cliente\_id IS NULL, se crea un registro PedidoAccesoAnonimo con token UUID opaco vinculado al Pedido.id, y el sistema genera la URL de acceso a CLI-16 con código QR como comprobante digital del pedido.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CAJ-005, REQ-CAJ-006, REQ-CAJ-007, REQ-CAJ-008, REQ-CAJ-009, REQ-CAJ-012.
+    \item Reglas de Negocio Aplicadas: RN-CAJ-003, RN-CAJ-004, RN-CAJ-005, RN-CAJ-006, RN-CAJ-007, RN-CAJ-008, RN-CAJ-009, RN-CAJ-010, RN-CAJ-011, RN-CAJ-012, RN-CAJ-019, RN-CLI-025.
+\end{itemize}
+
+\subsubsection{CU-CAJ-004: AJUSTE DE INVENTARIO DE INSUMOS}
+\paragraph{Descripción:} Permite al cajero registrar ajustes manuales al inventario de insumos durante el turno, documentando el motivo mediante un concepto de ajuste normalizado del catálogo. Garantiza la trazabilidad del movimiento de inventario y mantiene la integridad del stock para el control operativo del turno.
+
+\paragraph{Actor Principal:} Cajero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cajero tiene una sesión activa en el módulo de Caja.
+    \item[II.] Existen insumos configurados en el sistema con Insumo.estado = ACTIVO.
+    \item[III.] Existen al menos un ConceptoAjuste activo configurado en el catálogo de conceptos.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cajero navega a la sección de gestión de inventario (CAJ-06) desde el menú de navegación del módulo de Caja.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema presenta la pantalla CAJ-06 con el listado de insumos activos, incluyendo nombre, unidad de medida, stock actual y nivel mínimo de cada insumo.
+    \item[II.] El cajero selecciona el insumo sobre el cual realizará el ajuste (E: selección de insumo de la lista).
+    \item[III.] El sistema navega a la pantalla de detalle del insumo (CAJ-07) mostrando el historial de movimientos recientes del insumo (entradas, salidas, ajustes) con sus marcas de tiempo y conceptos.
+    \item[IV.] El cajero selecciona la opción de registrar un nuevo ajuste.
+    \item[V.] El sistema presenta el formulario de ajuste con los campos: tipo de ajuste (entrada / salida), cantidad y selección del ConceptoAjuste del catálogo normalizado (E: formulario de ajuste).
+    \item[VI.] El cajero completa el formulario seleccionando el tipo, ingresando la cantidad y eligiendo el concepto de ajuste.
+    \item[VII.] El sistema valida que la cantidad es un valor numérico positivo y que el ConceptoAjuste seleccionado pertenece al catálogo activo.
+    \item[VIII.] El sistema calcula el nuevo stock: stock\_actual + cantidad para entradas o stock\_actual - cantidad para salidas.
+    \item[IX.] El sistema valida que el resultado no sea negativo.
+    \item[X.] El sistema actualiza Insumo.stock\_actual con el valor calculado.
+    \item[XI.] El sistema crea un registro en HistorialDeMovimientos con: tipo de ajuste, cantidad, ConceptoAjuste, nuevo stock resultante, marca de tiempo y referencia a la sesión del cajero.
+    \item[XII.] El sistema muestra confirmación del ajuste registrado y actualiza el stock visible en pantalla al nuevo valor.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CAJ-004-A1: El cajero cancela el ajuste antes de enviar el formulario.
+    \begin{itemize}
+        \item En cualquier momento durante los pasos 5 o 6, el cajero activa la opción ``Cancelar''. El sistema descarta el formulario sin modificar ningún dato en la base de datos y retorna al listado del paso 1.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CAJ-004-E1: El ajuste resultaría en stock negativo.
+    \begin{itemize}
+        \item En el paso 9, si la operación de salida resultaría en stock\_actual $<$ 0, el sistema rechaza el ajuste y muestra el mensaje ``El ajuste excede el stock disponible. Stock actual: [valor].'' El flujo retorna al paso 5 con el formulario visible y los valores previos conservados. Invariante de integridad de inventario; un stock negativo representa un estado ilógico en el dominio del negocio y compromete la disponibilidad calculada de los productos.
+    \end{itemize}
+    \item CU-CAJ-004-E2: El catálogo de ConceptoAjuste está vacío.
+    \begin{itemize}
+        \item En el paso 5, si no existen ConceptoAjuste activos configurados, el sistema muestra el mensaje ``No hay conceptos de ajuste configurados. Contacte al mánager.'' y no habilita el formulario de ajuste. El flujo termina en el paso 3.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item El campo stock\_actual del insumo seleccionado es actualizado en la base de datos con el nuevo valor calculado.
+    \item Se crea un registro de auditoría en HistorialDeMovimientos con todos los atributos del ajuste para trazabilidad completa.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CAJ-010, REQ-CAJ-011, REQ-SYS-002.
+    \item Reglas de Negocio Aplicadas: RN-SYS-002, RN-CAJ-013.
+\end{itemize}
+
+\subsubsection{CU-CAJ-005: CONSULTA DEL HISTORIAL DE PEDIDOS Y REGISTRO DE PAGO PENDIENTE}
+\paragraph{Descripción:} Permite al cajero consultar el historial completo de pedidos del turno activo y gestionar el registro de pago para pedidos marcados con pago pendiente. Garantiza la trazabilidad financiera del turno y permite la conciliación de cuentas antes del corte de caja.
+
+\paragraph{Actor Principal:} Cajero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cajero tiene una sesión activa en el módulo de Caja.
+    \item[II.] Existen pedidos registrados en el turno activo en la base de datos.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cajero navega a la sección de historial de pedidos desde el menú de navegación del módulo de Caja.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema consulta y presenta la lista de todos los pedidos registrados en el turno activo (S: número de pedido, ítems resumidos, total, estado de pago, hora de registro).
+    \item[II.] El cajero aplica el filtro deseado por estado de pago: todos / pagados / pendientes (E: selección de filtro).
+    \item[III.] El sistema actualiza la lista aplicando el filtro seleccionado.
+    \item[IV.] El cajero selecciona un pedido con estado PAGO\_PENDIENTE de la lista.
+    \item[V.] El sistema muestra el detalle completo del pedido: ítems con personalizaciones, precios individuales, total y monto pendiente de cobro.
+    \item[VI.] El cajero selecciona la opción ``Registrar pago''.
+    \item[VII.] El cajero introduce el monto recibido del cliente (E: campo de monto de pago).
+    \item[VIII.] El sistema valida que monto\_recibido $\ge$ total\_pedido.
+    \item[IX.] El sistema actualiza el estado de pago del pedido: elimina la bandera pago\_pendiente y registra el monto y marca de tiempo del pago en el registro Pedido.
+    \item[X.] El sistema calcula y muestra el monto de cambio correspondiente (S: monto\_recibido - total\_pedido).
+    \item[XI.] El sistema registra el evento de pago en HistorialDeMovimientos con todos los atributos del cobro.
+    \item[XII.] El sistema retorna al listado de historial actualizado con el pedido ahora en estado pagado y las métricas del turno actualizadas.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CAJ-005-A1: El cajero consulta el historial sin registrar pago.
+    \begin{itemize}
+        \item El cajero navega por el historial y visualiza detalles de pedidos sin activar la opción ``Registrar pago''. El flujo termina en cualquier momento sin modificaciones en la base de datos.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CAJ-005-E1: Monto de pago insuficiente.
+    \begin{itemize}
+        \item En el paso 8, si monto\_recibido $<$ total\_pedido, el sistema muestra un mensaje de error indicando el faltante y retorna al paso 7 con el campo visible para corrección.
+    \end{itemize}
+    \item CU-CAJ-005-E2: El historial del turno no contiene pedidos.
+    \begin{itemize}
+        \item En el paso 1, si no existen pedidos registrados en el turno activo, el sistema muestra el mensaje ``No se han registrado pedidos en este turno.'' El flujo termina sin ofrecer la opción de filtro.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Si se registra un pago: el registro Pedido es actualizado eliminando la bandera pago\_pendiente con la marca de tiempo del cobro.
+    \item Se crea un registro de auditoría en HistorialDeMovimientos con los atributos del pago registrado.
+    \item Las métricas del turno en el dashboard (total recaudado) se actualizan para reflejar el nuevo ingreso.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CAJ-012, REQ-CAJ-013.
+    \item Reglas de Negocio Aplicadas: RN-CAJ-013, RN-CAJ-014.
+\end{itemize}
+
+\subsubsection{CU-CAJ-006: CORTE DE CAJA Y CIERRE DE TURNO}
+\paragraph{Descripción:} Permite al cajero ejecutar el cierre formal del turno, generando el reporte de corte de caja que consolida el total esperado, el total físico contado y las diferencias detectadas. Este caso de uso finaliza el ciclo operativo del turno y pone el reporte a disposición del mánager para revisión y auditoría.
+
+\paragraph{Actor Principal:} Cajero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} mánager (receptor del reporte de cierre vía módulo de gestión).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cajero tiene una sesión activa en el módulo de Caja.
+    \item[II.] El turno tiene al menos un pedido registrado.
+    \item[III.] No existen pedidos con estado operativo incompleto que impidan el cierre (ver CU-CAJ-006-E1).
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cajero selecciona la opción ``Corte de caja / Cerrar turno'' desde el menú de navegación del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema presenta la pantalla de corte de caja (CAJ-22) con el resumen del turno: total esperado calculado a partir de los pedidos pagados, número total de pedidos, desglose por categoría de producto y relación de pedidos con pago pendiente si los hubiera.
+    \item[II.] El sistema notifica al cajero sobre cualquier pedido con pago\_pendiente = true que aún no haya sido cobrado.
+    \item[III.] El sistema solicita al cajero introducir el monto físico contado en la caja registradora (E: campo de monto físico contado).
+    \item[IV.] El cajero introduce el monto contado y activa la opción de generar el reporte de corte.
+    \item[V.] El sistema calcula la diferencia: diferencia = monto\_contado - total\_esperado. Un valor positivo representa sobrante; un valor negativo representa faltante.
+    \item[VI.] El sistema presenta el resumen final del corte (S: CAJ-23) incluyendo: total esperado, monto contado, diferencia calculada y resumen de inconsistencias de inventario detectadas durante el turno (insumos ajustados manualmente vs. consumo calculated por pedidos).
+    \item[VII.] El cajero revisa el reporte y confirma el cierre del turno.
+    \item[VIII.] El sistema inicia una transacción atómica: persiste el registro CorteDeCaja con todos los atributos del turno, invalida el token de sesión de la estación y registra el evento de cierre en HistorialDeMovimientos.
+    \item[IX.] El sistema redirige al cajero a la pantalla de autenticación (CAJ-01) con el turno formalmente cerrado.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CAJ-006-A1: Existen pedidos con pago pendiente al momento del corte.
+    \begin{itemize}
+        \item En el paso 2, el sistema alerta al cajero sobre los pedidos sin cobrar. El cajero puede optar por: (a) atender los pagos pendientes mediante CU-CAJ-005 antes de continuar el corte, o (b) proceder con el cierre incluyendo los montos pendientes como inconsistencias en el reporte de corte. El flujo continúa en el paso 3 con la opción elegida.
+    \end{itemize}
+    \item CU-CAJ-006-A2: El cajero cancela el proceso de corte.
+    \begin{itemize}
+        \item En cualquier momento antes del paso 7, el cajero selecciona ``Cancelar''. El sistema descarta los datos introducidos en el formulario de corte y retorna al dashboard CAJ-02 sin cerrar el turno ni invalidar la sesión.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CAJ-006-E1: El sistema detecta pedidos en estado operativo no finalizado.
+    \begin{itemize}
+        \item En el paso 1, si existen pedidos con estado = EN\_PREPARACION o estado = LISTO\_PARA\_DESPACHO que aún no han sido despachados ni cancelados, el sistema muestra una advertencia bloqueante indicando el número y referencia de los pedidos activos. El corte no puede ser ejecutado hasta que todos los pedidos activos del turno sean resueltos. Invariante operacional que garantiza la integridad del corte de caja y previene que pedidos activos queden huérfanos sin responsable de turno.
+    \end{itemize}
+    \item CU-CAJ-006-E2: Error al persistir el reporte de cierre.
+    \begin{itemize}
+        \item En el paso 8, si la operación de escritura en la base de datos falla, el sistema no invalida la sesión del cajero, muestra el mensaje ``Error al guardar el cierre. Intente nuevamente.'' y habilita la opción de reintento. Patrón de transacción atómica para cierre de turno; la invalidación de la sesión debe ser consecuencia del éxito de la persistencia del reporte, nunca puede ocurrir antes.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Se crea un registro CorteDeCaja en la base de datos con todos los atributos del turno: total esperado, monto contado, diferencia y lista de inconsistencias.
+    \item La sesión de la estación de Caja queda formalmente invalidada.
+    \item El reporte de corte es accesible para el mánager desde el módulo de gestión.
+    \item El evento de cierre queda registrado en HistorialDeMovimientos con marca de tiempo.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CAJ-014, REQ-CAJ-015, REQ-CAJ-016.
+    \item Reglas de Negocio Aplicadas: RN-CAJ-015, RN-CAJ-016, RN-CAJ-017, RN-CAJ-018.
+\end{itemize}
+
+\subsubsection{CU-CAJ-007: PROGRAMAR VENTANA DE ENTREGA PARA PEDIDO ANTICIPADO}
+\paragraph{Descripción:} Permite al cajero asignar una ventana de recolección horaria a un pedido de tipo ANTICIPADO cuyo pago ya fue confirmado en CU-CAJ-003. Se activa como extensión obligatoria de CU-CAJ-003 cuando Pedido.tipo = ANTICIPADO y la ventana de recolección no corresponde al intervalo activo en curso. El sistema presenta únicamente las ventanas con capacidad disponible y revalida la capacidad en el servidor al momento del commit para prevenir overbooking concurrente.
+
+\paragraph{Actor Principal:} Cajero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo de Cocina (KDS, receptor diferido de la notificación del pedido anticipado).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] CU-CAJ-003 completó la transacción de persistencia del Pedido (paso 13) con Pedido.tipo = ANTICIPADO.
+    \item[II.] El Pedido tiene estado = PAGADO y ventana\_recoleccion = NULL.
+    \item[III.] Existen VentanaRecoleccion futuras con pedidos\_asignados $<$ capacidad\_maxima en la ConfiguracionSistema.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El sistema detecta Pedido.tipo = ANTICIPADO tras confirmar el pago en CU-CAJ-003 (paso 15 del flujo base de CU-CAJ-003-A5).
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla CAJ-26 como modal superpuesto al ticket del pedido recién creado.
+    \item[II.] El sistema consulta las VentanaRecoleccion disponibles: filtra por estado = ACTIVA, pedidos\_asignados $<$ capacidad\_maxima y hora\_inicio $>$ Timestamp\_actual (excluyendo el intervalo activo en curso).
+    \item[III.] El sistema presenta las ventanas disponibles al cajero ordenadas cronológicamente, mostrando: rango horario y capacidad restante de forma cualitativa (S: lista de slots con estado de ocupación).
+    \item[IV.] El cajero selecciona la ventana de recolección solicitada por el cliente (E: selección del slot).
+    \item[V.] El sistema revalida en el servidor que VentanaRecoleccion.pedidos\_asignados $<$ capacidad\_maxima en el momento del commit (guard de condición de carrera).
+    \item[VI.] El sistema actualiza Pedido.ventana\_recoleccion con el identificador de la ventana seleccionada e incrementa VentanaRecoleccion.pedidos\_asignados en 1 dentro de una operación atómica.
+    \item[VII.] El sistema cierra el modal CAJ-26 y notifica a CU-CAJ-003 que la ventana fue asignada.
+    \item[VIII.] El flujo de CU-CAJ-003 reanuda en el paso 16: envía la notificación del pedido al KDS con la ventana de recolección asignada para que el cocinero conozca el horario objetivo.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CAJ-007-A1: El cajero selecciona el intervalo activo en curso.
+    \begin{itemize}
+        \item En el paso 4, si el cajero selecciona la ventana cuya hora\_inicio $\le$ NOW $<$ hora\_fin, el sistema acepta la selección. El pedido es tratado operativamente como inmediato (se envía al KDS de forma inmediata), pero Pedido.tipo permanece como ANTICIPADO para fines de trazabilidad y reportes. El flujo continúa en el paso 6.
+    \end{itemize}
+    \item CU-CAJ-007-A2: El cajero cierra el modal sin seleccionar ventana.
+    \begin{itemize}
+        \item En cualquier momento antes del paso 6, el cajero cierra el modal CAJ-26 sin confirmar. El Pedido queda en estado huérfano: estado = PAGADO, ventana\_recoleccion = NULL. El sistema muestra una advertencia informando que el pedido no será visible en el KDS hasta que un mánager asigne la ventana de recolección. La notificación al KDS (paso 16 de CU-CAJ-003) es suprimida hasta que el pedido sea resuelto.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CAJ-007-E1: La ventana seleccionada fue ocupada por otra operación concurrente (race condition).
+    \begin{itemize}
+        \item En el paso 5, si la revalidación detecta VentanaRecoleccion.pedidos\_asignados = capacidad\_maxima, el sistema rechaza la asignación, muestra el mensaje ``El horario seleccionado se ha llenado. Por favor elige otro.'' y retorna al paso 2 con la lista de slots actualizada (sin la ventana ya llena). El Pedido permanece con ventana\_recoleccion = NULL hasta que se complete una selección exitosa.
+    \end{itemize}
+    \item CU-CAJ-007-E2: No existen ventanas futuras disponibles.
+    \begin{itemize}
+        \item En el paso 2, si la consulta no retorna ninguna VentanaRecoleccion disponible, el sistema muestra el mensaje ``No hay horarios disponibles para pedidos anticipados en este momento.'' El modal permanece abierto mostrando únicamente la opción de cerrar sin asignar, dejando el pedido en estado huérfano (ver A2).
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Pedido.ventana\_recoleccion queda persistido con el identificador de la VentanaRecoleccion asignada.
+    \item VentanaRecoleccion.pedidos\_asignados es incrementado en 1 de forma atómica.
+    \item El KDS recibe (o tiene encolada) la notificación del pedido anticipado con la ventana de recolección asignada.
+    \item El evento de asignación de ventana queda registrado en HistorialDeMovimientos.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CAJ-012, REQ-CAJ-013.
+    \item Reglas de Negocio Aplicadas: RN-CAJ-019, RN-CAJ-020, RN-CAJ-021, RN-CAJ-022.
+\end{itemize}
+
+\subsection{MÓDULO DEL CLIENTE}
+\subsubsection{CU-CLI-001: AUTENTICACIÓN DEL CLIENTE}
+\paragraph{Descripción:} Permite al cliente acceder al módulo de Cliente mediante sus credenciales individuales registradas. A diferencia de los módulos de estación, las credenciales son personales e intransferibles. El sistema valida el estado de la cuenta y establece la sesión del cliente, habilitando el acceso al catálogo de productos y al flujo de pedidos.
+
+\paragraph{Actor Principal:} Cliente.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema de gestión de sesiones (servidor local KMS, con puerto de acceso público configurado para dispositivos externos a la red de la cafetería).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El dispositivo del cliente tiene acceso a la red pública de la cafetería o a internet con conectividad al servidor KMS.
+    \item[II.] El cliente tiene una cuenta registrada en el sistema con Usuario.estado = ACTIVO.
+    \item[III.] El servidor KMS está en línea y el servicio de autenticación de clientes responde dentro del tiempo de espera configurado.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente navega a la URL del módulo de Cliente en el navegador de su dispositivo personal o accede desde un marcador guardado.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla CLI-01 con los campos de entrada para correo electrónico y contraseña del cliente.
+    \item[II.] El cliente introduce su correo electrónico registrado (E: campo correo electrónico).
+    \item[III.] El cliente introduce su contraseña (E: campo contraseña, con máscara de caracteres y opción de visualización togglable).
+    \item[IV.] El cliente activa la acción de inicio de sesión.
+    \item[V.] El sistema envía las credenciales al servidor KMS para validación.
+    \item[VI.] El servidor verifica que el correo electrónico corresponde a un registro Usuario y que el hash de la contraseña coincide con el almacenado.
+    \item[VII.] El servidor verifica que Usuario.estado = ACTIVO.
+    \item[VIII.] El servidor genera un token de sesión individual para el cliente.
+    \item[IX.] El sistema registra el evento de inicio de sesión en HistorialDeMovimientos.
+    \item[X.] El sistema redirige al cliente a la pantalla principal del catálogo (CLI-02) con la sesión activa.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-001-A1: El cliente no tiene cuenta registrada.
+    \begin{itemize}
+        \item En la pantalla CLI-01, el cliente selecciona la opción de registrarse. El sistema presenta el formulario de registro con los campos requeridos: nombre, correo electrónico y contraseña. Tras el registro exitoso, el sistema crea el Usuario con estado = ACTIVO y redirige al cliente al flujo de autenticación desde el paso 1.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-001-E1: Credenciales incorrectas.
+    \begin{itemize}
+        \item En el paso 6, si el correo electrónico no existe o el hash de contraseña no coincide, el sistema muestra el mensaje ``Correo o contraseña incorrectos.'' sin especificar cuál dato es incorrecto. El flujo retorna al paso 1. El mensaje de error genérico es una práctica de seguridad obligatoria que evita la enumeración de cuentas registradas en el sistema.
+    \end{itemize}
+    \item CU-CLI-001-E2: Cuenta de cliente desactivada.
+    \begin{itemize}
+        \item En el paso 7, si Usuario.estado $\neq$ ACTIVO, el sistema rechaza el acceso con el mensaje ``Tu cuenta ha sido desactivada. Contacta al administrador de la cafetería.'' El flujo termina.
+    \end{itemize}
+    \item CU-CLI-001-E3: Servidor KMS no disponible.
+    \begin{itemize}
+        \item En el paso 5, si la solicitud no recibe respuesta dentro del tiempo de espera, el sistema muestra el mensaje ``No se pudo conectar con el servidor. Verifica tu conexión e inténtalo de nuevo.'' y habilita un botón de reintento. A diferencia de los módulos de estación en intranet, el módulo de Cliente opera sobre una red pública con mayor variabilidad de conectividad; el mensaje de error debe orientar al usuario a verificar su conexión.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Se crea un token de sesión individual asociado al Usuario.id del cliente.
+    \item El evento de inicio de sesión queda registrado en HistorialDeMovimientos.
+    \item El cliente tiene acceso al catálogo de productos y al flujo completo de pedidos.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-001, REQ-CLI-002, REQ-SYS-001.
+    \item Reglas de Negocio Aplicadas: RN-CLI-001, RN-CLI-002.
+\end{itemize}
+
+\subsubsection{CU-CLI-002: EXPLORACIÓN DEL CATÁLOGO Y BÚSQUEDA DE PRODUCTOS}
+\paragraph{Descripción:} Permite al cliente navegar por el catálogo de productos de la cafetería, filtrando por categoría y consultando el detalle de cada producto. El sistema presenta información de disponibilidad en tiempo real basada en el stock de insumos y muestra el banner de capacidad de la cafetería para orientar la decisión de compra del cliente.
+
+\paragraph{Actor Principal:} Cliente.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema KMS (actualizaciones de disponibilidad en tiempo real).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cliente tiene una sesión activa en el módulo de Cliente (postcondición de CU-CLI-001).
+    \item[II.] Existen productos activos configurados en el sistema (Producto.estado = ACTIVO).
+    \item[III.] La ConfiguracionSistema tiene configurado el parámetro de capacidad máxima de la cafetería.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente completa el proceso de autenticación (CU-CLI-001) o navega a la pantalla principal del catálogo (CLI-02) desde cualquier sección del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla CLI-02 con el catálogo de productos activos.
+    \item[II.] El sistema calcula y muestra el banner de capacidad de la cafetería: porcentaje de capacidad utilizada basado en el número de pedidos activos respecto a ConfiguracionSistema.capacidad\_maxima (S: banner con indicador de capacidad actual).
+    \item[III.] El sistema presenta los productos agrupados por categoría con su nombre, imagen referencial, precio base y disponibilidad calculada en función del stock de insumos (S: tarjetas de producto con indicador de disponibilidad: disponible / agotado).
+    \item[IV.] El cliente puede filtrar el catálogo por categoría seleccionando una de las categorías disponibles (E: selección de categoría).
+    \item[V.] El sistema actualiza la vista mostrando únicamente los productos de la categoría seleccionada.
+    \item[VI.] El cliente selecciona un producto del catálogo para ver su detalle.
+    \item[VII.] El sistema navega a la pantalla de detalle del producto (CLI-05) mostrando: nombre, descripción, imagen, precio base, composición de ingredientes y disponibilidad.
+    \item[VIII.] El cliente puede retornar al catálogo desde el detalle del producto.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-002-A1: No hay productos disponibles en una categoría.
+    \begin{itemize}
+        \item En el paso 5, si la categoría seleccionada no tiene productos con estado = ACTIVO, el sistema muestra el mensaje ``No hay productos disponibles en esta categoría.'' con la opción de seleccionar otra categoría.
+    \end{itemize}
+    \item CU-CLI-002-A2: El cliente visualiza el banner de alta capacidad.
+    \begin{itemize}
+        \item En el paso 2, si el porcentaje de capacidad supera un umbral configurado (ej. $\ge$ 80\%), el sistema muestra el banner con indicador de alerta en lugar del indicador estándar, informando al cliente que los tiempos de espera pueden ser mayores al habitual.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-002-E1: No existen productos activos en el sistema.
+    \begin{itemize}
+        \item En el paso 3, si la consulta no retorna ningún producto con estado = ACTIVO, el sistema muestra el mensaje ``La cafetería no tiene productos disponibles en este momento. Inténtalo más tarde.'' El catálogo se muestra vacío.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item No se producen modificaciones en la base de datos durante la exploración del catálogo.
+    \item El catálogo refleja el estado de disponibilidad actual al momento de la carga.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-003, REQ-CLI-004, REQ-CLI-005, REQ-CLI-006.
+    \item Reglas de Negocio Aplicadas: RN-CLI-003, RN-CLI-004, RN-CLI-005, RN-CLI-006, RN-CLI-007.
+\end{itemize}
+
+\subsubsection{CU-CLI-003: CONFIGURACIÓN DE ÍTEM Y ADICIÓN AL CARRITO}
+\paragraph{Descripción:} Permite al cliente personalizar un producto seleccionado del catálogo ajustando extras opcionales y añadirlo al carrito de compras. El sistema calcula el precio final del ítem en tiempo real considerando el precio base y los incrementos de los extras seleccionados, y agrega el ítem al CarritoSesion con un snapshot inmutable del precio.
+
+\paragraph{Actor Principal:} Cliente.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cliente tiene una sesión activa en el módulo de Cliente.
+    \item[II.] El producto seleccionado tiene Producto.estado = ACTIVO y stock de insumos disponible.
+    \item[III.] El CarritoSesion del cliente está inicializado (vacío o con ítems previos).
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente selecciona la opción ``Agregar al carrito'' o ``Personalizar'' sobre un producto disponible en el catálogo (CLI-02) o en la pantalla de detalle del producto (CLI-05).
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema navega a la pantalla de configuración del ítem (CLI-06) mostrando el producto seleccionado con su composición base de ingredientes.
+    \item[II.] El sistema presenta las opciones de extras disponibles para el producto, con el incremento de precio de cada extra (S: lista de extras con precio adicional por cada uno).
+    \item[III.] El cliente selecciona los extras deseados (E: selección de extras opcionales; la cantidad de extras puede estar limitada por configuración del producto).
+    \item[IV.] El sistema actualiza el precio total del ítem en tiempo real: precio\_base + $\sum$ (precio\_extra $\times$ cantidad\_extra) (S: precio actualizado con desglose).
+    \item[V.] El cliente especifica la cantidad de este ítem a agregar al carrito (E: campo de cantidad, valor mínimo 1).
+    \item[VI.] El cliente confirma la adición del ítem al carrito.
+    \item[VII.] El sistema crea un registro de ítem en el CarritoSesion con: producto\_id, cantidad, snapshot del precio calculado, lista de extras seleccionados y marcas de los extras con sus precios al momento de la selección.
+    \item[VIII.] El sistema muestra confirmación de la adición exitosa y presenta el resumen actualizado del carrito (S: número de ítems en carrito y total acumulado).
+    \item[IX.] El sistema retorna al catálogo (CLI-02) para que el cliente continúe explorando.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-003-A1: El producto no tiene extras configurados.
+    \begin{itemize}
+        \item En el paso 2, si el producto no tiene extras opcionales definidos, el sistema omite la sección de extras y presenta únicamente la composición base del producto con el precio fijo. El cliente solo puede ajustar la cantidad antes de confirmar. El flujo continúa en el paso 5.
+    \end{itemize}
+    \item CU-CLI-003-A2: El cliente cancela la configuración sin añadir al carrito.
+    \begin{itemize}
+        \item En cualquier momento antes del paso 6, el cliente navega de regreso sin confirmar. El CarritoSesion permanece sin modificaciones.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-003-E1: El producto pasó a estar agotado durante la configuración.
+    \begin{itemize}
+        \item En el paso 6, si al confirmar la adición el sistema detecta que el producto ya no tiene disponibilidad (stock insuficiente), el sistema muestra el mensaje ``Este producto se ha agotado. Por favor selecciona otro.'' y retorna al catálogo. El CarritoSesion no es modificado. La verificación de disponibilidad en el momento de adición al carrito no solo en la visualización del catálogo es necesaria en entornos de alta concurrencia de pedidos simultáneos.
+    \end{itemize}
+    \item CU-CLI-003-E2: El cliente excede el límite de extras permitidos para el producto.
+    \begin{itemize}
+        \item En el paso 3, si la configuración del producto establece un número máximo de extras seleccionables (Producto.max\_extras) y el cliente intenta superar ese límite, el sistema bloquea la selección adicional y muestra el mensaje ``Has alcanzado el máximo de extras permitidos para este producto ([N] extras).''
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Se agrega un ítem al objeto CarritoSesion en memoria de sesión (no persistido en base de datos hasta la confirmación del pedido).
+    \item El total del carrito visible para el cliente es actualizado para reflejar el nuevo ítem.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-007, REQ-CLI-008, REQ-CLI-009.
+    \item Reglas de Negocio Aplicadas: RN-CLI-008, RN-CLI-009, RN-CLI-010.
+\end{itemize}
+
+\subsubsection{CU-CLI-004: GESTIÓN DEL CARRITO DE COMPRAS}
+\paragraph{Descripción:} Permite al cliente revisar y gestionar el contenido del CarritoSesion antes de proceder con la confirmación del pedido. El cliente puede modificar cantidades, eliminar ítems o vaciar el carrito completo. El sistema aplica la política de pago contra entrega como única modalidad disponible para el módulo de Cliente.
+
+\paragraph{Actor Principal:} Cliente.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cliente tiene una sesión activa en el módulo de Cliente.
+    \item[II.] El CarritoSesion del cliente contiene al menos un ítem.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente navega a la pantalla del carrito de compras (CLI-08) mediante el ícono o acceso directo al carrito desde cualquier pantalla del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema presenta la pantalla CLI-08 con el contenido completo del CarritoSesion: lista de ítems con nombre, extras seleccionados, precio unitario con desglose y cantidad.
+    \item[II.] El sistema muestra el total acumulado del carrito y la política de pago aplicable: ``Pago contra entrega --- el pago se realiza al momento de recoger tu pedido.'' (S: resumen de política de pago).
+    \item[III.] El cliente revisa el contenido del carrito.
+    \item[IV.] Para modificar la cantidad de un ítem, el cliente ajusta el campo de cantidad del ítem (E: campo de cantidad, mínimo 1).
+    \item[V.] El sistema recalcula el precio del ítem y el total del carrito en tiempo real.
+    \item[VI.] Para eliminar un ítem del carrito, el cliente activa la opción de eliminar sobre el ítem deseado.
+    \item[VII.] El sistema solicita confirmación para la eliminación del ítem.
+    \item[VIII.] Al confirmar, el sistema remueve el ítem del CarritoSesion y recalcula el total.
+    \item[IX.] El cliente puede proceder a la selección de ventana de recolección activando el botón ``Continuar'' (bifurcación a CU-CLI-005).
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-004-A1: El cliente vacía el carrito completo.
+    \begin{itemize}
+        \item En cualquier momento, el cliente activa la opción ``Vaciar carrito''. El sistema presenta una confirmación explícita (``¿Estás seguro de que deseas eliminar todos los productos del carrito?''). Al confirmar, el sistema elimina todos los ítems del CarritoSesion y redirige al cliente al catálogo (CLI-02).
+    \end{itemize}
+    \item CU-CLI-004-A2: El cliente retorna al catálogo para agregar más ítems.
+    \begin{itemize}
+        \item El cliente navega de regreso al catálogo sin proceder a la confirmación. El CarritoSesion conserva los ítems actuales y el cliente puede continuar agregando productos.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-004-E1: El carrito queda vacío tras eliminar el último ítem.
+    \begin{itemize}
+        \item En el paso 8, si el ítem eliminado era el último en el carrito, el sistema muestra el mensaje ``Tu carrito está vacío.'' con un acceso directo al catálogo y no habilita el botón de continuar.
+    \end{itemize}
+    \item CU-CLI-004-E2: La cantidad de un ítem se reduce a cero.
+    \begin{itemize}
+        \item En el paso 4, si el cliente reduce la cantidad de un ítem a cero mediante el campo de cantidad, el sistema trata esta acción como una eliminación del ítem y aplica el flujo del paso 7.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item El CarritoSesion refleja los ítems con las cantidades y configuraciones actualizadas por el cliente.
+    \item No se producen modificaciones en la base de datos hasta la confirmación del pedido (CU-CLI-005).
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-010, REQ-CLI-011, REQ-CLI-012.
+    \item Reglas de Negocio Aplicadas: RN-CLI-011, RN-CLI-012, RN-CLI-013, RN-CLI-014, RN-CLI-015.
+\end{itemize}
+
+\subsubsection{CU-CLI-005: SELECCIÓN DE VENTANA DE RECOLECCIÓN Y CONFIRMACIÓN DEL PEDIDO}
+\paragraph{Descripción:} Permite al cliente seleccionar una ventana de tiempo de recolección disponible y confirmar formalmente su pedido. Este caso de uso ejecuta la transacción crítica del módulo de Cliente: valida la disponibilidad del slot y del stock de insumos, persiste el pedido con sus ítems y decrementos de inventario, y notifica al KDS para iniciar la preparación. La ventana de recolección actúa como sistema de gestión de capacidad.
+
+\paragraph{Actor Principal:} Cliente.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo de Cocina (KDS, receptor de la notificación del nuevo pedido).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cliente tiene una sesión activa en el módulo de Cliente.
+    \item[II.] El CarritoSesion del cliente contiene al menos un ítem con cantidades válidas.
+    \item[III.] Existen ventanas de recolección (VentanaRecoleccion) disponibles y con capacidad para la fecha y hora actual.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente activa el botón ``Continuar'' desde la pantalla del carrito (CLI-08, postcondición de CU-CLI-004).
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema navega a la pantalla de selección de ventana de recolección (CLI-10).
+    \item[II.] El sistema consulta las VentanaRecoleccion disponibles para la fecha actual, filtradas por: estado = ACTIVA, pedidos\_asignados $<$ capacidad\_maxima y hora\_inicio $>$ Timestamp\_actual + margen\_minimo\_configurado.
+    \item[III.] El sistema presenta las ventanas disponibles al cliente ordenadas cronológicamente, mostrando: rango horario, capacidad restante expresada cualitativamente (ej. ``Pocos lugares disponibles'' si la capacidad restante es $\le$ umbral\_critico) (S: lista de slots disponibles).
+    \item[IV.] El cliente selecciona la ventana de recolección de su preferencia (E: selección del slot).
+    \item[V.] El sistema presenta la pantalla de resumen del pedido (CLI-11) con: ítems del carrito, precios, total, ventana de recolección seleccionada y política de pago contra entrega.
+    \item[VI.] El cliente revisa el resumen y confirma el pedido.
+    \item[VII.] El sistema ejecuta la transacción de confirmación de pedido en los siguientes pasos atómicos:
+    \begin{itemize}
+        \item 7a: Verifica que la VentanaRecoleccion seleccionada aún tiene pedidos\_asignados $<$ capacidad\_maxima (guard de condición de carrera).
+        \item 7b: Verifica que el stock de insumos es suficiente para todos los PedidoItem del carrito.
+        \item 7c: Crea el registro Pedido con estado = EN\_PROCESO, pago\_pendiente = true (pago contra entrega) y la referencia a la VentanaRecoleccion seleccionada.
+        \item 7d: Crea los registros PedidoItem con snapshot inmutable del precio y las personalizaciones del CarritoSesion.
+        \item 7e: Decrementa Insumo.stock\_actual para cada insumo afectado por los ítems del pedido.
+        \item 7f: Incrementa VentanaRecoleccion.pedidos\_asignados en 1.
+    \end{itemize}
+    \item[VIII.] El sistema registra el evento de creación del pedido en HistorialDeMovimientos.
+    \item[IX.] El sistema envía la notificación del nuevo pedido al KDS mediante WebSocket / SSE para iniciar la preparación.
+    \item[X.] El sistema descarta el CarritoSesion de la memoria de sesión.
+    \item[XI.] El sistema navega a la pantalla de confirmación (CLI-12) mostrando: número de pedido asignado, ventana de recolección confirmada, total del pedido y recordatorio de pago contra entrega.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-005-A1: No hay ventanas de recolección disponibles.
+    \begin{itemize}
+        \item En el paso 2, si la consulta no retorna ninguna VentanaRecoleccion disponible, el sistema muestra el mensaje ``No hay horarios disponibles en este momento. La cafetería puede estar a máxima capacidad. Inténtalo más tarde.'' y no permite continuar con el pedido. El CarritoSesion se conserva.
+    \end{itemize}
+    \item CU-CLI-005-A2: El cliente regresa al carrito para modificarlo.
+    \begin{itemize}
+        \item En el paso 5, el cliente navega de regreso al carrito. El sistema retorna a CLI-08 con el CarritoSesion intacto y la ventana seleccionada provisionalmente deseleccionada.
+    \end{itemize}
+\end{itemize
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-005-E1: La ventana seleccionada fue ocupada por otro cliente (race condition).
+    \begin{itemize}
+        \item En el paso 7a, si VentanaRecoleccion.pedidos\_asignados = capacidad\_maxima al momento de la transacción, el sistema aborta la transacción sin crear ningún registro, muestra el mensaje ``Lo sentimos, el horario que seleccionaste se llenó. Por favor elige otro.'' y retorna al paso 2 con la lista de slots actualizada. El CarritoSesion se preserva. La validación de capacidad debe realizarse dentro de la transacción atómica (no solo en la consulta inicial) para prevenir overbooking en escenarios de alta concurrencia de clientes.
+    \end{itemize}
+    \item CU-CLI-005-E2: Stock insuficiente al confirmar el pedido.
+    \begin{itemize}
+        \item En el paso 7b, si el stock de insumos no es suficiente para algún ítem del carrito, el sistema aborta la transacción, no crea el Pedido y muestra el mensaje ``Uno o más productos en tu carrito ya no están disponibles. Actualiza tu carrito antes de continuar.'' indicando los productos afectados. El CarritoSesion se preserva para que el cliente ajuste los ítems.
+    \end{itemize}
+    \item CU-CLI-005-E3: Error de comunicación con el KDS al notificar el pedido.
+    \begin{itemize}
+        \item En el paso 9, si la notificación al KDS falla, el Pedido ya fue persistido correctamente (la transacción del paso 7 fue confirmada). El sistema encola la notificación para reintento automático y continúa el flujo desde el paso 10 sin informar al cliente del retraso en la notificación interna. Patrón de entrega eventual para notificaciones al KDS; la persistencia del pedido es la acción crítica y no debe ser revertida por fallos en la capa de notificación.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Se crea un registro Pedido en estado = EN\_PROCESO con pago\_pendiente = true y la referencia a la VentanaRecoleccion.
+    \item Se crean los registros PedidoItem con snapshot inmutable de precios y personalizaciones.
+    \item Insumo.stock\_actual es decrementado para cada insumo afectado.
+    \item VentanaRecoleccion.pedidos\_asignados es incrementado en 1.
+    \item El evento de creación del pedido queda registrado en HistorialDeMovimientos.
+    \item El CarritoSesion queda descartado de la memoria de sesión.
+    \item El KDS recibe (o tiene encolada) la notificación del nuevo pedido.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-013, REQ-CLI-014, REQ-CLI-015, REQ-CLI-016, REQ-CLI-017.
+    \item Reglas de Negocio Aplicadas: RN-CLI-016, RN-CLI-017, RN-CLI-018, RN-CLI-019, RN-CLI-020.
+\end{itemize}
+
+\subsubsection{CU-CLI-006: SEGUIMIENTO DEL PEDIDO Y RECOLECCIÓN MEDIANTE CÓDIGO QR}
+\paragraph{Descripción:} Permite al cliente hacer seguimiento del estado de preparación de su pedido en tiempo real y, una vez preparado, presentar el código QR de verificación al operador de entrega para acreditar su identidad y recoger el pedido. El código QR es un token de un solo uso con tiempo de vigencia configurado que vincula la identidad del cliente con el pedido específico.
+
+\paragraph{Actor Principal:} Cliente.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo de Entrega (ENT, consumidor del CodigoVerificacionQR), sistema KMS (actualizaciones de estado en tiempo real).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cliente tiene una sesión activa en el módulo de Cliente.
+    \item[II.] El cliente tiene un pedido con estado = EN\_PROCESO o estado = LISTO\_PARA\_DESPACHO registrado en el sistema.
+    \item[III.] La VentanaRecoleccion asociada al pedido está vigente o próxima.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente navega a la pantalla de seguimiento del pedido (CLI-13) desde la pantalla de confirmación (CLI-12) o desde el historial de pedidos del perfil.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla de seguimiento CLI-13 con el detalle del pedido activo.
+    \item[II.] El sistema muestra una barra de progreso con los estados del ciclo de vida del pedido: EN\_PROCESO $\rightarrow$ EN\_PREPARACION $\rightarrow$ LISTO\_PARA\_DESPACHO $\rightarrow$ ENTREGADO, con el estado actual resaltado.
+    \item[III.] El sistema establece una conexión de tiempo real (WebSocket / SSE) para actualizar automáticamente el estado del pedido en la barra de progreso a medida que el KDS avanza en la preparación.
+    \item[IV.] Cuando el pedido alcanza el estado = LISTO\_PARA\_DESPACHO, el sistema muestra una notificación destacada (``¡Tu pedido está listo para recoger!'') y habilita el acceso al código QR.
+    \item[V.] El cliente activa la opción ``Mostrar código QR''.
+    \item[VI.] El sistema verifica si existe un CodigoVerificacionQR activo para el pedido del cliente. Si no existe, el sistema genera un nuevo token QR con los atributos: pedido\_id, cliente\_id, Timestamp\_generacion, tiempo\_vigencia (según ConfiguracionSistema) y estado = ACTIVO.
+    \item[VII.] El sistema persiste el CodigoVerificacionQR en la base de datos.
+    \item[VIII.] El sistema renderiza el código QR en pantalla CLI-14 en tamaño optimizado para facilitar el escaneo por el operador de entrega.
+    \item[IX.] El sistema muestra un temporizador de cuenta regresiva indicando el tiempo restante de vigencia del código.
+    \item[X.] El cliente presenta el código QR al operador de entrega para el escaneo (interacción con CU-ENT-005).
+    \item[XI.] Tras el escaneo exitoso del operador, el sistema recibe la confirmación de consumo del token y actualiza la pantalla del cliente mostrando el estado ENTREGADO con la marca de tiempo de entrega.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-006-A1: El código QR expira antes de ser escaneado.
+    \begin{itemize}
+        \item En el paso 9, si el temporizador de vigencia llega a cero antes del escaneo, el sistema actualiza CodigoVerificacionQR.estado = EXPIRADO, oculta el código QR y presenta el botón ``Generar nuevo código''. Al activarlo, el flujo retorna al paso 6 generando un nuevo token.
+    \end{itemize}
+    \item CU-CLI-006-A2: El cliente regresa a la pantalla de seguimiento desde el QR.
+    \begin{itemize}
+        \item El cliente puede navegar de regreso a la pantalla CLI-13 sin presentar el QR. El CodigoVerificacionQR permanece ACTIVO hasta que sea consumido o expire. Al volver a solicitar el QR, el sistema verifica si existe alguno activo y lo presenta sin generar uno nuevo.
+    \end{itemize}
+    \item CU-CLI-006-A3: El pedido es cancelado por el operador mientras el cliente espera.
+    \begin{itemize}
+        \item En el paso 3, si el pedido cambia a estado = CANCELADO, la conexión de tiempo real notifica al cliente. El sistema muestra en pantalla la notificación de cancelación con el motivo registrado y dirige al cliente al historial de pedidos.
+    \end{itemize}
+\end{itemize
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-006-E1: Error al generar o persistir el código QR.
+    \begin{itemize}
+        \item En el paso 6--7, si la generación o persistencia del token falla, el sistema muestra el mensaje ``No se pudo generar el código QR. Inténtalo de nuevo.'' y habilita el reintento desde el paso 5. El pedido permanece en su estado actual sin modificaciones. El código QR es un prerrequisito técnico bloqueante para la entrega; no puede omitirse ni sustituirse por un flujo manual en la versión estándar del sistema.
+    \end{itemize}
+    \item CU-CLI-006-E2: Pérdida de la conexión de tiempo real durante el seguimiento.
+    \begin{itemize}
+        \item En el paso 3, si la conexión WebSocket / SSE se interrumpe, el sistema muestra el indicador ``Actualización en tiempo real desconectada'' y ejecuta reconexión automática con backoff exponencial. La barra de progreso muestra el último estado conocido. El cliente puede recargar la pantalla manualmente para obtener el estado actual.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Si se generó un nuevo código QR: se crea un registro CodigoVerificacionQR con estado = ACTIVO en la base de datos.
+    \item Tras el escaneo exitoso por el operador: CodigoVerificacionQR.estado = CONSUMIDO y Pedido.estado = ENTREGADO (persisting en postcondición de CU-ENT-005).
+    \item El cliente visualiza la confirmación de entrega con la marca de tiempo.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-018, REQ-CLI-019, REQ-CLI-020, REQ-CLI-021.
+    \item Reglas de Negocio Aplicadas: RN-CLI-021, RN-CLI-022.
+\end{itemize}
+
+\subsubsection{CU-CLI-007: ACTUALIZACIÓN DEL PERFIL DEL CLIENTE}
+\paragraph{Descripción:} Permite al cliente actualizar la información de su perfil personal, incluyendo nombre, correo electrónico y contraseña. El sistema aplica validaciones de unicidad sobre el correo electrónico y garantiza que las contraseñas nunca se almacenen en texto plano, siendo siempre procesadas mediante hash en el servidor antes de su persistencia.
+
+\paragraph{Actor Principal:} Cliente.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cliente tiene una sesión activa en el módulo de Cliente.
+    \item[II.] El registro Usuario del cliente existe en la base de datos con estado = ACTIVO.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente navega a la pantalla de perfil (CLI-15) desde el menú de navegación del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla CLI-15 con el formulario de perfil mostrando los datos actuales del cliente: nombre, correo electrónico (campo editable) y campo de contraseña vacío (por seguridad, la contraseña no se pre-rellena).
+    \item[II.] El cliente modifica los campos que desea actualizar (E: nombre, correo electrónico, nueva contraseña y confirmación de nueva contraseña).
+    \item[III.] El cliente activa la acción de guardar cambios.
+    \item[IV.] El sistema valida que los campos obligatorios no estén vacíos.
+    \item[V.] Si el cliente modificó el correo electrónico, el sistema verifica en la base de datos que el nuevo correo no está registrado en ningún otro Usuario.correo\_electronico activo.
+    \item[VI.] Si el cliente proporcionó una nueva contraseña, el sistema verifica que el campo de confirmación de contraseña coincide con el campo de nueva contraseña.
+    \item[VII.] Si todas las validaciones pasan, el sistema envía los datos al servidor para su procesamiento.
+    \item[VIII.] En el servidor: si se proporcionó nueva contraseña, el servidor calcula el hash de la contraseña antes de cualquier operación de escritura; en ningún caso la contraseña se almacena en texto plano.
+    \item[IX.] El servidor actualiza el registro Usuario con los campos modificados: nombre, correo electrónico y / o hash de contraseña.
+    \item[X.] El sistema registra el evento de actualización de perfil en HistorialDeMovimientos con: campos modificados (sin incluir el valor de la contraseña), marca de tiempo e identificador del cliente.
+    \item[XI.] El sistema muestra confirmación de los cambios guardados y retorna al formulario con los datos actualizados.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-007-A1: El cliente actualiza solo el nombre sin modificar correo ni contraseña.
+    \begin{itemize}
+        \item Los pasos 5 y 6 son omitidos dado que los campos correspondientes no fueron modificados. El flujo continúa directamente en el paso 7 con solo el nombre actualizado.
+    \end{itemize}
+    \item CU-CLI-007-A2: El cliente cancela la edición antes de guardar.
+    \begin{itemize}
+        \item En cualquier momento antes del paso 3, el cliente navega de regreso sin guardar. Los datos en la base de datos permanecen sin modificación y el formulario descarta los cambios no guardados.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-007-E1: El nuevo correo electrónico ya está registrado por otro usuario.
+    \begin{itemize}
+        \item En el paso 5, si el correo electrónico introducido ya existe en la base de datos asociado a otro Usuario.id, el sistema muestra el mensaje ``Este correo electrónico ya está registrado. Utiliza un correo diferente.'' y retorna al formulario con el campo de correo resaltado. No se persiste ningún cambio.
+    \end{itemize}
+    \item CU-CLI-007-E2: Las contraseñas introducidas no coinciden.
+    \begin{itemize}
+        \item En el paso 6, si el campo de nueva contraseña y el campo de confirmación no son idénticos, el sistema muestra el mensaje ``Las contraseñas no coinciden.'' y retorna al formulario con ambos campos de contraseña resaltados sin revelar los valores introducidos.
+    \end{itemize}
+    \item CU-CLI-007-E3: La nueva contraseña no cumple los requisitos mínimos de seguridad.
+    \begin{itemize}
+        \item En el paso 6--8, si la contraseña proporcionada no cumple la política de seguridad configurada (longitud mínima, combinación de caracteres, etc.), el sistema muestra los requisitos no cumplidos y retorna al formulario sin persistir cambios. La validación de política de contraseñas debe realizarse antes del hash en el servidor para proporcionar retroalimentación útil al cliente sin comprometer la seguridad del almacenamiento.
+    \end{itemize}
+    \item CU-CLI-007-E4: Error de conectividad al guardar los cambios.
+    \begin{itemize}
+        \item En el paso 7, si la solicitud al servidor no recibe respuesta dentro del tiempo de espera, el sistema muestra el mensaje ``No se pudieron guardar los cambios. Verifica tu conexión e inténtalo de nuevo.'' El formulario conserva los valores introducidos por el cliente para facilitar el reintento.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item El registro Usuario es actualizado en la base de datos con los campos modificados: nombre, correo\_electronico y / o hash\_contrasena.
+    \item El evento de actualización de perfil queda registrado en HistorialDeMovimientos con los campos modificados (excluyendo el valor de contraseña).
+    \item Si el correo electrónico fue modificado, los futuros inicios de sesión del cliente deben realizarse con el nuevo correo.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-022, REQ-CLI-023, REQ-SYS-003.
+    \item Reglas de Negocio Aplicadas: RN-CLI-023, RN-CLI-024.
+\end{itemize}
+
+\subsubsection{CU-CLI-008: CONSULTA ANÓNIMA DE RESUMEN Y RECOLECCIÓN DE PEDIDO}
+\paragraph{Descripción:} Permite a un cliente sin sesión autenticada consultar el resumen y estado de preparación de su pedido presencial mediante el token UUID opaco contenido en la URL del ticket digital generado por Caja. Una vez que el pedido alcanza el estado LISTO\_PARA\_DESPACHO, el cliente puede generar el código QR de verificación para acreditar la recolección ante el operador de entrega, siguiendo el mismo protocolo ENT-05 que CU-CLI-006.
+
+\paragraph{Actor Principal:} Cliente Anónimo (sin sesión autenticada; accede mediante token opaco en URL).
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo de Entrega (ENT, consumidor del CodigoVerificacionQR), sistema KMS (actualizaciones de estado en tiempo real).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El cliente dispone del ticket digital (URL con token UUID) generado por Caja al confirmar el pago del pedido presencial.
+    \item[II.] El registro PedidoAccesoAnonimo correspondiente al token existe en la base de datos con estado = ACTIVO.
+    \item[III.] Pedido.cliente\_id IS NULL para el pedido vinculado al token (invariante de acceso anónimo).
+    \item[IV.] El servidor KMS está en línea y el puerto público es accesible desde el dispositivo del cliente.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cliente abre la URL del ticket digital en el navegador de su dispositivo. La URL tiene la forma /pedido/anónimo/\{token\} donde \{token\} es el UUID opaco generado en CU-CAJ-003.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El servidor recibe la solicitud GET con el token en la URL.
+    \item[II.] El servidor busca el registro PedidoAccesoAnonimo por token y verifica: (a) el token existe, (b) PedidoAccesoAnonimo.estado = ACTIVO, (c) el Pedido vinculado tiene cliente\_id IS NULL.
+    \item[III.] El servidor retorna los datos del pedido autorizados para la vista anónima: ítems del pedido (sin datos de otros clientes), estado actual del ciclo de vida y marca de tiempo de creación.
+    \item[IV.] El sistema renderiza la pantalla CLI-16 mostrando:
+    \begin{itemize}
+        \item Resumen del pedido: lista de ítems con cantidades y nombres (S: tarjetas de ítem).
+        \item Barra de progreso del ciclo de vida: EN\_PROCESO $\rightarrow$ EN\_PREPARACION $\rightarrow$ LISTO\_PARA\_DESPACHO $\rightarrow$ ENTREGADO, con el estado actual resaltado (S: barra de progreso).
+        \item Tiempo transcurrido desde la creación del pedido (S: indicador de tiempo).
+    \end{itemize}
+    \item[V.] El sistema establece una conexión de tiempo real (WebSocket / SSE) para actualizar la barra de progreso automáticamente a medida que el KDS avanza en la preparación.
+    \item[VI.] Cuando el pedido alcanza estado = LISTO\_PARA\_DESPACHO, el sistema muestra la notificación ``¡Tu pedido está listo!'' y habilita el botón de generar código QR.
+    \item[VII.] El cliente activa el botón ``Mostrar código QR para recoger''.
+    \item[VIII.] El sistema verifica si existe un CodigoVerificacionQR activo para el pedido. Si no existe, el servidor genera un nuevo token con: pedido\_id, Timestamp\_generacion, tiempo\_vigencia (según ConfiguracionSistema) y estado = ACTIVO. El campo cliente\_id del QR puede quedar en NULL dado que el acceso es anónimo; el servidor valida la relación por pedido\_id y token de URL, no por sesión de cliente.
+    \item[IX.] El sistema persiste el CodigoVerificacionQR en la base de datos.
+    \item[X.] El sistema renderiza el código QR en pantalla CLI-16 en tamaño optimizado para escaneo.
+    \item[XI.] El sistema muestra un temporizador de cuenta regresiva con el tiempo restante de vigencia del código.
+    \item[XII.] El cliente presenta el código QR al operador de entrega para escaneo (interacción con CU-ENT-005).
+    \item[XIII.] Tras el escaneo exitoso, el sistema recibe la confirmación de consumo del token y actualiza la pantalla mostrando ENTREGADO con la marca de tiempo de entrega.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-CLI-008-A1: El código QR expira antes de ser escaneado.
+    \begin{itemize}
+        \item En el paso 11, si el temporizador llega a cero, el sistema actualiza CodigoVerificacionQR.estado = EXPIRADO, oculta el código QR y presenta el botón ``Generar nuevo código''. Al activarlo, el flujo retorna al paso 8 generando un nuevo token.
+    \end{itemize}
+    \item CU-CLI-008-A2: El cliente regresa a la pantalla de resumen desde el QR.
+    \begin{itemize}
+        \item El cliente puede navegar de regreso a la vista de progreso sin presentar el QR. El CodigoVerificacionQR permanece ACTIVO hasta ser consumido o expirado. Al solicitar el QR nuevamente, el sistema verifica si existe alguno activo y lo presenta sin generar uno nuevo.
+    \end{itemize}
+    \item CU-CLI-008-A3: El pedido es cancelado mientras el cliente espera.
+    \begin{itemize}
+        \item En el paso 5, si el pedido cambia a estado = CANCELADO, la conexión de tiempo real notifica al cliente. El sistema muestra en pantalla la notificación de cancelación y actualiza el PedidoAccesoAnonimo.estado = INACTIVO para invalidar futuros accesos mediante ese token.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-CLI-008-E1: Token no encontrado o inválido.
+    \begin{itemize}
+        \item En el paso 2, si el token no existe en la base de datos o PedidoAccesoAnonimo.estado $\neq$ ACTIVO, el servidor retorna HTTP 404 y el sistema muestra la pantalla de error ``El enlace no es válido o ha expirado.'' sin revelar información sobre otros pedidos del sistema. El flujo termina.
+    \end{itemize}
+    \item CU-CLI-008-E2: Intento de acceso a pedido con cliente autenticado.
+    \begin{itemize}
+        \item En el paso 2, si el Pedido.cliente\_id IS NOT NULL (el pedido pertenece a un cliente registrado), el servidor retorna HTTP 403 y el sistema muestra el mensaje ``Este pedido requiere inicio de sesión para ser consultado.'' El flujo termina.
+    \end{itemize}
+    \item CU-CLI-008-E3: Error al generar o persistir el código QR.
+    \begin{itemize}
+        \item En los pasos 8--9, si la generación o persistencia del token falla, el sistema muestra el mensaje ``No se pudo generar el código QR. Inténtalo de nuevo.'' y habilita el reintento desde el paso 7. El pedido permanece en su estado actual sin modificaciones.
+    \end{itemize}
+    \item CU-CLI-008-E4: Pérdida de la conexión de tiempo real durante el seguimiento.
+    \begin{itemize}
+        \item En el paso 5, si la conexión WebSocket / SSE se interrumpe, el sistema muestra el indicador ``Actualización en tiempo real desconectada'' con reconexión automática. La barra de progreso muestra el último estado conocido. El cliente puede recargar la URL original para obtener el estado actualizado.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Si se generó un código QR: se crea un registro CodigoVerificacionQR con estado = ACTIVO en la base de datos.
+    \item Tras el escaneo exitoso: CodigoVerificacionQR.estado = CONSUMIDO y Pedido.estado = ENTREGADO (persistido en postcondición de CU-ENT-005).
+    \item Tras la entrega o cancelación: PedidoAccesoAnonimo.estado = INACTIVO, invalidando el token para accesos futuros.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-CLI-016, REQ-CLI-017, REQ-CLI-018.
+    \item Reglas de Negocio Aplicadas: RN-CLI-025, RN-CLI-026, RN-CLI-027, RN-CLI-028, RN-CLI-029, RN-CLI-030.
+\end{itemize}
+
