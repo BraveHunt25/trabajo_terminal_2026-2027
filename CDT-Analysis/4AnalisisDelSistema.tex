@@ -1276,7 +1276,7 @@ Estas reglas no están contenidas en un único módulo; son variantes del sistem
 \setlength{\LTright}{\fill}
 
 \begin{longtable}[c]{l p{2.1cm} p{2.1cm} p{8cm} p{4cm} p{3cm}}
-\caption{\textsc{Reglas de negocio transversales para múltiples módulos.}} \label{tab:reglas-negocio-transversales-multiples-modulos}\\
+\caption{\textsc{Reglas de negocio transversales para múltiples módulos.}} \label{tab:reglas-negocio-transversales-multiples-módulos}\\
 \toprule
 \textbf{ID} & \textbf{Título} & \textbf{Taxonomía} & \textbf{Descripción Anatómica} & \textbf{Entidades Acopladas} & \textbf{Interfaz Origen} \\
 \midrule
@@ -1336,3 +1336,39 @@ En segundo lugar, el Módulo mánager emite parámetros de configuración global
 El Módulo mánager concentra la mayor densidad de casos de uso del sistema (10 en total), correspondiente a su rol como rector de todas las entidades maestras. El mánager es el único actor de este módulo y accede mediante credenciales individuales de rol mánager (CU-MGR-001). Los casos de uso de gestión de empleados (CU-MGR-003) incluyen de forma obligatoria la asociación de estaciones de trabajo (CU-MGR-004), modelada como relación <<include>> dado que ningún alta de empleado tiene sentido funcional sin al menos una estación asignada.  
 
 De forma análoga, la gestión de productos del menú (CU-MGR-005) incluye la definición de receta (CU-MGR-006), dado que el invariante de distribución completa de ingredientes en pasos de preparación es una precondición obligatoria para persistir cualquier producto. La configuración global del sistema (CU-MGR-009) actúa como proveedor de parámetros para los cuatro módulos operativos restantes, estableciendo la dependencia de configuración representada en el diagrama de contexto. 
+
+\subsection{Diagrama del módulo de caja - POS (CAJ)}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Caja/Flujo Detallado del Módulo de Caja.svg}
+    \caption{Flujo detallado del módulo de caja (CAJ).}
+    \label{fig:casos_uso_caja}
+\end{figure}
+
+El Módulo Caja modela el flujo operativo del punto de venta presencial. La autenticación (CU-CAJ-001) se realiza mediante credencial de estación compartida, a diferencia del modelo de credencial individual utilizado en los módulos mánager y Cocina. El caso de uso de mayor criticidad es la creación de pedidos (CU-CAJ-003), que incluye de forma obligatoria la personalización de ingredientes y ejecuta la transacción atómica de persistencia del Pedido, decremento de stock de Insumo y notificación al KDS.  
+
+La relación de extensión entre CU-CAJ-006 y CU-CAJ-005 refleja que el proceso de corte de caja puede extenderse con la regularización de pagos pendientes antes de cerrar el turno, siendo este comportamiento condicional y no obligatorio. Al confirmar el pago, CU-CAJ-003 genera un ticket digital (URL con código QR) dirigido a la interfaz de Acceso Anónimo CLI-16 para pedidos sin cliente autenticado (Pedido.cliente\_id IS NULL), sustituyendo completamente el comprobante físico. CU-CAJ-007, modelado como extensión de CU-CAJ-003, se activa condicionalmente cuando Pedido.tipo $=$ ANTICIPADO para programar la ventana de recolección antes de enviar el pedido al KDS. 
+
+\subsection{Diagrama del módulo de caja cocina - KDS (COC)}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Cocina/Flujo Detallado del Módulo de Cocina.svg}
+    \caption{Flujo detallado del módulo de cocina (COC).}
+    \label{fig:casos_uso_cocina}
+\end{figure}
+
+El Módulo Cocina modela el KDS (Kitchen Display System), cuya función central es la visualización y gestión del avance de preparación de pedidos. Se identifican dos niveles de actor: el Cocinero base, que accede al tablero y completa pasos de preparación, y el Cocinero con Sub-Asignación, que hereda todas las capacidades del cocinero base y adicionalmente puede gestionar asignaciones de estaciones de personal (CU-COC-005). Esta especialización está condicionada al atributo Empleado.permite\_sub\_asignacion $=$ true.  
+
+La consulta de receta completa (CU-COC-004) se modela como extensión de la visualización del tablero (CU-COC-002), dado que se activa opcionalmente al pulsar sobre una tarjeta de paso, sin modificar el estado de ninguna entidad. La completación de un paso (CU-COC-003) incluye obligatoriamente la evaluación y liberación del grafo de dependencias (DAG), cuyo resultado puede propagar el estado PREPARADO al Módulo Entrega cuando todos los pasos del pedido se completan. 
+
+\subsection{Diagrama del módulo de entrega (ENT)}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Entrega/Flujo Detallado del Módulo de Entrega.svg}
+    \caption{Flujo detallado del módulo de entrega (ENT).}
+    \label{fig:casos_uso_entrega}
+\end{figure}
+
+El Módulo Entrega gestiona el ciclo de despacho de pedidos preparados. La autenticación (CU-ENT-001) sigue el mismo modelo de credencial de estación compartida que el Módulo Caja. El tablero de despacho (CU-ENT-002) consume en tiempo real los estados publicados por el Módulo Cocina, aplicando dos algoritmos independientes de prioridad: urgencia (para pedidos EN\_PREPARACION) y merma (para pedidos LISTO\_PARA\_DESPACHO), cuyos umbrales son configurables desde el Módulo mánager.  
+
+La gestión de pago y despacho (CU-ENT-004) incluye obligatoriamente la verificación de identidad por QR (CU-ENT-005), modelada como <<include>> dado que ningún pedido puede ser entregado sin validar el protocolo de cuatro pasos sobre el CodigoVerificacionQR. La cancelación (CU-ENT-003) propaga notificaciones tanto al Módulo Cocina como, condicionalmente, al Módulo Cliente cuando el pedido fue originado por la aplicación de autoservicio.

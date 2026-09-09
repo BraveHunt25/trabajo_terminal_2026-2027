@@ -1,0 +1,36 @@
+@startuml "Flujo Detallado del Módulo de Caja"
+left to right direction
+
+skinparam linetype ortho
+
+actor "Cajero" as casher
+
+rectangle "Módulo de Mánager (CAJ)" {
+    usecase "CU-CAJ-001:\nAutenticar (Estación)" as CUCAJ001
+    usecase "CU-CAJ-002:\nConsultar Dashboard" as CUCAJ002
+    usecase "CU-CAJ-003:\nCrear Pedido" as CUCAJ003
+    usecase "CU-CAJ-004:\nAjustar Inventario" as CUCAJ004
+    usecase "CU-CAJ-005:\nConsultar Historial/\nPago" as CUCAJ005
+    usecase "CU-CAJ-006:\nCorte de Caja\ny Cierre" as CUCAJ006
+    usecase "CU-CAJ-007:\nProgramar Pedido\nAnticipado" as CUCAJ007
+
+    CUCAJ007 .> CUCAJ003 : <<extend>>
+    CUCAJ005 .> CUCAJ006 : <<extend>>
+}
+
+rectangle "Sistemas Externos"{
+    actor "Módulo de Cocina\n(KDS)" as KDS <<System>>
+    actor "Módulo del Cliente\n(Anónimo)" as anon_cliente <<System>>
+    actor "Módulo de Mánager" as manager <<System>>
+}
+
+casher -- CUCAJ001
+casher -- CUCAJ002
+casher -- CUCAJ003
+casher -- CUCAJ005
+casher -- CUCAJ006
+
+CUCAJ003 -- anon_cliente
+CUCAJ003 -- KDS
+CUCAJ005 -- manager
+@enduml

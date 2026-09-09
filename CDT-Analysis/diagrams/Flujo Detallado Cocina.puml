@@ -1,0 +1,34 @@
+@startuml "Flujo Detallado del Módulo de Cocina"
+left to right direction
+
+skinparam linetype ortho
+
+actor "Cocinero" as kitchen
+actor "Cocinero con\nSub-asignación" as sub_kitchen
+kitchen <|- sub_kitchen
+
+rectangle "Módulo de Cocina(COC)" {
+    usecase "CU-COC-001:\nAutenticar\nen el KDS" as CUCOC001
+    usecase "CU-COC-002:\nVisualizar Tablero\nKDS" as CUCOC002
+    usecase "CU-COC-003:\nCompletar Paso\nde Preparación" as CUCOC003
+    usecase "CU-COC-004:\nConsultar Receta\nCompleta" as CUCOC004
+    usecase "CU-COC-005:\nSub-asignar\nEstaciones" as CUCOC005
+
+    CUCOC004 .> CUCOC002 : <<extend>>
+}
+
+rectangle "Sistemas Externos"{
+    actor "Módulo de Caja" as caja <<System>>
+    actor "Módulo del Cliente" as cliente <<System>>
+    actor "Módulo de Entrega" as delivery <<System>>
+}
+
+kitchen -- CUCOC001
+kitchen -- CUCOC002
+kitchen -- CUCOC003
+sub_kitchen -- CUCOC005
+
+CUCOC002 -- cliente
+CUCOC002 -- caja
+CUCOC003 -- delivery
+@enduml
