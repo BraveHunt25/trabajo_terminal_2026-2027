@@ -2442,3 +2442,688 @@ La gestión del carrito (CU-CLI-004) incluye la selección de ventana y confirma
     \item Reglas de Negocio Aplicadas: RN-CLI-025, RN-CLI-026, RN-CLI-027, RN-CLI-028, RN-CLI-029, RN-CLI-030.
 \end{itemize}
 
+\subsection{MÓDULO DE COCINA}
+\subsubsection{CU-COC-001: AUTENTICACIÓN DEL COCINERO}
+\paragraph{Descripción:} Permite al empleado de cocina acceder al módulo KDS mediante sus credenciales individuales, validando su identidad y la existencia de al menos una estación de cocina activa asignada a su perfil, con registro de auditoría del evento de inicio de sesión.
+
+\paragraph{Actor Principal:} Cocinero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema de auditoría (HistorialDeMovimientos).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El mánager ha registrado al empleado (CU-MGR-003) y el empleado ha completado el flujo de onboarding estableciendo su contraseña.
+    \item[II.] El empleado tiene al menos una AsignacionEstacion activa con Estacion.tipo = COCINA.
+    \item[III.] No existe sesión activa de cocinero en el dispositivo.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cocinero accede a la URL del módulo Cocina y el sistema detecta la ausencia de un token de sesión válido.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la interfaz COC-01 con el formulario de autenticación.
+    \item[II.] El cocinero introduce su identificador de usuario y contraseña.
+    \item[III.] El cocinero activa el botón ``Login''.
+    \item[IV.] El sistema valida el formato de los campos: ambos deben ser no nulos.
+    \item[V.] El sistema consulta la entidad Empleado filtrando por el identificador provisto.
+    \item[VI.] El sistema ejecuta la comparación del hash de la contraseña ingresada contra Empleado.hash\_contrasena.
+    \item[VII.] El sistema consulta la entidad AsignacionEstacion para el Empleado.id\_empleado autenticado y evalúa la vigencia de cada asignación: las de tipo TEMPORAL se consideran inactivas si fecha\_hora\_actual $>$ 23:59:59 del día de creación.
+    \item[VIII.] El sistema verifica que al menos una asignación activa tenga Estacion.tipo = COCINA.
+    \item[IX.] El sistema genera un token de sesión con perfil COCINERO, vinculado al Empleado.id\_empleado y al conjunto de estaciones de tipo COCINA activas del empleado.
+    \item[X.] El sistema registra un evento en HistorialDeMovimientos con concepto INICIO\_SESION y el Empleado.id\_empleado como responsable.
+    \item[XI.] El sistema redirige al cocinero a la interfaz COC-02 (KDS Principal).
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item Ninguno definido para este caso de uso.
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-COC-001-E1: Credenciales inválidas (Se gatilla en el paso 6 cuando el hash no coincide).
+    \begin{itemize}
+        \item El sistema no establece la sesión y despliega el mensaje: ``Credenciales inválidas.''
+        \item El estado del sistema retorna a la precondición inicial.
+    \end{itemize}
+    \item CU-COC-001-E2: Empleado sin estaciones de cocina activas (Se gatilla en el paso 8 cuando todas las asignaciones de cocina han expirado o no existen).
+    \begin{itemize}
+        \item El sistema rechaza la autenticación y despliega el mensaje: ``No tiene estaciones de cocina activas asignadas. Contacte al mánager.''
+        \item El estado del sistema retorna a la precondición inicial. El módulo Cocina no dispone de enlace de recuperación de contraseña. La gestión de credenciales del personal es responsabilidad exclusiva del mánager (CU-MGR-003). Esta restricción es consistente con el modelo de credenciales individuales de empleado y el principio de mínimo privilegio: los cocineros no deben poder modificar sus propias credenciales.
+    \end{itemize}
+    \item CU-COC-001-E3: Todas las asignaciones temporales han expirado (Se gatilla en el paso 7 cuando el empleado solo tiene asignaciones de tipo TEMPORAL y todas han expirado a las 23:59:59).
+    \begin{itemize}
+        \item El sistema evalúa que no existen asignaciones activas y procede como en CU-COC-001-E2.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Token de sesión con perfil COCINERO generado y activo.
+    \item HistorialDeMovimientos: registro con concepto = INICIO\_SESION.
+    \item El sistema carga el conjunto de estaciones de tipo COCINA activas para poblar el selector de estaciones en COC-02.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-COC-001 (Autenticación individual del cocinero).
+    \item Reglas de Negocio Aplicadas: RN-COC-001 (Autenticación con validación de estación activa), RN-COC-002 (Vigencia de asignaciones temporales en Login), RN-MGR-008 (Expiración de asignaciones temporales), RN-SYS-002 (Registro en bitácora), RN-SYS-004 (Sesión activa como precondición global).
+\end{itemize}
+
+\subsubsection{CU-COC-002: VISUALIZACIÓN DEL KDS --- TABLERO DE PASOS DE PREPARACIÓN}
+\paragraph{Descripción:} Constituye la función central del módulo KDS: presenta al cocinero en tiempo real los pasos de preparación pendientes correspondientes a la estación de trabajo seleccionada, con sus indicadores visuales de urgencia, agrupaciones por producto y los filtros de visualización disponibles, sin modificar el estado de ningún paso.
+
+\paragraph{Actor Principal:} Cocinero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo Caja (fuente de los pedidos encolados), Módulo Entrega (consume el estado de completitud del pedido), servidor KMS (canal de notificación en tiempo real).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil COCINERO.
+    \item[II.] El cocinero tiene al menos una estación de tipo COCINA asignada y activa.
+    \item[III.] Existen pedidos con estado EN\_PREPARACION encolados desde el módulo Caja cuyos pasos de preparación han sido asignados a la estación activa en la sesión.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cocinero autentica exitosamente (postcondición de CU-COC-001) o regresa al tablero principal desde cualquier interfaz del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la interfaz COC-02 con el selector de estación en la esquina superior derecha, precargado con la primera estación activa asignada al cocinero.
+    \item[II.] El cocinero selecciona la estación de trabajo activa desde el dropdown; el sistema registra la estación seleccionada en la sesión y recarga el tablero.
+    \item[III.] El sistema ejecuta la consulta de pasos visibles para la estación activa aplicando la condición triple: (a) EstacionPaso.id\_estacion = estacion\_activa; (b) PasoPedidoEstado.estado = PENDIENTE; (c) todos los predecesores en DependenciaPasoPedido tienen estado = COMPLETADO.
+    \item[IV.] El sistema calcula el nivel de urgencia de cada paso mediante la expresión: nivel = URGENTE si (NOW() $-$ PasoPedidoEstado.Timestamp\_inicio) / (PasoReceta.tiempo\_estimado $\times$ 60) $\ge$ ConfiguracionSistema.porcentaje\_urgencia.
+    \item[V.] El sistema renderiza las tarjetas de paso ordenadas por prioridad, con las tres primeras tarjetas resaltadas visualmente, mostrando por cada una: nombre del producto, número de pedido, tiempo transcurrido y barra de progreso (negro si NO\_URGENTE, rojo si URGENTE), descripción del paso e ingredientes con cantidades.
+    \item[VI.] El sistema renderiza el drawer inferior de ``Resumen de pedidos'' con los pasos agrupados por id\_producto.
+    \item[VII.] El sistema establece el mecanismo de actualización en tiempo real (WebSocket o SSE) para recibir nuevos pasos liberados por otras estaciones y la transición de urgencia continua.
+    \item[VIII.] El cocinero visualiza el tablero actualizado; el nivel de urgencia se recalcula de forma continua y el color de los elementos visuales de cada tarjeta se actualiza en consecuencia.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-COC-002-A1: Aplicación de filtro de urgencia (Se gatilla cuando el cocinero activa el filtro ``Urgentes'' o ``No urgentes'').
+    \begin{itemize}
+        \item El sistema aplica el filtro seleccionado: deshabilita visualmente (opacidad reducida) las tarjetas que no cumplen el criterio activo.
+        \item Al activar un filtro, el sistema desactiva automáticamente el filtro alternativo (los dos filtros son mutuamente excluyentes).
+        \item Las tarjetas deshabilitadas permanecen en pantalla, pero no se puede interactuar con ellas.
+        \item El cocinero desactiva el filtro pulsando de nuevo sobre él; el sistema restaura todas las tarjetas al estado habilitado.
+    \end{itemize}
+    \item CU-COC-002-A2: Filtro por producto desde el drawer inferior (Se gatilla cuando el cocinero selecciona un producto en el ``Resumen de pedidos'').
+    \begin{itemize}
+        \item El sistema aplica un resaltado selectivo: las tarjetas del producto seleccionado se mantienen habilitadas, mientras las de otros productos se deshabilitan visualmente.
+        \item Si simultáneamente hay un filtro de urgencia activo, el sistema aplica la intersección lógica AND: solo las tarjetas que cumplen ambos criterios permanecen habilitadas.
+        \item El cocinero deselecciona el producto para restaurar el estado anterior.
+    \end{itemize}
+    \item CU-COC-002-A3: Consulta de detalle de receta (Se gatilla cuando el cocinero pulsa sobre el cuerpo de una tarjeta de paso).
+    \begin{itemize}
+        \item El sistema abre el modal COC-06 (CU-COC-004) con la receta completa del producto asociado al paso.
+        \item La apertura del modal no modifica el estado de ningún paso ni pausa el recálculo de urgencia en el tablero subyacente.
+    \end{itemize}
+    \item CU-COC-002-A4: Cambio de estación activa (Se gatilla cuando el cocinero selecciona una estación distinta en el dropdown).
+    \begin{itemize}
+        \item El sistema registra la nueva estación activa en la sesión.
+        \item El sistema descarga la suscripción de tiempo real de la estación anterior.
+        \item El sistema ejecuta la consulta de pasos para la nueva estación y establece la suscripción de tiempo real correspondiente.
+        \item El tablero se actualiza completamente con los pasos de la nueva estación.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-COC-002-E1: Desconexión del canal de tiempo real (Se gatilla cuando el mecanismo WebSocket / SSE pierde la conexión con el servidor).
+    \begin{itemize}
+        \item El sistema muestra un indicador visual de pérdida de conectividad en la cabecera del tablero.
+        \item El sistema intenta reconectar de forma automática con backoff exponencial.
+        \item Mientras no se restablezca la conexión, el tablero puede contener datos desactualizados; la urgencia se recalcula localmente con las marcas de tiempo disponibles.
+        \item Al restablecer la conexión, el sistema ejecuta una sincronización completa del estado de los pasos con el servidor.
+    \end{itemize}
+    \item CU-COC-002-E2: Sin pasos pendientes para la estación activa (Se gatilla en el paso 3 cuando la consulta no retorna resultados).
+    \begin{itemize}
+        \item El sistema renderiza el mensaje ``No hay pedidos pendientes'' en la zona de contenido del tablero.
+        \item El canal de tiempo real permanece activo para recibir nuevos pasos cuando sean liberados.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item No se persisten cambios en la base de datos desde este caso de uso; la interfaz es de visualización.
+    \item El nivel de urgencia es un valor derivado calculado en tiempo real; no se persiste en la base de datos.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-COC-002 (Visualización del KDS en tiempo real).
+    \item Reglas de Negocio Aplicadas: RN-COC-004 (Condición triple de visibilidad de paso), RN-COC-005 (Algoritmo de urgencia), RN-COC-007 (M de inicio en transición BLOQUEADO$\rightarrow$PENDIENTE), RN-COC-008 (Filtros mutuamente excluyentes), RN-COC-009 (Filtro de producto con intersección AND), RN-SYS-003 (Propagación de transiciones en tiempo real).
+\end{itemize}
+
+\subsubsection{CU-COC-003: COMPLETAR PASO DE PREPARACIÓN}
+\paragraph{Descripción:} Permite al cocinero marcar un paso de preparación como completado, lo que cambia a su estado en el sistema, elimina la tarjeta del display del KDS y libera automáticamente los pasos dependientes en las estaciones asignadas correspondientes.
+
+\paragraph{Actor Principal:} Cocinero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} KDS de otras estaciones (receptoras de los pasos liberados), Módulo Entrega (receptor de la transición final EN\_PREPARACION $\rightarrow$ PREPARADO cuando todos los pasos del pedido están completados).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil COCINERO.
+    \item[II.] Existe al menos una tarjeta de paso en estado PENDIENTE visible en el tablero de la estación activa.
+    \item[III.] El paso por completar tiene PasoPedidoEstado.estado = PENDIENTE y todos sus predecesores están en estado COMPLETADO.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cocinero activa el botón ``Terminar paso'' en la tarjeta del paso que ha concluido físicamente.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El cocinero verifica que ha completado físicamente la tarea descrita en el paso y activa el botón ``Terminar paso'' en la tarjeta correspondiente.
+    \item[II.] El sistema envía una solicitud transaccional al servidor para cambiar a PasoPedidoEstado.estado del paso P de PENDIENTE a COMPLETADO, registrando Timestamp\_fin = NOW().
+    \item[III.] El servidor ejecuta la transición de estado de P de forma atómica.
+    \item[IV.] El servidor evalúa el conjunto de pasos Q tales que existe un registro DependenciaPasoPedido.id\_paso\_predecesor = P. Para cada paso Q donde todos sus predecesores tienen estado = COMPLETADO, el servidor cambia a PasoPedidoEstado.estado de BLOQUEADO a PENDIENTE y establece Timestamp\_inicio = NOW().
+    \item[V.] El servidor verifica si todos los PasoPedidoEstado del pedido asociado al paso P tienen estado = COMPLETADO. Si es así, el servidor cambia a Pedido.estado de EN\_PREPARACION a PREPARADO y notifica al módulo Entrega.
+    \item[VI.] El servidor propaga vía WebSocket / SSE: (a) la eliminación de la tarjeta del paso P del tablero de la estación activa; (b) la aparición de las nuevas tarjetas de los pasos Q liberados en los tableros de sus estaciones asignadas.
+    \item[VII.] El tablero del cocinero actualiza su vista, eliminando la tarjeta del paso completado.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item Ninguno definido para este caso de uso.
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-COC-003-E1: Error de concurrencia --- paso ya completado por otra sesión (Se gatilla en el paso 3 cuando el servidor detecta que PasoPedidoEstado.estado ya no es PENDIENTE en el momento de la transición).
+    \begin{itemize}
+        \item El servidor rechaza la operación e informa al cliente del estado actual del paso.
+        \item El sistema del cocinero recibe el rechazo y elimina la tarjeta del display (ya que el paso fue completado por otra acción).
+        \item Los pasos dependientes ya habrán sido liberados por la acción que completó el paso primero. En un entorno con múltiples estaciones y posible duplicación de roles, un paso podría ser completado concurrentemente desde dos estaciones. El servidor debe implementar un bloqueo optimista (check-and-set) sobre PasoPedidoEstado.estado para garantizar que solo una transición sea exitosa, y propagar el resultado actualizado a todos los displays mediante el canal de tiempo real.
+    \end{itemize}
+    \item CU-COC-003-E2: Pérdida de conexión durante la transición (Se gatilla en el paso 2 cuando la red no está disponible en el momento de la solicitud).
+    \begin{itemize}
+        \item El sistema muestra un indicador de error de conectividad en la tarjeta del paso.
+        \item El botón ``Terminar paso'' permanece activo para que el cocinero pueda reintentar cuando la conexión se restablezca.
+        \item El estado del paso no cambia en el servidor.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item PasoPedidoEstado: el paso P cambia a estado = COMPLETADO con Timestamp\_fin registrado.
+    \item PasoPedidoEstado: los pasos Q dependientes de P cambia de BLOQUEADO a PENDIENTE con Timestamp\_inicio = NOW().
+    \item Si todos los pasos del pedido están COMPLETADO: Pedido.estado cambia a de EN\_PREPARACION a PREPARADO; el módulo Entrega recibe la notificación.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-COC-003 (Completar pasos de preparación y liberación de dependencias).
+    \item Reglas de Negocio Aplicadas: RN-COC-004 (Condición triple de visibilidad), RN-COC-006 (Liberación de pasos bloqueados al completar predecesor), RN-COC-007 (marca de tiempo de inicio en transición BLOQUEADO$\rightarrow$PENDIENTE), RN-SYS-003 (Propagación de transiciones en tiempo real), RN-SYS-005 (Máquina de estados del pedido).
+\end{itemize}
+
+\subsubsection{CU-COC-004: CONSULTA DE RECETA COMPLETA DEL PEDIDO}
+\paragraph{Descripción:} Proporciona al cocinero una vista de solo lectura de todos los pasos de la receta de un producto específico dentro de un pedido activo, con el estado de completitud actualizado de cada paso al momento de apertura, los ingredientes requeridos, la estación responsable y las dependencias entre pasos, para facilitar la coordinación entre estaciones.
+
+\paragraph{Actor Principal:} Cocinero.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] CU-COC-002 activo. El cocinero ha pulsado sobre el cuerpo de una tarjeta de paso en el tablero.
+    \item[II.] El pedido asociado al paso está en estado EN\_PREPARACION.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cocinero pulsa sobre el área de cuerpo de una tarjeta de paso en COC-02 (cualquier área excepto el botón ``Terminar paso'').
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema obtiene el snapshot de la receta del producto para el pedido activo consultando PasoRecetaPedido, IngredientePasoPedido, EstacionPasoPedido y PasoPedidoEstado.
+    \item[II.] El sistema abre el modal COC-06 sobre el tablero del KDS.
+    \item[III.] El modal muestra en el encabezado el nombre del producto y el número de pedido.
+    \item[IV.] El sistema renderiza por cada paso de la receta (ordenados por PasoReceta.orden): la descripción del paso, los ingredientes con cantidad y unidad de medida, la estación asignada y el indicador de completitud (COMPLETADO con ícono de check o pendiente sin marcador).
+    \item[V.] El cocinero consulta la información para coordinar con otras estaciones.
+    \item[VI.] El cocinero cierra el modal mediante el ícono de cierre (X).
+    \item[VII.] El sistema cierra el modal y retorna al estado previo de COC-02 sin alterar ningún estado de paso.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item Ninguno definido para este caso de uso; el modal es de solo lectura sin acciones alternativas.
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-COC-004-E1: Pedido cancelado durante la visualización del modal (Se gatilla cuando el módulo Entrega cancela el pedido mientras el modal está abierto).
+    \begin{itemize}
+        \item El servidor propaga la cancelación al canal de tiempo real del módulo Cocina.
+        \item El modal, al ser de solo lectura y no sincronizarse en tiempo real, no refleja el cambio automáticamente.
+        \item Al cerrar el modal y retornar a COC-02, el tablero ya no muestra las tarjetas del pedido cancelado. El modal no se actualiza en tiempo real mientras está abierto, dado que su propósito es informativo puntual. Esta es una decisión de diseño intencional para evitar complejidad innecesaria en la interfaz del cocinero durante el período de consulta.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item No se persisten cambios en la base de datos; el modal es estrictamente de solo lectura.
+    \item El estado de COC-02 permanece inalterado al cerrar el modal.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-COC-004 (Consulta de receta completa del pedido).
+    \item Reglas de Negocio Aplicadas: RN-COC-012 (Modal de receta de solo lectura y no sincronizado en tiempo real), RN-MGR-023 (Snapshot de receta en historial de pedidos).
+\end{itemize}
+
+\subsubsection{CU-COC-005: SUB-ASIGNACIÓN DE ESTACIONES A PERSONAL (VISTA COCINERO)}
+\paragraph{Descripción:} Permite al cocinero con permiso de sub-asignación habilitado modificar las asignaciones de estaciones de trabajo de otros empleados, dentro del alcance de temporalidad que le ha sido autorizado por el mánager, sin posibilidad de modificar datos de identidad del empleado ni crear nuevos registros de personal.
+
+\paragraph{Actor Principal:} Cocinero (con Empleado.permite\_sub\_asignacion = true).
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema de auditoría (HistorialDeMovimientos).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil COCINERO.
+    \item[II.] Empleado.permite\_sub\_asignacion = true para el cocinero autenticado.
+    \item[III.] Existe al menos una estación de tipo COCINA o CAJA registrada en el sistema.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El cocinero activa el botón ``Asignar personal'' visible en la variante COC-02-B del tablero KDS (solo visible cuando permite\_sub\_asignacion = true).
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema redirige al cocinero a COC-03 (Dashboard de Gestión de Personal).
+    \item[II.] El sistema carga el directorio de empleados agrupados por puesto, con sus estaciones asignadas actuales.
+    \item[III.] El cocinero localiza al empleado deseado mediante la barra de búsqueda (filtra por nombre, puesto o nombre de estación) o mediante navegación por el listado.
+    \item[IV.] El cocinero activa el botón ``Editar'' sobre la card del empleado.
+    \item[V.] El sistema abre el drawer COC-04 con los datos del empleado precargados: nombre, puesto (solo lectura), turno (solo lectura) y lista de estaciones actualmente asignadas.
+    \item[VI.] El cocinero modifica las asignaciones de estaciones: agrega nuevas mediante el botón ``+'' (que invoca el modal COC-05) o remueve existentes mediante ``Remover asignación''.
+    \item[VII.] El sistema valida la restricción de tipo único: solo permite agregar estaciones del mismo tipo que las ya existentes para el empleado.
+    \item[VIII.] El sistema valida que el tipo de temporalidad seleccionado esté incluido en Empleado.tipo\_sub\_asignacion del cocinero autenticado.
+    \item[IX.] El cocinero activa ``Guardar''.
+    \item[X.] El sistema persiste los cambios en AsignacionEstacion.
+    \item[XI.] El sistema registra el evento en HistorialDeMovimientos con concepto ASOCIACION\_PERSONAL\_ESTACION y el id\_empleado del cocinero como responsable.
+    \item[XII.] El sistema cierra el drawer y retorna a COC-03.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-COC-005-A1: Cancelación del drawer (Se gatilla cuando el cocinero activa ``Cancelar'').
+    \begin{itemize}
+        \item El sistema descarta todos los cambios locales no persistidos.
+        \item El sistema cierra el drawer y retorna a COC-03 sin modificar ningún registro.
+    \end{itemize}
+    \item CU-COC-005-A2: Selección de estación a agregar (Se gatilla cuando el cocinero activa el botón ``+'' en el drawer COC-04).
+    \begin{itemize}
+        \item El sistema abre el modal COC-05 con la tabla de estaciones compatibles filtradas por el tipo ya asociado al empleado.
+        \item El cocinero selecciona la estación deseada y activa ``Agregar''.
+        \item El sistema agrega la estación a la lista pendiente de guardar en el drawer COC-04.
+        \item El modal COC-05 se cierra y el flujo retorna al paso 6 del Flujo Principal.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-COC-005-E1: Tipo de temporalidad no autorizado para el cocinero (Se gatilla en el paso 8 cuando el cocinero intenta asignar un tipo de temporalidad no incluido en su tipo\_sub\_asignacion).
+    \begin{itemize}
+        \item El sistema rechaza la configuración y muestra un mensaje de error: ``No tiene autorización para realizar asignaciones de tipo [TIPO\_SOLICITADO].''
+        \item El sistema elimina la fila de asignación no válida del formulario.
+    \end{itemize}
+    \item CU-COC-005-E2: Violación de unicidad de tipo de estación (Se gatilla en el paso 7 cuando se intenta agregar una estación de tipo incompatible).
+    \begin{itemize}
+        \item El sistema rechaza la asociación y despliega el mensaje equivalente al definido en CU-MGR-003-E3.
+        \item La lista de estaciones en el drawer no se modifica.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item AsignacionEstacion: se crean o eliminan registros para el empleado editado.
+    \item HistorialDeMovimientos: registro con concepto = ASOCIACION\_PERSONAL\_ESTACION, id\_responsable = id\_empleado\_cocinero.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-COC-005 (Sub-asignación de estaciones por cocinero autorizado).
+    \item Reglas de Negocio Aplicadas: RN-COC-003 (Visibilidad del botón condicionada al atributo), RN-COC-010 (Alcance de temporalidad limitado al perfil del cocinero), RN-COC-011 (Datos de identidad de solo lectura para el cocinero), RN-MGR-007 (Unicidad de tipo de estación), RN-MGR-011 (Alcance del permiso de sub-asignación), RN-MGR-012 (Alta restringida al mánager), RN-SYS-002 (Registro en bitácora).
+\end{itemize}
+
+\subsection{MÓDULO DE ENTREGA}
+\subsubsection{CU-ENT-001: AUTENTICACIÓN DEL OPERADOR DE ENTREGA MEDIANTE CREDENCIAL DE ESTACIÓN}
+\paragraph{Descripción:} Permite al operador de entrega acceder al módulo de Entrega mediante la credencial compartida de la estación. El sistema valida las credenciales y establece la sesión operativa, habilitando el acceso al tablero de despacho y todas las funciones del puesto de entrega.
+
+\paragraph{Actor Principal:} Operador de Entrega.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema de gestión de sesiones (servidor local KMS).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] La estación de trabajo de Entrega está operativa y conectada a la red intranet.
+    \item[II.] Existe al menos un registro CredencialEstacion activo con tipo = ENTREGA en la base de datos.
+    \item[III.] El servidor KMS está en línea y el servicio de autenticación responde dentro del tiempo de espera configurado.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El operador navega a la URL del módulo de Entrega en el navegador del puesto de trabajo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla ENT-01 con los campos de entrada para identificador y contraseña de la estación de entrega.
+    \item[II.] El operador introduce el identificador de la credencial de estación (E: campo identificador).
+    \item[III.] El operador introduce la contraseña de la estación (E: campo contraseña, con máscara de caracteres).
+    \item[IV.] El operador activa la acción de inicio de sesión.
+    \item[V.] El sistema envía las credenciales al servidor de autenticación mediante una solicitud segura sobre la red intranet.
+    \item[VI.] El servidor valida que el par identificador / contraseña corresponde a un registro CredencialEstacion con tipo = ENTREGA y estado = ACTIVO.
+    \item[VII.] El servidor genera un token de sesión y lo asocia a la estación de entrega.
+    \item[VIII.] El sistema registra el evento de inicio de sesión en HistorialDeMovimientos con marca de tiempo y origen.
+    \item[IX.] El sistema redirige al operador al Tablero de Pedidos en Despacho (ENT-02) con la sesión activa.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-ENT-001-A1: La estación de entrega no tiene credencial configurada.
+    \begin{itemize}
+        \item En el paso 6, si no existe ninguna CredencialEstacion de tipo ENTREGA activa, el sistema muestra un mensaje informativo indicando que la estación no está configurada y presenta instrucciones para contactar al mánager. El flujo termina.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-ENT-001-E1: Credenciales incorrectas.
+    \begin{itemize}
+        \item En el paso 6, si el par identificador / contraseña no corresponde a ningún registro activo, el sistema incrementa el contador de intentos fallidos y presenta un mensaje de error genérico (``Credenciales inválidas'') sin revelar información sobre la existencia del registro. El flujo retorna al paso 1. Contador de intentos para mitigación de fuerza bruta en la intranet; coherente con el modelo de seguridad aplicado en los demás módulos de estación.
+    \end{itemize}
+    \item CU-ENT-001-E2: Servidor KMS no disponible.
+    \begin{itemize}
+        \item En el paso 5, si la solicitud no recibe respuesta dentro del tiempo de espera definido, el sistema muestra el mensaje ``No se pudo conectar con el servidor. Verifique la conexión de red.'' y habilita un botón de reintento. El flujo retorna al paso 4. Patrón timeout + retry para sistemas críticos de despacho sobre intranet.
+    \end{itemize}
+    \item CU-ENT-001-E3: Credencial de estación desactivada.
+    \begin{itemize}
+        \item En el paso 6, si la CredencialEstacion existe, pero estado $\neq$ ACTIVO, el sistema rechaza el acceso con el mensaje ``La credencial de esta estación ha sido desactivada. Contacte al mánager.'' El flujo termina.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Se crea o actualiza un registro de sesión activa asociado a la CredencialEstacion de tipo ENTREGA.
+    \item El evento de inicio de sesión queda persistido en HistorialDeMovimientos.
+    \item El operador tiene acceso completo al Tablero de Pedidos en Despacho y a todas las funciones del módulo.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-ENT-001, REQ-ENT-002, REQ-SYS-001.
+    \item Reglas de Negocio Aplicadas: RN-ENT-001.
+\end{itemize}
+
+\subsubsection{CU-ENT-002: CONSULTA DEL TABLERO DE PEDIDOS EN DESPACHO}
+\paragraph{Descripción:} Permite al operador de entrega visualizar en tiempo real el estado de todos los pedidos pendientes de despacho, ordenados por prioridad según los algoritmos de urgencia y merma configurados. Este caso de uso es el punto de control central del módulo de Entrega y guía las decisiones de despacho del operador.
+
+\paragraph{Actor Principal:} Operador de Entrega.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo de Cocina (KDS, fuente de actualizaciones de estado de pedidos), sistema KMS (WebSocket / SSE para tiempo real).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El operador tiene una sesión activa en el módulo de Entrega (postcondición de CU-ENT-001).
+    \item[II.] El sistema KMS está operativo y el flujo de actualización de estados de pedidos desde el módulo de Cocina está activo.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El operador completa el proceso de autenticación (CU-ENT-001) exitosamente, o navega manualmente al tablero desde cualquier sección del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pantalla ENT-02 con el tablero de pedidos en despacho.
+    \item[II.] El sistema consulta todos los pedidos con estado = EN\_PREPARACION o estado = LISTO\_PARA\_DESPACHO.
+    \item[III.] Para los pedidos EN\_PREPARACION, el sistema calcula el indicador de urgencia basado en el porcentaje de tiempo transcurrido respecto al tiempo estimado de preparación: verde ($<$ umbral\_amarillo\%), amarillo ($\ge$ umbral\_amarillo\%), rojo ($\ge$ umbral\_rojo\%). Los valores de umbral son configurables en ConfiguracionSistema.
+    \item[IV.] Para los pedidos LISTO\_PARA\_DESPACHO, el sistema calcula el indicador de merma basado en el tiempo transcurrido desde que el pedido alcanzó el estado LISTO: verde ($<$ umbral\_merma\_amarillo\%), amarillo ($\ge$ umbral\_merma\_amarillo\%), rojo ($\ge$ umbral\_merma\_rojo\%).
+    \item[V.] El sistema presenta los pedidos ordenados: primero los LISTO\_PARA\_DESPACHO por indicador de merma descendente, luego los EN\_PREPARACION por indicador de urgencia descendente.
+    \item[VI.] El sistema muestra para cada pedido: número de pedido, ítems, cliente (si aplica), estado, indicador de color, tiempo transcurrido y ventana de recolección comprometida.
+    \item[VII.] El sistema establece una conexión de tiempo real (WebSocket / SSE) para recibir actualizaciones automáticas de estado sin recargar la página.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-ENT-002-A1: No hay pedidos activos en despacho.
+    \begin{itemize}
+        \item En el paso 2, si la consulta no retorna ningún pedido en los estados indicados, el sistema muestra el mensaje ``No hay pedidos pendientes de despacho en este momento.'' El tablero se mantiene activo con la conexión de tiempo real para recibir nuevos pedidos.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-ENT-002-E1: Pérdida de la conexión de tiempo real.
+    \begin{itemize}
+        \item En el paso 7, si la conexión WebSocket / SSE se interrumpe, el sistema muestra un indicador de ``Actualización en tiempo real desconectada'' y ejecuta reconexión automática con backoff exponencial. El tablero continúa mostrando el último estado conocido hasta que la conexión se reestablezca. El estado congelado del tablero es operativamente preferible a una pantalla de error; el operador puede continuar gestionando los pedidos ya visibles mientras se reestablece la conexión.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item No se producen modificaciones en la base de datos durante la consulta del tablero.
+    \item El tablero refleja el estado de los pedidos en tiempo real mediante la conexión activa.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-ENT-003, REQ-ENT-004, REQ-ENT-005.
+    \item Reglas de Negocio Aplicadas: RN-ENT-002, RN-ENT-003, RN-ENT-004.
+\end{itemize}
+
+\subsubsection{CU-ENT-003: CANCELACIÓN DE PEDIDO EN DESPACHO}
+\paragraph{Descripción:} Permite al operador de entrega cancelar un pedido que se encuentra en proceso de preparación o listo para despacho, documentando el motivo de cancelación mediante un concepto normalizado del catálogo. La cancelación propaga el cambio de estado al KDS y notifica al módulo del Cliente cuando aplica.
+
+\paragraph{Actor Principal:} Operador de Entrega.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo de Cocina (KDS, receptor de la notificación de cancelación), módulo del Cliente (notificación de cancelación al cliente si el pedido fue realizado por la aplicación).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El operador tiene una sesión activa en el módulo de Entrega.
+    \item[II.] El pedido a cancelar existe en la base de datos con estado = EN\_PREPARACION o estado = LISTO\_PARA\_DESPACHO.
+    \item[III.] Existen conceptos de cancelación normalizados configurados en el sistema (MotivoCancelacion).
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El operador selecciona la opción ``Cancelar pedido'' sobre un pedido en el tablero ENT-02.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema navega a la pantalla de cancelación (ENT-03) mostrando el detalle del pedido seleccionado: número, ítems, estado actual y tiempo en estado.
+    \item[II.] El sistema presenta el catálogo de motivos de cancelación normalizados (MotivoCancelacion) para selección (E: selección del motivo de cancelación).
+    \item[III.] El operador selecciona el motivo de cancelación aplicable.
+    \item[IV.] El sistema muestra la confirmación del motivo seleccionado y solicita confirmación explícita de la cancelación (E: confirmación de la acción de cancelar).
+    \item[V.] El operador confirma la cancelación.
+    \item[VI.] El sistema inicia una transacción atómica: actualiza el estado del Pedido a CANCELADO, registra el MotivoCancelacion seleccionado en el registro de cancelación y la marca de tiempo de cancelación.
+    \item[VII.] El sistema revierte el stock de los insumos afectados por los PedidoItem del pedido cancelado: incrementa Insumo.stock\_actual con las cantidades correspondientes.
+    \item[VIII.] El sistema persiste el evento de cancelación en HistorialDeMovimientos con todos los atributos.
+    \item[IX.] El sistema envía notificación de cancelación al módulo de Cocina (KDS) para actualizar el estado del pedido en el tablero del cocinero.
+    \item[X.] Si el pedido fue generado por el módulo de Cliente, el sistema envía notificación de cancelación al dispositivo del cliente.
+    \item[XI.] El sistema retorna al tablero ENT-02 con el pedido cancelado removido de la lista activa.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-ENT-003-A1: El operador cancela el proceso de cancelación.
+    \begin{itemize}
+        \item En el paso 4, el operador selecciona ``Cancelar'' en el diálogo de confirmación. El sistema descarta la acción sin modificar ningún dato en la base de datos y retorna al tablero ENT-02 con el pedido en su estado original.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-ENT-003-E1: El pedido cambió de estado durante el proceso de cancelación.
+    \begin{itemize}
+        \item En el paso 6, si el pedido ya no tiene el estado esperado (EN\_PREPARACION o LISTO\_PARA\_DESPACHO) al momento de ejecutar la transacción ---por ejemplo, porque fue entregado concurrentemente---, el sistema rechaza la operación y muestra el mensaje ``El pedido ya no puede ser cancelado. Estado actual: [estado].'' El flujo retorna al tablero. Uso de bloqueo optimista (optimistic locking) con validación de estado al momento de commit para prevenir cancelaciones sobre pedidos ya procesados por otro operador o sesión concurrente.
+    \end{itemize}
+    \item CU-ENT-003-E2: Catálogo de motivos de cancelación vacío.
+    \begin{itemize}
+        \item En el paso 2, si no existen MotivoCancelacion configurados en el sistema, el sistema muestra el mensaje ``No hay motivos de cancelación configurados. Contacte al mánager.'' La cancelación no puede ser ejecutada sin un motivo normalizado.
+    \end{itemize}
+    \item CU-ENT-003-E3: Error al notificar al KDS.
+    \begin{itemize}
+        \item En el paso 9, si la notificación al módulo de Cocina falla, la cancelación ya fue persistida en la base de datos. El sistema encola la notificación para reintento y muestra un aviso no bloqueante al operador. El estado del pedido en base de datos es la fuente de verdad; las notificaciones son mecanismos de actualización eventual del KDS.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item El estado del Pedido es actualizado a CANCELADO en la base de datos.
+    \item El stock de los insumos afectados es restituido en Insumo.stock\_actual.
+    \item Se crea un registro de cancelación vinculado al Pedido con el MotivoCancelacion y la marca de tiempo.
+    \item El evento de cancelación queda registrado en HistorialDeMovimientos.
+    \item El KDS recibe (o tiene encolada) la notificación de cancelación.
+    \item El cliente es notificado de la cancelación si el pedido fue originado por el módulo de Cliente.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-ENT-006, REQ-ENT-007, REQ-ENT-008.
+    \item Reglas de Negocio Aplicadas: RN-ENT-005, RN-ENT-006, RN-ENT-007, RN-ENT-008, RN-ENT-009.
+\end{itemize}
+
+\subsubsection{CU-ENT-004: GESTIÓN DE PAGO Y PREPARACIÓN DE DESPACHO DE PEDIDO}
+\paragraph{Descripción:} Permite al operador de entrega gestionar el cobro del pedido y preparar el proceso de despacho para un pedido listo. El flujo se ramifica en tres sub-vistas según el origen del pedido y el estado de pago: pedido de caja ya pagado, pedido de cliente con pago confirmado, o pedido con pago pendiente que debe ser cobrado en entrega.
+
+\paragraph{Actor Principal:} Operador de Entrega.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El operador tiene una sesión activa en el módulo de Entrega.
+    \item[II.] El pedido seleccionado tiene estado = LISTO\_PARA\_DESPACHO.
+    \item[III.] El pedido existe en la base de datos con todos sus PedidoItem asociados.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El operador selecciona un pedido con estado = LISTO\_PARA\_DESPACHO en el tablero ENT-02 para proceder con el despacho.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema navega a la pantalla de detalle del pedido (ENT-04) mostrando: número de pedido, ítems con personalizaciones, total, origen (módulo de caja o módulo de cliente) y estado de pago.
+    \item[II.] El sistema evalúa el estado de pago del pedido para determinar la sub-vista de despacho aplicable:
+    \begin{itemize}
+        \item Sub-vista A (pedido de caja con pago registrado): el sistema muestra directamente el resumen del pedido con el estado ``PAGO REGISTRADO'' y habilita el botón de proceder a verificación de entrega (CU-ENT-005).
+        \item Sub-vista B (pedido de cliente con pago confirmado por el sistema): el sistema muestra el resumen con el estado ``PAGO CONFIRMADO POR APP'' y habilita el botón de proceder a verificación de entrega (CU-ENT-005).
+        \item Sub-vista C (pedido con pago pendiente de cobro en entrega): el sistema muestra el total a cobrar y un campo para registrar el monto recibido del cliente (E: monto recibido).
+    \end{itemize}
+    \item[III.] Para la Sub-vista C: el operador introduce el monto recibido del cliente.
+    \item[IV.] El sistema valida que monto\_recibido $\ge$ total\_pedido.
+    \item[V.] El sistema registra el pago: actualiza el estado de pago del Pedido a pagado y registra el monto y marca de tiempo del cobro.
+    \item[VI.] El sistema calcula y muestra el monto de cambio (S: monto\_recibido - total\_pedido).
+    \item[VII.] El sistema registra el evento de cobro en HistorialDeMovimientos.
+    \item[VIII.] El sistema habilita el botón de proceder a verificación de entrega (CU-ENT-005) para todas las sub-vistas.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-ENT-004-A1: El operador regresa al tablero sin proceder al despacho.
+    \begin{itemize}
+        \item En cualquier momento antes de activar el botón de verificación de entrega, el operador navega de regreso al tablero. Si se estaba en Sub-vista C y no se registró el pago, el pedido permanece en estado LISTO\_PARA\_DESPACHO sin modificaciones en la base de datos.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-ENT-004-E1: Monto de pago insuficiente (Sub-vista C).
+    \begin{itemize}
+        \item En el paso 4, si monto\_recibido $<$ total\_pedido, el sistema muestra el mensaje ``El monto es insuficiente. Faltante: [diferencia].'' y retorna al paso 3 con el campo visible para corrección.
+    \end{itemize}
+    \item CU-ENT-004-E2: El pedido cambió a un estado no despachable durante la gestión.
+    \begin{itemize}
+        \item En el paso 2, si el pedido ya no tiene estado = LISTO\_PARA\_DESPACHO (por ejemplo, fue cancelado concurrentemente por otro operador), el sistema muestra el mensaje ``Este pedido ya no está disponible para despacho. Estado actual: [estado].'' y retorna al tablero. Validación de estado al momento de carga de la vista de despacho para prevenir doble procesamiento en entornos de operación concurrente.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Para Sub-vista C: el estado de pago del Pedido es actualizado a pagado con la marca de tiempo del cobro.
+    \item El evento de cobro (si aplica) queda registrado en HistorialDeMovimientos.
+    \item El flujo queda listo para continuar con la verificación de identidad por QR (CU-ENT-005).
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-ENT-009, REQ-ENT-010, REQ-ENT-011.
+    \item Reglas de Negocio Aplicadas: RN-ENT-010, RN-ENT-011, RN-ENT-012.
+\end{itemize}
+
+\subsubsection{CU-ENT-005: VERIFICACIÓN DE IDENTIDAD POR QR Y CONFIRMACIÓN DE ENTREGA}
+\paragraph{Descripción:} Permite al operador de entrega verificar la identidad del cliente mediante el escaneo del código QR generado por el módulo de Cliente, y confirmar la entrega formal del pedido. El código QR es un token de un solo uso que garantiza que únicamente el cliente que realizó el pedido puede retirarlo. La transición al estado ENTREGADO es irreversible.
+
+\paragraph{Actor Principal:} Operador de Entrega.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo del Cliente (generador del CodigoVerificacionQR), sistema KMS (validación del token y actualización del estado).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El operador tiene una sesión activa en el módulo de Entrega.
+    \item[II.] El pedido tiene estado = LISTO\_PARA\_DESPACHO y el pago ha sido gestionado (postcondición de CU-ENT-004).
+    \item[III.] El cliente tiene activo un CodigoVerificacionQR con estado = ACTIVO asociado a su pedido en el módulo de Cliente.
+    \item[IV.] El dispositivo del puesto de entrega cuenta con lector de QR operativo (cámara o lector físico).
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El operador activa el botón ``Verificar identidad por QR'' en la vista de despacho (ENT-05) después de gestionar el pago (postcondición de CU-ENT-004).
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema activa el lector de QR en el puesto de entrega y renderiza la pantalla de escaneo ENT-05.
+    \item[II.] El cliente presenta el código QR en la pantalla de su dispositivo.
+    \item[III.] El operador dirige el lector de QR hacia el código presentado por el cliente.
+    \item[IV.] El lector captura el valor del código QR y el sistema lo envía al servidor KMS para validación.
+    \item[V.] El servidor ejecuta el protocolo de validación del token en cuatro pasos:
+    \begin{itemize}
+        \item Paso V1: Verifica que el token existe en la base de datos como CodigoVerificacionQR.
+        \item Paso V2: Verifica que CodigoVerificacionQR.estado = ACTIVO (no consumido ni expirado).
+        \item Paso V3: Verifica que el token no ha expirado comparando Timestamp\_generacion + tiempo\_vigencia\_configurado contra la marca de tiempo actual.
+        \item Paso V4: Verifica que el CodigoVerificacionQR.pedido\_id corresponde al pedido que está siendo despachado en la sesión actual del operador.
+    \end{itemize}
+    \item[VI.] Si los cuatro pasos de validación son superados, el sistema inicia una transacción atómica:
+    \begin{itemize}
+        \item Actualiza CodigoVerificacionQR.estado = CONSUMIDO con la marca de tiempo de consumo.
+        \item Actualiza Pedido.estado = ENTREGADO con la marca de tiempo de entrega.
+        \item Registra el evento de entrega en HistorialDeMovimientos con: identificador del operador, identificador del pedido, marca de tiempo de entrega y referencia al token QR consumido.
+    \end{itemize}
+    \item[VII.] El sistema muestra la confirmación de entrega exitosa en pantalla ENT-06 (S: número de pedido, cliente, marca de tiempo de entrega).
+    \item[VIII.] El sistema retorna al tablero ENT-02 con el pedido removido de la lista activa.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-ENT-005-A1: El operador cancela el proceso de escaneo.
+    \begin{itemize}
+        \item En cualquier momento durante los pasos 1--3, el operador selecciona ``Cancelar escaneo''. El sistema desactiva el lector de QR y retorna a la vista de detalle del pedido (ENT-04). El pedido permanece en estado = LISTO\_PARA\_DESPACHO sin modificaciones.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-ENT-005-E1: El código QR no existe en el sistema (fallo en Paso V1).
+    \begin{itemize}
+        \item En el paso 5, si el token escaneado no corresponde a ningún CodigoVerificacionQR en la base de datos, el sistema muestra el mensaje ``Código QR no reconocido. Solicite al cliente que actualice su código.'' y retorna al paso 1 habilitando un nuevo intento.
+    \end{itemize}
+    \item CU-ENT-005-E2: El código QR ya fue consumido o está expirado (fallo en Paso V2 o V3).
+    \begin{itemize}
+        \item En el paso 5, si CodigoVerificacionQR.estado = CONSUMIDO o el token ha expirado, el sistema muestra el mensaje ``El código QR no es válido (ya fue utilizado o expiró). Solicite al cliente que genere un nuevo código.'' El flujo retorna al paso 1. La expiración y el consumo único del token QR son mecanismos de seguridad fundamentales que previenen la entrega de pedidos a terceros no autorizados; el sistema no debe entregar un pedido sin una validación exitosa.
+    \end{itemize}
+    \item CU-ENT-005-E3: El código QR no corresponde al pedido en despacho (fallo en Paso V4).
+    \begin{itemize}
+        \item En el paso 5, si el pedido\_id del token no coincide con el pedido que el operador está despachando, el sistema muestra el mensaje ``El código QR no corresponde a este pedido.'' y retorna al paso 1. El operador puede verificar manualmente el número de pedido con el cliente.
+    \end{itemize}
+    \item CU-ENT-005-E4: El lector de QR no puede capturar el código.
+    \begin{itemize}
+        \item En el paso 3--4, si tras un tiempo razonable el lector no logra capturar ningún código (por problemas de iluminación, daño en pantalla del cliente u otro factor), el sistema ofrece al operador la opción de introducir el código QR manualmente mediante teclado como alternativa. El flujo continúa desde el paso 4 con el valor introducido manualmente. Mecanismo de fallback para garantizar la continuidad operativa del despacho ante fallos del hardware de lectura; la validación lógica del token aplica igualmente al código introducido manualmente.
+    \end{itemize}
+    \item CU-ENT-005-E5: Error de conectividad al validar el token en el servidor.
+    \begin{itemize}
+        \item En el paso 4--5, si el servidor no responde dentro del tiempo de espera, el sistema muestra el mensaje ``Error de comunicación con el servidor. Intente nuevamente.'' y habilita el reintento del escaneo. El pedido permanece en estado = LISTO\_PARA\_DESPACHO. No se permite la entrega sin validación del token en el servidor; un modo offline no es seguro para este caso de uso dado que comprometería el protocolo de identidad.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item CodigoVerificacionQR.estado es actualizado de ACTIVO a CONSUMIDO con marca de tiempo; el token no puede ser reutilizado.
+    \item Pedido.estado es actualizado a ENTREGADO con marca de tiempo de entrega; la transición es irreversible.
+    \item Se crea un registro de auditoría en HistorialDeMovimientos con todos los atributos de la entrega.
+    \item El pedido queda removido del tablero de despacho activo (ENT-02).
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-ENT-012, REQ-ENT-013, REQ-ENT-014, REQ-ENT-015.
+    \item Reglas de Negocio Aplicadas: RN-ENT-013, RN-ENT-014, RN-ENT-015, RN-ENT-016, RN-ENT-017, RN-ENT-018.
+\end{itemize}
+
