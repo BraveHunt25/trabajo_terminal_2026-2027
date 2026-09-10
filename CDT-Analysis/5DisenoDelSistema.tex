@@ -1,0 +1,8 @@
+% !TeX root = proyecto.tex
+%=========================================================
+\chapter{DISEÑO DEL SISTEMA}
+\section{ARQUITECTURA GENERAL DEL SISTEMA}
+\subsection{VISIÓN GENERAL}
+El Sistema de Gestión de Cocina se diseñó bajo un modelo de arquitectura de tres capas, ejecutado mediante un despliegue local (on-premise) en las instalaciones físicas del establecimiento. Esta configuración se seleccionó con base en tres requerimientos críticos: la optimización de la latencia en la actualización de estados del Sistema de Visualización de Cocina, la necesidad de garantizar la operatividad continua ante interrupciones en la conectividad a la red de área amplia y el cumplimiento de las políticas de segmentación de red para el personal operativo. 
+
+La infraestructura consolidó la lógica de negocio, el almacenamiento persistente de datos y los servicios de comunicación en tiempo real en un servidor físico central. El acceso a dichos recursos se gestionó mediante interfaces diferenciadas: una red de intranet dedicada para los módulos operativos (Gestión, Caja, Cocina y Entrega), y un puerto de acceso expuesto bajo configuraciones de seguridad específicas para el Módulo Cliente.

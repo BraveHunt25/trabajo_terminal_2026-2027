@@ -7,22 +7,22 @@ actor "Cliente" as cliente
 actor "Cliente (Anónimo)" as anon_cliente
 
 rectangle "Módulo del Cliente (CLI)" {
-    usecase "CU-CLI-001:\nAutenticar" as CUCLI001
-    usecase "CU-CLI-002:\nExplorar Catálogo" as CUCLI002
-    usecase "CU-CLI-003:\nConfigurar Item" as CUCLI003
-    usecase "CU-CLI-004:\nGestionar Carrito" as CUCLI004
-    usecase "CU-CLI-005:\nSeleccionar Ventana/Confirmar" as CUCLI005
-    usecase "CU-CLI-006:\nSeguir Pedido y Confirmar" as CUCLI006
-    usecase "CU-CLI-007:\nActualizar Perfil" as CUCLI007
-    usecase "CU-CLI-008:\nConsultar Pedido\n(Anónimo)" as CUCLI008
+    usecase "CU-CLI-001:\nAutenticar" as CUCLI001
+    usecase "CU-CLI-002:\nExplorar Catálogo" as CUCLI002
+    usecase "CU-CLI-003:\nConfigurar Item" as CUCLI003
+    usecase "CU-CLI-004:\nGestionar Carrito" as CUCLI004
+    usecase "CU-CLI-005:\nSeleccionar Ventana/Confirmar" as CUCLI005
+    usecase "CU-CLI-006:\nSeguir Pedido y Confirmar" as CUCLI006
+    usecase "CU-CLI-007:\nActualizar Perfil" as CUCLI007
+    usecase "CU-CLI-008:\nConsultar Pedido\n(Anónimo)" as CUCLI008
 
-    CUCAJ003 .> CUCAJ002 : <<extend>>
-    CUCAJ005 .> CUCAJ004 : <<extend>>
+    CUCAJ003 .> CUCAJ002 : <<extend>>
+    CUCAJ005 .> CUCAJ004 : <<extend>>
 }
 
 rectangle "Sistemas Externos"{
-    actor "Módulo de Cocina (KDS)" as KDS <<System>>
-    actor "Módulo del Entrega" as delivery <<System>>
+    actor "Módulo de Cocina (KDS)" as KDS <<System>>
+    actor "Módulo del Entrega" as delivery <<System>>
 }
 
 cliente-- CUCLI001
@@ -34,7 +34,7 @@ anon_cliente -- CUCLI008
 
 CUCLI005 -- KDS
 CUCLI006 -- delivery
-CUCLI008 -- delivery 
+CUCLI008 -- delivery
 @enduml
 
 

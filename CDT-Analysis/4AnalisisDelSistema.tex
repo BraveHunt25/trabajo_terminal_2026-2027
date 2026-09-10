@@ -1337,7 +1337,7 @@ El Módulo mánager concentra la mayor densidad de casos de uso del sistema (10 
 
 De forma análoga, la gestión de productos del menú (CU-MGR-005) incluye la definición de receta (CU-MGR-006), dado que el invariante de distribución completa de ingredientes en pasos de preparación es una precondición obligatoria para persistir cualquier producto. La configuración global del sistema (CU-MGR-009) actúa como proveedor de parámetros para los cuatro módulos operativos restantes, estableciendo la dependencia de configuración representada en el diagrama de contexto. 
 
-\subsection{Diagrama del módulo de caja - POS (CAJ)}
+\subsection{DIAGRAMA DEL MÓDULO DE CAJA - POS (CAJ)}
 \begin{figure}[H]
     \centering
     \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Caja/Flujo Detallado del Módulo de Caja.svg}
@@ -1349,7 +1349,7 @@ El Módulo Caja modela el flujo operativo del punto de venta presencial. La aute
 
 La relación de extensión entre CU-CAJ-006 y CU-CAJ-005 refleja que el proceso de corte de caja puede extenderse con la regularización de pagos pendientes antes de cerrar el turno, siendo este comportamiento condicional y no obligatorio. Al confirmar el pago, CU-CAJ-003 genera un ticket digital (URL con código QR) dirigido a la interfaz de Acceso Anónimo CLI-16 para pedidos sin cliente autenticado (Pedido.cliente\_id IS NULL), sustituyendo completamente el comprobante físico. CU-CAJ-007, modelado como extensión de CU-CAJ-003, se activa condicionalmente cuando Pedido.tipo $=$ ANTICIPADO para programar la ventana de recolección antes de enviar el pedido al KDS. 
 
-\subsection{Diagrama del módulo de caja cocina - KDS (COC)}
+\subsection{DIAGRAMA DEL MÓDULO DE CAJA COCINA - KDS (COC)}
 \begin{figure}[H]
     \centering
     \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Cocina/Flujo Detallado del Módulo de Cocina.svg}
@@ -1361,7 +1361,7 @@ El Módulo Cocina modela el KDS (Kitchen Display System), cuya función central 
 
 La consulta de receta completa (CU-COC-004) se modela como extensión de la visualización del tablero (CU-COC-002), dado que se activa opcionalmente al pulsar sobre una tarjeta de paso, sin modificar el estado de ninguna entidad. La completación de un paso (CU-COC-003) incluye obligatoriamente la evaluación y liberación del grafo de dependencias (DAG), cuyo resultado puede propagar el estado PREPARADO al Módulo Entrega cuando todos los pasos del pedido se completan. 
 
-\subsection{Diagrama del módulo de entrega (ENT)}
+\subsection{DIAGRAMA DEL MÓDULO DE ENTREGA (ENT)}
 \begin{figure}[H]
     \centering
     \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Entrega/Flujo Detallado del Módulo de Entrega.svg}
@@ -1373,7 +1373,7 @@ El Módulo Entrega gestiona el ciclo de despacho de pedidos preparados. La auten
 
 La gestión de pago y despacho (CU-ENT-004) incluye obligatoriamente la verificación de identidad por QR (CU-ENT-005), modelada como <<include>> dado que ningún pedido puede ser entregado sin validar el protocolo de cuatro pasos sobre el CodigoVerificacionQR. La cancelación (CU-ENT-003) propaga notificaciones tanto al Módulo Cocina como, condicionalmente, al Módulo Cliente cuando el pedido fue originado por la aplicación de autoservicio.
 
-\subsection{Diagrama del módulo del cliente (CLI)}
+\subsection{DIAGRAMA DEL MÓDULO DEL CLIENTE (CLI)}
 \begin{figure}[H]
     \centering
     \includesvg[width=0.5\textwidth, inkscapelatex=false]{diagrams/Flujo Detallado Cliente/Flujo Detallado del Módulo del Cliente.svg}
@@ -2172,7 +2172,7 @@ La gestión del carrito (CU-CLI-004) incluye la selección de ventana y confirma
     \begin{itemize}
         \item En el paso 5, el cliente navega de regreso al carrito. El sistema retorna a CLI-08 con el CarritoSesion intacto y la ventana seleccionada provisionalmente deseleccionada.
     \end{itemize}
-\end{itemize
+\end{itemize}
 
 \paragraph{Flujos de Excepción (Exception Flows):}
 \begin{itemize}
@@ -2252,7 +2252,7 @@ La gestión del carrito (CU-CLI-004) incluye la selección de ventana y confirma
     \begin{itemize}
         \item En el paso 3, si el pedido cambia a estado = CANCELADO, la conexión de tiempo real notifica al cliente. El sistema muestra en pantalla la notificación de cancelación con el motivo registrado y dirige al cliente al historial de pedidos.
     \end{itemize}
-\end{itemize
+\end{itemize}
 
 \paragraph{Flujos de Excepción (Exception Flows):}
 \begin{itemize}
@@ -3127,3 +3127,685 @@ La gestión del carrito (CU-CLI-004) incluye la selección de ventana y confirma
     \item Reglas de Negocio Aplicadas: RN-ENT-013, RN-ENT-014, RN-ENT-015, RN-ENT-016, RN-ENT-017, RN-ENT-018.
 \end{itemize}
 
+\subsection{MÓDULO DE MÁNAGER}
+\subsubsection{CU-MGR-001: AUTENTICACIÓN DEL MÁNAGER}
+\paragraph{Descripción:} Permite al usuario con rol mánager acceder al sistema KMS mediante la validación de credenciales contra el repositorio de usuarios, estableciendo la sesión de mayor privilegio y habilitando el acceso a la totalidad del módulo de administración.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema de auditoría (HistorialDeMovimientos).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El sistema ha completado el proceso de bootstrapping y las credenciales del mánager han sido configuradas.
+    \item[II.] No existe una sesión activa con perfil mánager en el dispositivo.
+    \item[III.] La entidad Usuario contiene al menos un registro con rol = mánager y estado activo.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager accede a la URL raíz del módulo de administración y el sistema detecta la ausencia de un token de sesión válido.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la interfaz MGR-01 con el formulario de autenticación, incluyendo la imagen de la cafetería cargada en ConfiguracionSistema.imagen\_cafeteria.
+    \item[II.] El mánager introduce el identificador de usuario (correo electrónico o ID interno) en el campo Usuario y la contraseña en el campo Contraseña.
+    \item[III.] El mánager activa el botón ``Login''.
+    \item[IV.] El sistema ejecuta la validación de formato: verifica que ambos campos sean no nulos y que el identificador cumpla el formato de correo electrónico RFC 5321 o el patrón de ID interno.
+    \item[V.] El sistema consulta la entidad Usuario filtrando por el identificador provisto.
+    \item[VI.] El sistema verifica que el registro recuperado tenga rol = mánager y estado activo.
+    \item[VII.] El sistema ejecuta la comparación del hash de la contraseña ingresada contra Usuario.hash\_contrasena mediante el algoritmo de hashing configurado en el servidor.
+    \item[VIII.] El sistema genera un token de sesión con perfil mánager vinculado al Usuario.id autenticado y lo almacena en la sesión del navegador.
+    \item[IX.] El sistema registra de forma síncrona un evento en HistorialDeMovimientos con concepto INICIO\_SESION, el Usuario.id como responsable y la fecha-hora exacta del evento.
+    \item[X.] El sistema redirige al mánager a la interfaz MGR-02 (Manager-Home).
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-001-A1: Recuperación de contraseña (Se gatilla en el paso 3 del Flujo Principal cuando el mánager activa el enlace ``¿Olvidaste tu contraseña?'').
+    \begin{itemize}
+        \item El sistema redirige al mánager al flujo de recuperación de contraseña mediante enlace al correo registrado.
+        \item El flujo de recuperación es auxiliar y externo al alcance de este caso de uso; la implementación se registra como pendiente de especificación metodológica.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-001-E1: Credenciales inválidas (Se gatilla en el paso 7 cuando el hash de la contraseña no coincide con Usuario.hash\_contrasena).
+    \begin{itemize}
+        \item El sistema no establece la sesión, no genera el token y no registra evento de inicio de sesión.
+        \item El sistema despliega el mensaje de error: ``Credenciales inválidas.''
+        \item El estado del sistema retorna a la precondición inicial; el formulario permanece vacío para un nuevo intento.
+    \end{itemize}
+    \item CU-MGR-001-E2: Usuario con rol distinto de mánager (Se gatilla en el paso 6 cuando Usuario.rol $\neq$ mánager).
+    \begin{itemize}
+        \item El sistema rechaza la autenticación, aunque el hash de la contraseña sea correcto.
+        \item El sistema despliega el mensaje de error equivalente a credenciales inválidas, sin revelar la existencia del registro con rol distinto (principio de seguridad de no-revelación de información).
+        \item El estado del sistema retorna a la precondición inicial. El mensaje de error unificado entre ``credenciales inválidas'' y ``rol incorrecto'' sigue el principio de seguridad de mínima revelación de información, estándar en sistemas de autenticación empresarial POS / KDS, para prevenir la enumeración de usuarios.
+    \end{itemize}
+    \item CU-MGR-001-E3: Fallo en el registro de bitácora (Se gatilla en el paso 9 si el INSERT en HistorialDeMovimientos falla).
+    \begin{itemize}
+        \item El sistema aborta la operación, invalida el token generado y revierte el estado de sesión.
+        \item El sistema despliega un mensaje de error de sistema.
+        \item El estado retorna a la precondición inicial. La atomicidad entre la generación del token y el registro en bitácora es un requerimiento de integridad de auditoría. Si el registro falla, la sesión no debe persistir para garantizar la trazabilidad completa conforme a RN-MGR-002.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item HistorialDeMovimientos: se crea un registro con concepto = INICIO\_SESION, id\_responsable = Usuario.id, fecha = NOW().
+    \item El token de sesión con perfil mánager queda activo y vinculado al Usuario.id.
+    \item El sistema redirige al módulo MGR-02.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-001 (Autenticación segura del mánager).
+    \item Reglas de Negocio Aplicadas: RN-MGR-001 (Verificación de rol mánager), RN-MGR-002 (Registro obligatorio de inicio de sesión), RN-SYS-004 (Sesión activa como precondición global).
+\end{itemize}
+
+\subsubsection{CU-MGR-002: CONSULTA DEL DASHBOARD DE ALERTAS CRÍTICAS}
+\paragraph{Descripción:} Proporciona al mánager una vista consolidada del estado operativo crítico del sistema, incluyendo productos no disponibles por insuficiencia de insumos y un panel de insumos cuyas existencias se encuentran en o por debajo del umbral de alerta configurado, con acceso a la gráfica histórica de existencias.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil mánager.
+    \item[II.] El catálogo de productos e insumos ha sido inicializado con al menos un registro.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager autentica exitosamente (postcondición de CU-MGR-001) o navega al ítem ``Tablero'' del sidebar del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema consulta la entidad Producto junto con sus relaciones IngredienteProducto e Insumo para calcular la disponibilidad de cada producto.
+    \item[II.] El sistema aplica el algoritmo de disponibilidad: para cada producto, evalúa si existe al menos un IngredienteProducto con es\_opcional = false cuyo Insumo.cantidad\_stock $<$ IngredienteProducto.cantidad\_requerida.
+    \item[III.] El sistema renderiza las cards de productos no disponibles en la sección superior del dashboard.
+    \item[IV.] El sistema consulta la entidad Insumo filtrando los registros cuya cantidad\_stock $\le$ umbral\_alerta, donde umbral\_alerta es el valor individual del insumo si está definido, o bien el valor global de ConfiguracionSistema.umbral\_alerta\_global como valor predeterminado.
+    \item[V.] El sistema renderiza la tabla ``Estatus de los insumos'' con nombre, cantidad en stock, unidad de medida y fecha de última actualización para cada insumo en alerta.
+    \item[VI.] El sistema renderiza la gráfica histórica de existencias consultando HistorialDeMovimientos filtrado por concepto = AJUSTE\_INVENTARIO y el rango de fechas predeterminado (últimos 7 días).
+    \item[VII.] El mánager visualiza el estado completo del dashboard.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-002-A1: Aplicación de filtro de fechas a la gráfica (Se gatilla en el paso 7 cuando el mánager selecciona un rango de fechas personalizado).
+    \begin{itemize}
+        \item El mánager establece la fecha de inicio y la fecha de fin mediante los controles de selección de fecha.
+        \item El sistema valida que fecha\_inicio $\le$ fecha\_fin.
+        \item El sistema re-consulta HistorialDeMovimientos con el nuevo rango y actualiza únicamente la gráfica histórica.
+        \item Las cards de productos no disponibles y la tabla de insumos no se ven afectadas por el filtro de fechas.
+        \item El flujo retorna al paso 7 del Flujo Principal.
+    \end{itemize}
+    \item CU-MGR-002-A2: Consulta de ingredientes faltantes de un producto (Se gatilla en el paso 7 cuando el mánager activa el acceso rápido de un producto ``No disponible'').
+    \begin{itemize}
+        \item El sistema abre el modal MGR-07 con la lista de insumos cuya cantidad\_stock es insuficiente para preparar una unidad del producto seleccionado.
+        \item El mánager consulta la información y cierra el modal.
+        \item El flujo retorna al paso 7 del Flujo Principal.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-002-E1: Rango de fechas inválido (Se gatilla en CU-MGR-002-A1 paso 2 cuando fecha\_inicio $>$ fecha\_fin).
+    \begin{itemize}
+        \item El sistema muestra un mensaje de error de validación sobre el campo de fecha de fin.
+        \item El sistema no ejecuta la re-consulta; la gráfica conserva los datos del rango previo.
+        \item El estado del sistema retorna al estado previo del filtro de fechas.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item No se persisten cambios en la base de datos; la interfaz es de solo lectura.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-002 (Panel de alertas operativas).
+    \item Reglas de Negocio Aplicadas: RN-MGR-004 (Cálculo de disponibilidad por stock), RN-MGR-005 (Umbral de alerta configurable por insumo), RN-MGR-006 (Insumos opcionales excluidos del cálculo de disponibilidad), RN-SYS-001 (Consistencia de disponibilidad entre módulos).
+\end{itemize}
+
+\subsubsection{CU-MGR-003: ALTA Y EDICIÓN DE EMPLEADO}
+\paragraph{Descripción:} Permite al mánager registrar un nuevo empleado en el sistema o modificar los datos de un empleado existente, incluyendo la gestión de sus asignaciones a estaciones de trabajo, los permisos de sub-asignación y la revisión de su historial de acciones. La creación de un nuevo empleado dispara el flujo de onboarding mediante el envío de un correo electrónico de establecimiento de contraseña.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Servicio de correo electrónico (SMTP) para el envío del enlace de onboarding.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil mánager.
+    \item[II.] Existe al menos una estación de tipo COCINA o CAJA registrada en el sistema para que las operaciones de asignación sean posibles.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):}
+\begin{itemize}
+    \item Modo Alta: El mánager activa el botón ``Agregar personal'' en la interfaz MGR-03.
+    \item Modo Edición: El mánager activa el botón ``Editar'' sobre la card de un empleado en MGR-03.
+\end{itemize}
+
+\paragraph{Flujo Principal de Éxito --- Modo Alta (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza el formulario MGR-04 en modo ``Agregar'' con todos los campos vacíos.
+    \item[II.] El mánager introduce el nombre completo, el correo electrónico, el puesto y selecciona al menos un turno de los turnos configurados en ConfiguracionSistema.
+    \item[III.] El mánager configura el permiso de sub-asignación (Empleado.permite\_sub\_asignacion) y, si aplica, el tipo de temporalidad que puede asignar (Empleado.tipo\_sub\_asignacion).
+    \item[IV.] El mánager agrega las estaciones de trabajo mediante el botón ``+'' que invoca CU-MGR-004 (Asociación de Estación).
+    \item[V.] El mánager activa el botón ``Guardar''.
+    \item[VI.] El sistema valida que el campo Empleado.correo no exista en otro registro activo de la entidad Empleado.
+    \item[VII.] El sistema valida que todos los campos obligatorios estén completos y cumplan las reglas de formato.
+    \item[VIII.] El sistema crea el registro Empleado con estado PENDIENTE\_CONTRASENA.
+    \item[IX.] El sistema crea los registros correspondientes en AsignacionEstacion con el tipo de temporalidad seleccionado.
+    \item[X.] El sistema envía, de forma asíncrona al flujo principal, un correo electrónico al campo Empleado.correo con un enlace de único uso para el establecimiento de contraseña.
+    \item[XI.] El sistema registra el evento en HistorialDeMovimientos con concepto ALTA\_EMPLEADO.
+    \item[XII.] El sistema cierra el formulario y retorna a MGR-03 con el nuevo empleado visible en el directorio.
+\end{enumerate}
+
+\paragraph{Flujo Principal de Éxito --- Modo Edición (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza el formulario MGR-04 en modo ``Editar'' con los datos del empleado seleccionado precargados, incluyendo su historial de acciones filtrado por los últimos 7 días.
+    \item[II.] El mánager modifica los campos deseados (nombre, correo, puesto, turno, permisos).
+    \item[III.] El mánager puede agregar nuevas estaciones mediante el botón ``+'' o remover existentes mediante el botón ``Remover asignación'' en cada card de estación.
+    \item[IV.] El mánager activa el botón ``Guardar''.
+    \item[V.] El sistema valida la unicidad del correo si fue modificado.
+    \item[VI.] El sistema actualiza los campos modificados en la entidad Empleado.
+    \item[VII.] El sistema crea, modifica o elimina los registros en AsignacionEstacion según las acciones efectuadas.
+    \item[VIII.] El sistema registra el evento en HistorialDeMovimientos con concepto EDICION\_EMPLEADO.
+    \item[IX.] El sistema retorna a MGR-03.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-003-A1: Filtro de historial de acciones del empleado (Se gatilla en Modo Edición cuando el mánager modifica el rango de fechas del historial).
+    \begin{itemize}
+        \item El mánager establece la fecha de inicio y fin.
+        \item El sistema re-consulta HistorialDeMovimientos filtrado por id\_empleado y el nuevo rango.
+        \item El sistema actualiza la tabla de historial sin afectar los campos del formulario de edición.
+        \item El flujo retorna al paso 2 del Modo Edición.
+    \end{itemize}
+    \item CU-MGR-003-A2: Cancelación del formulario (Se gatilla en cualquier paso cuando el mánager activa ``Cancelar'').
+    \begin{itemize}
+        \item El sistema descarta todos los cambios locales no persistidos.
+        \item El sistema cierra el formulario y retorna a MGR-03 sin modificar ningún registro.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-003-E1: Correo electrónico duplicado (Se gatilla en los pasos 6 del Alta o 5 de la Edición cuando el correo ya existe en otro registro activo de Empleado).
+    \begin{itemize}
+        \item El sistema aborta la operación de persistencia.
+        \item El sistema despliega un mensaje de error sobre el campo de correo: ``El correo electrónico ya está registrado en el sistema.''
+        \item El estado del sistema retorna al formulario con los datos ingresados conservados para corrección.
+    \end{itemize}
+    \item CU-MGR-003-E2: Fallo en el envío del correo de onboarding (Se gatilla en el paso 10 del Alta cuando el servicio SMTP no responde).
+    \begin{itemize}
+        \item El sistema registra el error en el log de sistema, pero no revierte la creación del registro Empleado.
+        \item El sistema despliega una notificación al mánager indicando que el correo de onboarding no pudo ser enviado y que se puede reenviar desde el modo Edición del empleado.
+        \item El empleado permanece en estado PENDIENTE\_CONTRASENA hasta completar el onboarding. El desacoplamiento del envío del correo del flujo de creación del empleado sigue el patrón de tolerancia a fallos de sistema para servicios externos (correo). La persistencia del empleado no debe depender de la disponibilidad del servidor SMTP. Un mecanismo de cola de reintentos es la implementación recomendada para garantizar la entrega eventual del correo.
+    \end{itemize}
+    \item CU-MGR-003-E3: Violación de la restricción de tipo único de estación (Se gatilla al intentar agregar una estación en el paso 4 del Alta o paso 3 de la Edición cuando el tipo no es compatible con las estaciones ya asociadas).
+    \begin{itemize}
+        \item El sistema rechaza la asociación y no agrega la estación al listado del formulario.
+        \item El sistema despliega un mensaje de error: ``El empleado ya tiene estaciones de tipo [TIPO\_EXISTENTE] asignadas. Solo se pueden agregar estaciones del mismo tipo.''
+        \item El estado del formulario permanece sin cambios en la lista de estaciones.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones (Modo Alta):}
+\begin{itemize}
+    \item Empleado: se crea con estado = PENDIENTE\_CONTRASENA.
+    \item AsignacionEstacion: se crean los registros para las estaciones seleccionadas.
+    \item HistorialDeMovimientos: se registra el evento ALTA\_EMPLEADO.
+    \item Correo de onboarding enviado al Empleado.correo (o encolado para reintento).
+\end{itemize}
+
+\paragraph{Postcondiciones (Modo Edición):}
+\begin{itemize}
+    \item Empleado: los campos modificados son actualizados.
+    \item AsignacionEstacion: se crean o eliminan registros según las acciones realizadas.
+    \item HistorialDeMovimientos: se registra el evento EDICION\_EMPLEADO.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-003 (Gestión de personal).
+    \item Reglas de Negocio Aplicadas: RN-MGR-007 (Unicidad de tipo de estación), RN-MGR-008 (Expiración de asignaciones temporales), RN-MGR-009 (Estado PENDIENTE\_CONTRASENA al crear empleado), RN-MGR-010 (Unicidad de correo de empleado), RN-MGR-011 (Alcance del permiso de sub-asignación), RN-MGR-012 (Alta de empleados restringida al mánager).
+\end{itemize}
+
+\subsubsection{CU-MGR-004: ASOCIACIÓN DE ESTACIÓN DE TRABAJO A EMPLEADO}
+\paragraph{Descripción:} Permite al mánager seleccionar una estación de trabajo del catálogo disponible y asociarla al perfil del empleado que se encuentra en edición en CU-MGR-003, respetando la restricción de tipo único de estación por empleado.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] El formulario MGR-04 (CU-MGR-003) se encuentra activo con un empleado seleccionado o en proceso de creación.
+    \item[II.] Existe al menos una estación de tipo compatible (COCINA o CAJA) registrada en el sistema.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager activa el botón ``+'' de agregar estación en el formulario MGR-04.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema abre el modal MGR-05 con la tabla de estaciones disponibles.
+    \item[II.] El sistema filtra las estaciones mostrando únicamente aquellas cuyo tipo sea compatible con el tipo de estación ya asociado al empleado. Si el empleado no tiene estaciones previas, se muestran todas las estaciones disponibles.
+    \item[III.] El mánager navega por la tabla y aplica ordenamiento alfabético ascendente o descendente sobre la columna ``Estación'' o ``Tipo'' si lo requiere.
+    \item[IV.] El mánager selecciona la fila de la estación deseada (selección única).
+    \item[V.] El mánager activa el botón ``Agregar''.
+    \item[VI.] En Modo Alta: la asociación queda en estado pendiente en el formulario hasta que el mánager confirme con ``Guardar'' en MGR-04.
+    \item[VII.] En Modo Edición: el sistema persiste de forma inmediata el registro en AsignacionEstacion y registra el evento ASOCIACION\_PERSONAL\_ESTACION en HistorialDeMovimientos.
+    \item[VIII.] El sistema cierra el modal y retorna al formulario MGR-04 con la nueva estación visible en el listado.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-004-A1: Cancelación de la asociación (Se gatilla en cualquier paso cuando el mánager activa el botón de cierre o ``Cancelar'').
+    \begin{itemize}
+        \item El sistema descarta la selección y cierra el modal sin modificar la lista de estaciones en MGR-04.
+        \item El flujo retorna al formulario MGR-04 sin cambios.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-004-E1: Catálogo de estaciones compatibles vacío (Se gatilla en el paso 2 cuando no existen estaciones del tipo compatible con el empleado).
+    \begin{itemize}
+        \item El sistema muestra la tabla vacía con un mensaje informativo: ``No existen estaciones compatibles disponibles.''
+        \item El botón ``Agregar'' permanece deshabilitado.
+        \item El mánager solo puede cerrar el modal. Esta condición puede ocurrir si el mánager ha eliminado todas las estaciones de un tipo específico o si las estaciones disponibles han sido asignadas al límite de su capacidad. El sistema debe proveer al mánager información suficiente para identificar la causa.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones (Modo Edición):}
+\begin{itemize}
+    \item AsignacionEstacion: se crea el registro para la estación seleccionada.
+    \item HistorialDeMovimientos: se registra ASOCIACION\_PERSONAL\_ESTACION.
+\end{itemize}
+
+\paragraph{Postcondiciones (Modo Alta):}
+\begin{itemize}
+    \item La asociación queda en estado local pendiente en el formulario hasta la confirmación en CU-MGR-003.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-004 (Asignación de estaciones a empleados).
+    \item Reglas de Negocio Aplicadas: RN-MGR-007 (Unicidad de tipo de estación), RN-MGR-008 (Expiración de asignaciones temporales), RN-SYS-002 (Registro en bitácora).
+\end{itemize}
+
+\subsubsection{CU-MGR-005: ALTA Y EDICIÓN DE PRODUCTO DEL MENÚ}
+\paragraph{Descripción:} Permite al mánager registrar un nuevo producto en el catálogo del menú o modificar un producto existente, incluyendo su información comercial, imagen, costo, cargo por desechables, lista de ingredientes e insumos desechables requeridos, y la gestión de sus etiquetas de categorización.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Sistema de almacenamiento de archivos de imagen (blob).
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil mánager.
+    \item[II.] El catálogo de insumos contiene al menos un insumo de categoría INGREDIENTE.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):}
+\begin{itemize}
+    \item Modo Alta: El mánager activa ``Agregar producto'' en MGR-06.
+    \item Modo Edición: El mánager activa ``Editar'' sobre la card de un producto en MGR-06.
+\end{itemize}
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza el formulario MGR-08 (pestaña Ingredientes) en el modo correspondiente; en Modo Edición, los campos se precargan con los datos actuales del producto.
+    \item[II.] El mánager carga o modifica la imagen del producto (formato JPEG o PNG).
+    \item[III.] El mánager introduce o modifica el nombre, las etiquetas, la descripción, el costo de producción y el cargo por desechables del producto.
+    \item[IV.] El mánager agrega ingredientes mediante el botón ``+'' de ingredientes, que invoca el modal MGR-09 filtrado por categoría = INGREDIENTE; por cada ingrediente asociado el mánager define la cantidad, la unidad de medida, el flag de opcionalidad y el precio extra si aplica.
+    \item[V.] El mánager agrega insumos desechables mediante el botón ``+'' de desechables, que invoca el modal MGR-09 filtrado por categoría = DESECHABLE.
+    \item[VI.] El sistema actualiza en tiempo real el contador de ingredientes pendientes de distribución en el badge de la pestaña ``Receta'' tras cada modificación de la lista de ingredientes.
+    \item[VII.] El mánager navega a la pestaña ``Receta'' para definir o modificar la secuencia de pasos (referenciado como CU-MGR-006).
+    \item[VIII.] El sistema habilita el botón ``Guardar'' únicamente cuando el invariante de distribución completa se satisface: $\forall \text{ingrediente}_i : \sum (\text{IngredientePaso.cantidad WHERE id\_insumo} = i) = \text{IngredienteProducto.cantidad WHERE id\_insumo} = i$.
+    \item[IX.] El mánager activa el botón ``Guardar''.
+    \item[X.] El sistema persiste el registro Producto junto con los registros IngredienteProducto, InsumoDesechableProducto y EtiquetaProducto.
+    \item[XI.] El sistema retorna a MGR-06 con el producto visible en el catálogo.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-005-A1: Duplicación de producto (Se gatilla en Modo Edición cuando el mánager activa el botón ``Duplicar'').
+    \begin{itemize}
+        \item El sistema genera una copia del producto con el nombre [nombre\_original] copia e inicia el flujo en Modo Alta con los datos del producto original precargados.
+        \item El mánager modifica los datos diferenciadores del nuevo producto y procede al guardado.
+        \item El flujo retorna al paso 9 del Flujo Principal.
+    \end{itemize}
+    \item CU-MGR-005-A2: Eliminación de producto (Se gatilla en Modo Edición cuando el mánager activa el botón ``Eliminar'').
+    \begin{itemize}
+        \item El sistema despliega un diálogo de confirmación.
+        \item El mánager confirma la eliminación.
+        \item El sistema elimina el registro del producto y sus relaciones asociadas.
+        \item El sistema retorna a MGR-06.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-005-E1: Invariante de distribución incompleta (Se gatilla en el paso 8 cuando la suma de cantidades distribuidas en pasos no iguala la cantidad total declarada para algún ingrediente).
+    \begin{itemize}
+        \item El sistema mantiene el botón ``Guardar'' deshabilitado.
+        \item El badge de la pestaña ``Receta'' muestra el número de ingredientes con distribución pendiente.
+        \item El mánager debe completar la distribución en los pasos de receta antes de poder guardar.
+    \end{itemize}
+    \item CU-MGR-005-E2: Formato de imagen inválido (Se gatilla en el paso 2 cuando el archivo no es JPEG ni PNG).
+    \begin{itemize}
+        \item El sistema rechaza el archivo y despliega un mensaje de error de formato.
+        \item El campo de imagen permanece vacío o con la imagen previa.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Producto: se crea o actualiza el registro con sus atributos comerciales.
+    \item IngredienteProducto: se crean, modifican o eliminan los registros de ingredientes asociados.
+    \item InsumoDesechableProducto: se crean, modifican o eliminan los registros de desechables.
+    \item EtiquetaProducto, Etiqueta: se crean o eliminan las asociaciones de etiquetas; las nuevas etiquetas se persisten en Etiqueta.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-005 (Gestión de catálogo de productos).
+    \item Reglas de Negocio Aplicadas: RN-MGR-013 (Invariante de distribución completa), RN-MGR-014 (Ingredientes opcionales para el módulo Cliente), RN-MGR-015 (Desechables excluidos del contador de distribución), RN-MGR-018 (Cargo por extra activo solo en ingredientes opcionales).
+\end{itemize}
+
+\subsubsection{CU-MGR-006: DEFINICIÓN DE RECETA DE PRODUCTO}
+\paragraph{Descripción:} Permite al mánager definir la secuencia de pasos de preparación de un producto, asociando a cada paso los ingredientes requeridos, la estación de cocina responsable y las relaciones de precedencia que determinan el flujo de liberación de pasos en el KDS.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulo Cocina (KDS) como sistema consumidor de la receta definida.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] CU-MGR-005 activo con al menos un ingrediente de categoría INGREDIENTE asociado al producto.
+    \item[II.] Existe al menos una estación de tipo COCINA registrada en el sistema.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager navega a la pestaña ``Receta'' dentro del formulario MGR-08 / MGR-11 de un producto.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la pestaña MGR-11 con las cards de pasos existentes (en modo Edición) o vacía (en modo Alta), junto con el contador de ingredientes pendientes de distribución.
+    \item[II.] El mánager activa ``Agregar paso'' para crear un nuevo card de paso.
+    \item[III.] El mánager introduce el nombre del paso y el tiempo estimado de ejecución en minutos.
+    \item[IV.] El mánager activa ``Ingredientes'' en la card del paso, lo que invoca MGR-10, y asigna porciones de los ingredientes declarados del producto al paso, respetando que la suma distribuida no supere la cantidad total del ingrediente.
+    \item[V.] El mánager activa ``Estación'' en la card del paso, lo que invoca MGR-12, y selecciona la estación de cocina responsable del paso.
+    \item[VI.] Cuando la receta tiene más de un paso y se requieren dependencias, el mánager activa ``Dependencia de pasos'' en la card del paso, lo que invoca MGR-13, y declara los pasos predecesores necesarios.
+    \item[VII.] El sistema valida que no existan autorreferencias ni dependencias circulares en el DAG de pasos.
+    \item[VIII.] El mánager repite los pasos 2 al 6 para cada paso de la receta.
+    \item[IX.] El mánager puede reordenar los pasos mediante drag \& drop; el sistema relocaliza automáticamente los predecesores si el reordenamiento viola alguna relación de dependencia.
+    \item[X.] El mánager retorna a la pestaña ``Ingredientes'' y activa ``Guardar'' cuando el invariante de distribución se satisface.
+    \item[XI.] El sistema persiste los registros PasoReceta, IngredientePaso, EstacionPaso y DependenciaPaso.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-006-A1: Eliminación de un paso de la receta (Se gatilla cuando el mánager activa el botón ``close'' en la card de un paso).
+    \begin{itemize}
+        \item El sistema elimina el paso y todas sus asociaciones de ingredientes, estación y dependencias.
+        \item Los ingredientes previamente asignados al paso eliminado regresan al pool de ingredientes pendientes de distribución.
+        \item El contador del badge de ``Receta'' se actualiza.
+        \item El flujo retorna al paso 8 del Flujo Principal.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-006-E1: Dependencia circular detectada (Se gatilla en el paso 7 cuando la declaración de dependencias genera un ciclo, p.ej. paso A $\rightarrow$ paso B $\rightarrow$ paso A).
+    \begin{itemize}
+        \item El sistema rechaza el registro de la dependencia que crea el ciclo.
+        \item El sistema despliega un mensaje de error: ``Esta dependencia genera un ciclo en la cadena de preparación y no puede ser registrada.''
+        \item El estado de DependenciaPaso no se modifica; el mánager debe corregir las relaciones de precedencia. La detección de ciclos en el DAG de dependencias es un requerimiento de integridad funcional. Un ciclo generaría un deadlock en el KDS donde ninguno de los pasos involucrados podría cambiar de BLOQUEADO a PENDIENTE. La detección se implementa mediante un algoritmo de detección de ciclos (DFS) ejecutado en el servidor al persistir cada nueva relación DependenciaPaso.
+    \end{itemize}
+    \item CU-MGR-006-E2: Cantidad de ingrediente en paso excede el remanente disponible (Se gatilla en el paso 4 cuando la cantidad a asignar supera la diferencia entre la cantidad total del ingrediente y la suma ya distribuida en otros pasos).
+    \begin{itemize}
+        \item El sistema rechaza la cantidad y muestra un mensaje informativo con el remanente disponible para ese ingrediente.
+        \item El campo de cantidad retorna al valor anterior.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item PasoReceta: se crean o actualizan los registros de pasos con nombre, tiempo estimado y orden.
+    \item IngredientePaso: se crean o actualizan las porciones de ingredientes por paso.
+    \item EstacionPaso: se crea o actualiza la asignación de estación por paso.
+    \item DependenciaPaso: se crean o actualizan las relaciones de precedencia entre pasos.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-006 (Definición de recetas de preparación).
+    \item Reglas de Negocio Aplicadas: RN-MGR-013 (Invariante de distribución completa), RN-MGR-016 (Preservación de dependencias al reordenar), RN-MGR-017 (Prohibición de autorreferencia en dependencias), RN-COC-004 (Condición triple de visibilidad en KDS), RN-COC-006 (Liberación de pasos bloqueados).
+\end{itemize}
+
+\subsubsection{CU-MGR-007: GESTIÓN DE PROMOCIONES DEL MENÚ}
+\paragraph{Descripción:} Permite al mánager crear, editar y administrar las promociones y combos del catálogo, definiendo su composición de productos, precio, vigencia temporal y estado de activación, con trazabilidad automática de su vigencia en los módulos de pedido.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Módulos Caja y Cliente como sistemas consumidores del catálogo de promociones.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil mánager.
+    \item[II.] El catálogo de productos contiene al menos un producto con estado de guardado completo.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager navega al ítem ``Promociones'' del sidebar y activa la creación o edición de una promoción.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza el formulario de alta / edición de promoción con los campos: nombre, descripción, precio, flag es\_temporal, fechas de inicio y fin (visibles solo si es\_temporal = true) y la lista de productos que conforman el combo.
+    \item[II.] El mánager introduce el nombre y precio de la promoción.
+    \item[III.] Si la promoción tiene vigencia temporal, el mánager activa el flag es\_temporal y define las fechas de inicio y fin.
+    \item[IV.] El mánager agrega los productos que componen el combo mediante el selector de productos del catálogo.
+    \item[V.] El mánager activa el flag de activación de la promoción (activa = true).
+    \item[VI.] El mánager activa ``Guardar''.
+    \item[VII.] El sistema persiste el registro Promocion con sus atributos y los registros ProductoPromocion para cada producto asociado.
+    \item[VIII.] El sistema retorna al dashboard de promociones con la nueva promoción visible.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-007-A1: Desactivación de promoción (Se gatilla cuando el mánager establece activa = false sobre una promoción existente).
+    \begin{itemize}
+        \item El mánager actualiza el flag activa = false y guarda.
+        \item El sistema persiste el cambio; la promoción deja de ser visible en los módulos Caja y Cliente de forma inmediata.
+        \item Las recetas de pedidos ya confirmados con esta promoción no se ven afectadas (principio de snapshot inmutable).
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-007-E1: Fechas de vigencia inválidas (Se gatilla cuando fecha\_fin $\le$ fecha\_inicio).
+    \begin{itemize}
+        \item El sistema muestra un mensaje de error de validación sobre el campo de fecha de fin.
+        \item El guardado queda bloqueado hasta corregir el rango de fechas.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Promocion: se crea o actualiza el registro con sus atributos y el estado de activación.
+    \item ProductoPromocion: se crean o eliminan los registros de composición del combo.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-007 (Gestión de promociones).
+    \item Reglas de Negocio Aplicadas: RN-MGR-019 (Inmutabilidad de la composición durante pedidos), RN-MGR-020 (Vigencia temporal automática), RN-MGR-021 (Snapshot inmutable al confirmar pedido).
+\end{itemize}
+
+\subsubsection{CU-MGR-008: GESTIÓN DEL INVENTARIO DE INSUMOS}
+\paragraph{Descripción:} Permite al mánager consultar el catálogo completo de insumos, registrar nuevos insumos, modificar sus atributos (nombre, categoría, unidad de medida, umbral de alerta) y ejecutar ajustes formales de inventario con registro trazable de cada movimiento.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil mánager.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager navega al ítem ``Inventario'' del sidebar del módulo.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza la interfaz de inventario (MGR-15) con la tabla de insumos paginada, mostrando nombre, cantidad en stock, unidad de medida, umbral de alerta y fecha de última actualización.
+    \item[II.] El mánager localiza el insumo de interés mediante búsqueda de texto libre o navegación paginada.
+    \item[III.] El mánager activa el botón de acciones sobre el insumo para registrar un ajuste formal.
+    \item[IV.] El sistema abre el modal de ajuste de inventario con el nombre, cantidad actual y unidad del insumo precargados.
+    \item[V.] El mánager introduce la cantidad del ajuste (positiva para incremento, negativa para decremento) y selecciona o introduce el concepto de ajuste del catálogo ConceptoAjuste.
+    \item[VI.] El mánager activa ``Guardar''.
+    \item[VII.] El sistema calcula nuevo\_stock = stock\_actual + cantidad\_ajuste y actualiza Insumo.cantidad\_stock.
+    \item[VIII.] El sistema verifica si el concepto de ajuste ya existe en ConceptoAjuste; si no existe, lo crea como nuevo registro normalizado.
+    \item[IX.] El sistema registra el evento en HistorialDeMovimientos con concepto AJUSTE\_INVENTARIO, el identificador del insumo, la cantidad ajustada, el concepto y el identificador del responsable.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-008-A1: Alta de nuevo insumo (Se gatilla cuando el mánager activa ``Agregar insumo'').
+    \begin{itemize}
+        \item El sistema abre el formulario de alta de insumo con campos: nombre, categoría (INGREDIENTE / DESECHABLE), unidad de medida, stock inicial y umbral de alerta individual.
+        \item El mánager completa los campos y guarda.
+        \item El sistema crea el registro Insumo y lo hace disponible en el catálogo de productos.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-008-E1: Ajuste que resultaría en stock negativo (Se gatilla en el paso 7 cuando stock\_actual + cantidad\_ajuste $<$ 0).
+    \begin{itemize}
+        \item El sistema muestra un mensaje de advertencia con el stock resultante negativo.
+        \item El sistema permite al mánager confirmar el ajuste con stock negativo (ya que puede reflejar discrepancias reales de inventario) o corregir la cantidad. En sistemas de inventario de cafetería, el stock negativo puede ocurrir por error humano en el conteo físico. El sistema debe permitirlo con advertencia para no bloquear la operación, ya que el mánager puede tener razones legítimas para registrarlo (p.ej., retroalimentar un ajuste de turno previo).
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Insumo.cantidad\_stock: actualizado con el nuevo valor calculated.
+    \item ConceptoAjuste: creado si el concepto es nuevo en el catálogo.
+    \item HistorialDeMovimientos: registrado con todos los atributos del ajuste.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-008 (Gestión de inventario de insumos).
+    \item Reglas de Negocio Aplicadas: RN-MGR-005 (Umbral de alerta configurable), RN-SYS-002 (Registro obligatorio en bitácora).
+\end{itemize}
+
+\subsubsection{CU-MGR-009: CONFIGURACIÓN GLOBAL DEL SISTEMA}
+\paragraph{Descripción:} Permite al mánager definir y modificar los parámetros de comportamiento que gobiernan los módulos operativos del KMS: métodos de pago habilitados, horario de operación, granularidad de ventanas de recolección, capacidad máxima por ventana, umbral de alerta global de inventario, límites de tiempo de preparación y entrega, porcentajes de urgencia y merma, anticipación de encolamiento, cargos por pedidos para llevar y políticas de penalización.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Todos los módulos del sistema como consumidores de los parámetros de configuración.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil mánager.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager navega al ítem ``Configuración'' de la cabecera o del sidebar, que redirige a MGR-27 / MGR-28.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema carga y renderiza todos los parámetros actuales de ConfiguracionSistema en el formulario de configuración MGR-28.
+    \item[II.] El mánager revisa y modifica los parámetros deseados: métodos de pago, horario de operación, tamaño de ventanas de tiempo, capacidad máxima por ventana, anticipación de encolamiento, porcentajes de urgencia y merma, umbral de alerta global, política de penalización por impuntualidad / no recolección, flag permite\_para\_llevar, flag tiene\_cargo\_para\_llevar y monto del cargo.
+    \item[III.] El mánager activa ``Guardar''.
+    \item[IV.] El sistema ejecuta las validaciones de integridad: (a) el conjunto metodos\_pago\_habilitados no puede quedar vacío; (b) hora\_fin $>$ hora\_inicio para cada turno definido; (c) tamanio\_ventanas\_tiempo $>$ 0; (d) tiene\_cargo\_para\_llevar = true solo es válido cuando permite\_para\_llevar = true.
+    \item[V.] El sistema persiste los cambios en la entidad ConfiguracionSistema.
+    \item[VI.] Los módulos consumidores (Caja, Cliente, Cocina, Entrega) reflejan automáticamente los nuevos parámetros en la siguiente solicitud que los consulte.
+\end{enumerate}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-009-E1: Conjunto de métodos de pago vacío (Se gatilla en el paso 4a cuando el mánager deshabilita todos los métodos de pago).
+    \begin{itemize}
+        \item El sistema bloquea el guardado y muestra un mensaje de error: ``Debe existir al menos un método de pago habilitado.''
+        \item El formulario permanece con los valores no guardados para corrección.
+    \end{itemize}
+    \item CU-MGR-009-E2: Integridad temporal de turno violada (Se gatilla en el paso 4b cuando hora\_fin $\le$ hora\_inicio en un turno).
+    \begin{itemize}
+        \item El sistema bloquea el guardado y muestra un mensaje de error sobre el campo del turno inválido.
+        \item El formulario permanece con los valores no guardados para corrección.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item ConfiguracionSistema: los parámetros modificados quedan persistidos.
+    \item Los módulos consumidores operan con los nuevos parámetros a partir de la siguiente solicitud.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-009 (Configuración global del sistema).
+    \item Reglas de Negocio Aplicadas: RN-MGR-025 (Métodos de pago no pueden quedar vacíos), RN-MGR-026 (Integridad temporal de turnos), RN-MGR-027 (Granularidad de ventanas de recolección), RN-MGR-028 (Encolamiento diferido de pedidos), RN-MGR-029 (Cargo por pedido para llevar).
+\end{itemize}
+
+\subsubsection{CU-MGR-010: GESTIÓN DE ESTACIONES DE TRABAJO}
+\paragraph{Descripción:} Permite al mánager crear, editar, duplicar y eliminar estaciones de trabajo del sistema (tipo COCINA, CAJA o ENTREGA), incluyendo la gestión de sus credenciales de acceso para estaciones de tipo CAJA y ENTREGA, y la asignación de etiquetas para estaciones de cocina.
+
+\paragraph{Actor Principal:} Mánager.
+
+\paragraph{Actores Secundarios / Sistemas Externos:} Ninguno.
+
+\paragraph{Precondiciones:}
+\begin{enumerate}
+    \item[I.] Sesión activa con perfil mánager.
+\end{enumerate}
+
+\paragraph{Gatillador (Trigger):} El mánager navega al ítem ``Estaciones'' del sidebar y selecciona la acción de creación, edición o eliminación.
+
+\paragraph{Flujo Principal de Éxito (Basic Flow):}
+\begin{enumerate}
+    \item[I.] El sistema renderiza el dashboard de estaciones (MGR-29) con el listado de todas las estaciones registradas.
+    \item[II.] El mánager activa ``Agregar estación'' o ``Editar'' sobre una estación existente.
+    \item[III.] El mánager define o modifica el nombre de la estación y el tipo (COCINA, CAJA o ENTREGA).
+    \item[IV.] Para estaciones de tipo COCINA: el mánager puede asignar o modificar etiquetas clasificadoras para facilitar la asignación de pasos de receta.
+    \item[V.] Para estaciones de tipo CAJA o ENTREGA (MGR-30-B): el mánager define o actualiza las credenciales de acceso (CredencialEstacion.usuario y contraseña) de forma atómica e independiente de los demás atributos.
+    \item[VI.] El mánager activa ``Guardar''.
+    \item[VII.] El sistema persiste el registro Estacion con sus atributos y, si aplica, el registro CredencialEstacion asociado.
+\end{enumerate}
+
+\paragraph{Flujos Alternativos / de Extensión (Alternative Flows):}
+\begin{itemize}
+    \item CU-MGR-010-A1: Duplicación de estación (Se gatilla cuando el mánager activa ``Duplicar'').
+    \begin{itemize}
+        \item El sistema genera una nueva estación con los atributos de la original excepto las credenciales de CredencialEstacion, que no se replican.
+        \item Las credenciales de la nueva estación deben ser definidas explícitamente por el mánager antes de que el acceso sea posible.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Flujos de Excepción (Exception Flows):}
+\begin{itemize}
+    \item CU-MGR-010-E1: Eliminación bloqueada por dependencias activas (Se gatilla cuando el mánager intenta eliminar una estación con pasos activos en recetas o en el KDS).
+    \begin{itemize}
+        \item El sistema rechaza la eliminación y muestra un mensaje de error: ``La estación tiene pasos de receta asignados o pasos activos en el KDS. Elimine las dependencias antes de proceder.''
+        \item El estado de la estación no se modifica.
+    \end{itemize}
+\end{itemize}
+
+\paragraph{Postcondiciones:}
+\begin{itemize}
+    \item Estacion: se crea, actualiza o elimina el registro.
+    \item CredencialEstacion: se crea o actualiza el registro de credenciales para estaciones de tipo CAJA o ENTREGA.
+    \item EtiquetaEstacion: se crean o eliminan las asociaciones de etiquetas para estaciones de tipo COCINA.
+\end{itemize}
+
+\paragraph{Matriz de Trazabilidad:}
+\begin{itemize}
+    \item Requerimientos Satisfechos: REQ-MGR-010 (Gestión de estaciones).
+    \item Reglas de Negocio Aplicadas: RN-MGR-030 (Modelo de autenticación diferenciado), RN-MGR-031 (Eliminación bloqueada por dependencias activas), RN-MGR-032 (Etiquetas como criterio de filtrado), RN-MGR-033 (Credenciales no replicadas en duplicado), RN-MGR-034 (Actualización de credenciales como operación atómica).
+\end{itemize}
