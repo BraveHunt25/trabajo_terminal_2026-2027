@@ -1,0 +1,66 @@
+@startuml "DA-06 Algoritmo de Cálculo de Urgencia Dual en KDS y Módulo Entrega"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+}
+
+|Sistema|
+start
+repeat
+    :Iniciar ciclo de cálculo de urgencia;
+    
+    fork
+        |Base de Datos|
+        :Consultar pasos PENDIENTES;
+        |Sistema|
+        repeat
+            :Calcular ratio de urgencia (Paso);
+            if (¿Porcentaje > umbral?) then (Sí)
+                :Etiquetar paso como URGENTE;
+            else (No)
+                :Etiquetar paso como NORMAL;
+            endif
+            |Interfaces (KDS)|
+            :Actualizar estilo visual (Color/Deshabilitar);
+        repeat while (¿Existen más pasos?)
+        
+    fork again
+        |Base de Datos|
+        :Consultar pedidos EN_PREPARACION;
+        |Sistema|
+        repeat
+            :Calcular ratio de urgencia (Pedido);
+            if (¿Porcentaje > umbral?) then (Sí)
+                :Etiquetar pedido como URGENTE;
+            else (No)
+                :Etiquetar pedido como NORMAL;
+            endif
+            |Interfaces (Entrega)|
+            :Actualizar estilo visual (Borde);
+        repeat while (¿Existen más pedidos?)
+        
+    fork again
+        |Base de Datos|
+        :Consultar pedidos PREPARADO;
+        |Sistema|
+        repeat
+            :Calcular ratio de riesgo (Merma);
+            if (¿Porcentaje > umbral merma?) then (Sí)
+                :Etiquetar pedido como RIESGO_MERMA;
+            else (No)
+                :Etiquetar pedido como NORMAL;
+            endif
+            |Interfaces (Entrega)|
+            :Actualizar estilo visual (Alerta);
+        repeat while (¿Existen más pedidos?)
+    end fork
+    
+    :Esperar intervalo de ciclo;
+repeat while (¿Servicio activo?) is (Sí)
+stop
+@enduml

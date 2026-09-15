@@ -1,0 +1,64 @@
+@startuml "DA-03 Evaluación del DAG y Propagación de Estado en el KDS"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+    ActivityBackgroundColor #FDFEFE
+    ActivityBorderColor #2C3E50
+}
+
+|Cocinero|
+start
+:Terminar paso en tarjeta P;
+
+|Base de Datos|
+:Consultar estado del paso P;
+if (¿Estado es PENDIENTE?) then (Sí)
+    :Actualizar estado del paso P a COMPLETADO;
+    :Consultar pasos dependientes (Q);
+else (No)
+    :Emitir error HTTP 409 (Estado Inválido);
+    stop
+endif
+
+|Sistema|
+if (¿Existen pasos dependientes Q?) then (Sí)
+    repeat
+        :Validar predecesores del paso Q;
+        if (¿Todos los predecesores completados?) then (Sí)
+            |Base de Datos|
+            :Actualizar estado del paso Q a PENDIENTE;
+            |KDS/RT|
+            :Emitir notificación (PASO_LIBERADO);
+        else (No)
+            |Sistema|
+            :Mantener estado del paso Q en BLOQUEADO;
+        endif
+    repeat while (¿Existen más pasos Q?)
+else (No)
+endif
+
+|Base de Datos|
+:Consultar cantidad de pasos restantes en pedido;
+if (¿Todos los pasos completados?) then (Sí)
+    :Actualizar estado de pedido a PREPARADO;
+    |KDS/RT|
+    :Emitir notificación (PEDIDO_PREPARADO);
+else (No)
+endif
+
+fork
+    |KDS/RT|
+    :Emitir notificación (PASO_COMPLETADO);
+fork again
+    |Base de Datos|
+    :Confirmar transacción (COMMIT);
+end fork
+
+|Cocinero|
+stop
+@enduml

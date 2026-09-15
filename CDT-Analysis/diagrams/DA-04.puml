@@ -1,0 +1,73 @@
+@startuml "DA-04 Ciclo Completo del Corte de Caja con Doble Reconciliación"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+}
+
+|Cajero|
+start
+:Iniciar proceso de corte de caja;
+
+|Sistema|
+:Calcular monto esperado por método de pago;
+:Consultar pedidos no pagados;
+
+if (¿Existen pedidos NO_PAGADO?) then (Sí)
+    |Cajero|
+    repeat
+        :Regularizar pago pendiente;
+    repeat while (¿Existen más pedidos pendientes?) is (Sí)
+else (No)
+endif
+
+|Cajero|
+:Ingresar conteos físicos por método de pago;
+
+|Sistema|
+:Calcular diferencias financieras;
+repeat
+    if (¿Existen diferencias sin justificación?) then (Sí)
+        |Cajero|
+        :Registrar ajuste explicativo;
+    else (No)
+    endif
+repeat while (¿Existen diferencias sin ajustar?) is (Sí)
+
+|Sistema|
+:Cargar inventario activo;
+
+|Cajero|
+:Realizar conteo físico de insumos;
+
+|Sistema|
+:Calcular diferencias de inventario;
+repeat
+    if (¿Existen diferencias de inventario?) then (Sí)
+        |Cajero|
+        :Registrar ajuste de inventario;
+    else (No)
+    endif
+repeat while (¿Existen diferencias sin justificación?) is (Sí)
+
+|Cajero|
+:Confirmar cierre definitivo;
+
+|Base de Datos|
+fork
+    :Insertar CorteDeCaja;
+    :Actualizar Turno a CERRADO;
+    :Insertar HistorialDeMovimientos;
+    :Confirmar transacción (COMMIT);
+fork again
+    |Sistema|
+    :Invalidar token de sesión;
+end fork
+
+|Sistema|
+stop
+@enduml

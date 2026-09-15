@@ -6,3 +6,1110 @@
 El Sistema de Gestión de Cocina se diseñó bajo un modelo de arquitectura de tres capas, ejecutado mediante un despliegue local (on-premise) en las instalaciones físicas del establecimiento. Esta configuración se seleccionó con base en tres requerimientos críticos: la optimización de la latencia en la actualización de estados del Sistema de Visualización de Cocina, la necesidad de garantizar la operatividad continua ante interrupciones en la conectividad a la red de área amplia y el cumplimiento de las políticas de segmentación de red para el personal operativo. 
 
 La infraestructura consolidó la lógica de negocio, el almacenamiento persistente de datos y los servicios de comunicación en tiempo real en un servidor físico central. El acceso a dichos recursos se gestionó mediante interfaces diferenciadas: una red de intranet dedicada para los módulos operativos (Gestión, Caja, Cocina y Entrega), y un puerto de acceso expuesto bajo configuraciones de seguridad específicas para el Módulo Cliente.
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1\textwidth, inkscapelatex=false]{diagrams/ArquitecturaGeneral/Arquitectura General.svg}
+    \caption{Arquitectura del sistema completo.}
+    \label{fig:arquitectura_sistema_completo}
+\end{figure}
+
+\subsection{STACK TENOLÓGICO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l X X}
+\caption{\textsc{Tabla de stack tecnológico.}} \label{tab:stack_tecnologico}\\
+\toprule
+\textbf{Capa} & \textbf{Tecnología} & \textbf{Justificación} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Capa} & \textbf{Tecnología} & \textbf{Justificación} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Frontend & Next.js + Tailwind CSS & SPA con componentes reutilizables, amplia comunidad y documentación, código abierto. \\
+\addlinespace
+Backend & Node.js + Express.js & Manejo eficiente de I / O asíncrono, ideal para WebSocket y API REST de alta concurrencia. \\
+\addlinespace
+Base de datos & PostgreSQL & RDBMS robusto, soporte nativo para JSON, transacciones ACID y código abierto. \\
+\addlinespace
+Tiempo real & Socket.io & Abstracción de WebSocket con fallback automático a long-polling. \\
+\addlinespace
+Autenticación & JWT + bcrypt & Estándar de autenticación sin estado, escalable y compatible con SPA. \\
+\addlinespace
+Contenerización & Docker + Docker Compose & Reproducibilidad del entorno, facilidad de despliegue y escalamiento. \\
+\end{tabularx}
+\endgroup
+
+\subsection{HARDWARE}
+Dado que es de interés que las cafeterías puedan ejecutar el software con equipo accesible y con el que puedan contar como equipos comerciales, se considerarán los siguientes requisitos mínimos para ejecutar el sistema:
+
+\subsubsection{SERVIDOR CENTRAL}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l X X}
+\caption{\textsc{Requisitos mínimos y recomendados para ejecutar el servidor central.}} \label{tab:requisitos_minimos_servidor_central}\\
+\toprule
+\textbf{Componente} & \textbf{Mínimo} & \textbf{Recomendado} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Componente} & \textbf{Mínimo} & \textbf{Recomendado} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+CPU & Dual-core 2.0 GHz & Quad-core 2.5 GHz \\
+\addlinespace
+RAM & 4 GB & 8 GB \\
+\addlinespace
+Almacenamiento & 60 GB HDD & 120 GB SSD \\
+\addlinespace
+Red & Ethernet 100 Mbps & Ethernet + 10 Gbps \\
+\addlinespace
+OS & Ubuntu Server 22.04 LTS & Ubuntu Server 22.04 LTS \\
+\end{tabularx}
+\endgroup
+
+Se recomienda almacenamiento SSD para reducir la latencia de escritura y lectura de la BD. Le red recomendada, por otro lado, permite la transferencia rápida de datos para la diversidad de estaciones conectadas a la vez. 
+
+\subsubsection{ESTACIONES FIJAS}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l X}
+\caption{\textsc{Requisitos mínimos para ejecución del sistema en estaciones fijas.}} \label{tab:requisitos_minimos_estaciones_fijas}\\
+\toprule
+\textbf{Componente} & \textbf{Mínimo} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Componente} & \textbf{Mínimo} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{2}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+CPU & Dual-core 1.8 GHz \\
+\addlinespace
+RAM & 4 GB \\
+\addlinespace
+Almacenamiento & 32 GB \\
+\addlinespace
+Red & Ethernet \\
+\addlinespace
+OS & Ubuntu 22.04 \\
+\end{tabularx}
+\endgroup
+
+Estos requisitos se encuentran cubiertos por la obsolescencia tecnológica actual por lo que las cafeterías contarán con alternativas accesibles para obtener el hardware necesario de operación en soluciones comerciales disponibles de las cuales poseerán en su totalidad. 
+
+\section{DISEÑO DE LA BASE DE DATOS}
+El diseño de la base de datos del \textit{Kitchen Management System} (KMS) se concibió como un esquema relacional centralizado, implementado sobre PostgreSQL, cuya responsabilidad es mantener la coherencia transaccional del ciclo completo de un pedido: desde su captura en caja hasta su entrega al cliente. La decisión de adoptar un motor relacional responde al requisito RFUN-05, que establece una base de datos única y centralizada para todos los módulos del sistema, garantizando integridad referencial y eliminando inconsistencias derivadas de almacenes de datos distribuidos.
+
+El modelo se organizó en nueve dominios funcionales: (1)~autenticación y personal, (2)~catálogo de productos e insumos, (3)~recetas y pasos de preparación, (4)~clientes y ciclo de vida del pedido, (5)~instantáneas de producción para el KDS (\textit{Kitchen Display System}), (6)~entrega y cancelación, (7)~cortes de caja e inventario, (8)~configuración del sistema y (9)~auditoría. Esta segmentación favoreció la aplicación sistemática de las reglas de normalización y facilitó el análisis de dependencias funcionales entre atributos.
+
+Un principio de diseño transversal fue la \textit{inmutabilidad por instantánea}: cuando un pedido se confirma, los datos operativos de la receta (pasos, ingredientes, duraciones, estación asignada) se copian a tablas de producción independientes (\texttt{PASO\_RECETA\_PEDIDO}, \texttt{INGREDIENTE\_PASO\_PEDIDO}). Esto garantiza que modificaciones posteriores al catálogo no alteren pedidos en curso ni el historial de producción, satisfaciendo las reglas de negocio RN-COC-001 y RN-CAJ-007.
+
+\subsection{DICCIONARIO DE DATOS}
+\subsubsection{USUARIO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{0.15\textwidth} p{0.15\textwidth} X}
+\caption{\textsc{Tabla USUARIO de la base de datos.}} \label{tab:diccionario-usuario}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_usuario} & UUID & PK, NOT NULL & Identificador único del usuario con acceso al panel de Manager o Caja (UUID v4). \\
+\addlinespace
+\texttt{nombre\_usuario} & VARCHAR(50) & UNIQUE, NOT NULL & Credencial de inicio de sesión. Debe ser única en el sistema. \\
+\addlinespace
+\texttt{nombre\_completo} & VARCHAR(150) & NOT NULL & Nombre real del usuario para visualización en bitácoras y reportes. \\
+\addlinespace
+\texttt{hash\_contrasena} & TEXT & NOT NULL & Hash bcrypt de la contraseña. Nunca se almacena en texto plano. \\
+\addlinespace
+\texttt{rol} & VARCHAR(20) & NOT NULL, CHECK (MANAGER\textbar CAJERO) & Rol que determina los privilegios RBAC del usuario dentro del sistema (RNFU-01). \\
+\addlinespace
+\texttt{activo} & BOOLEAN & NOT NULL, DEFAULT TRUE & Bandera de estado lógico; los usuarios se desactivan en lugar de eliminarse para preservar integridad referencial. \\
+\addlinespace
+\texttt{fecha\_creacion} & TIMESTAMP WITH TIME ZONE & NOT NULL, DEFAULT NOW() & Marca temporal del momento de creación del registro. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{EMPLEADO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3cm} X}
+\caption{\textsc{Tabla EMPLEADO de la base de datos.}} \label{tab:diccionario-empleado}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_empleado} & UUID & PK, NOT NULL & Identificador único del empleado de cocina (UUID v4). \\
+\addlinespace
+\texttt{id\_usuario} & UUID & FK $\rightarrow$ USUARIO, UNIQUE, NULL & Referencia al usuario del sistema si el empleado también tiene acceso al panel Manager/Caja. Nullable para cocineros sin acceso a panel. \\
+\addlinespace
+\texttt{nombre\_completo} & VARCHAR(150) & NOT NULL & Nombre del cocinero para asignación de turnos y visualización en el KDS. \\
+\addlinespace
+\texttt{nip\_hash} & TEXT & NOT NULL & Hash bcrypt del NIP de 4-6 dígitos usado para autenticación rápida en el KDS. \\
+\addlinespace
+\texttt{activo} & BOOLEAN & NOT NULL, DEFAULT TRUE & Estado lógico del empleado. Los empleados inactivos no se pueden asignar a turnos. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{TURNO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3cm} X}
+\caption{\textsc{Tabla TURNO de la base de datos.}} \label{tab:turno}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_turno} & UUID & PK, NOT NULL & Identificador único del turno de trabajo (UUID v4). \\
+\addlinespace
+\texttt{hora\_inicio} & TIME & NOT NULL & Hora de inicio del turno. Validada contra \texttt{hora\_fin} en regla RN-MGR-026. \\
+\addlinespace
+\texttt{hora\_fin} & TIME & NOT NULL & Hora de fin del turno. Debe ser posterior a \texttt{hora\_inicio}. \\
+\addlinespace
+\texttt{descripcion} & VARCHAR(100) & NOT NULL & Nombre descriptivo del turno (ej. ``Turno Mañana'', ``Turno Tarde''). \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{ESTACION}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3cm} X}
+\caption{\textsc{Tabla ESTACION de la base de datos.}} \label{tab:estacion}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_estacion} & UUID & PK, NOT NULL & Identificador único de la estación de trabajo (UUID v4). \\
+\addlinespace
+\texttt{nombre} & VARCHAR(100) & NOT NULL & Nombre operativo de la estación (ej. ``Caja Principal'', ``Parrilla'', ``Módulo Entrega''). \\
+\addlinespace
+\texttt{tipo} & VARCHAR(20) & NOT NULL, CHECK (CAJA  $|$  COCINA  $|$  ENTREGA) & Determina el módulo de interfaz que se sirve a ese dispositivo y los privilegios de acceso. \\
+\addlinespace
+\texttt{activa} & BOOLEAN & NOT NULL, DEFAULT TRUE & Estado lógico. Las estaciones inactivas no reciben asignaciones ni pedidos. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{CREDENCIAL\_ESTACION}
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla CREDENCIAL\_ESTACION de la base de datos.}} \label{tab:credencial-estacion}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_credencial} & UUID & PK, NOT NULL & Identificador único de la credencial compartida (UUID v4). \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NOT NULL & Estación a la que pertenece esta credencial. \\
+\addlinespace
+\texttt{nombre\_usuario} & VARCHAR(50) & UNIQUE, NOT NULL & Usuario de inicio de sesión compartido para el puesto físico (Caja o Entrega). \\
+\addlinespace
+\texttt{hash\_contrasena} & TEXT & NOT NULL & Hash bcrypt de la contraseña compartida del puesto. \\
+\addlinespace
+\texttt{activa} & BOOLEAN & NOT NULL, DEFAULT TRUE & Estado lógico de la credencial. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{ASIGNACION\_ESTACION}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla ASIGNACION\_ESTACION de la base de datos.}} \label{tab:asignacion-estacion}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_asignacion} & UUID & PK, NOT NULL & Identificador único de la asignación (UUID v4). \\
+\addlinespace
+\texttt{id\_empleado} & UUID & FK $\rightarrow$ EMPLEADO, NOT NULL & Empleado asignado. \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NOT NULL & Estación a la que se asigna el empleado. Debe ser de tipo COCINA. \\
+\addlinespace
+\texttt{id\_turno} & UUID & FK $\rightarrow$ TURNO, NOT NULL & Turno que cubre esta asignación. \\
+\addlinespace
+\texttt{fecha} & DATE & NOT NULL & Fecha calendario de la asignación. \\
+\addlinespace
+\texttt{inicio\_sesion} & TIMESTAMP WITH TIME ZONE & NULL & Marca temporal del momento en que el empleado autenticó en el KDS. \\
+\addlinespace
+\texttt{fin\_sesion} & TIMESTAMP WITH TIME ZONE & NULL & Marca temporal del cierre de sesión. Nullable mientras la sesión está activa. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{INSUMO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla INSUMO de la base de datos.}} \label{tab:insumo}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_insumo} & UUID & PK, NOT NULL & Identificador único del insumo (UUID v4). \\
+\addlinespace
+\texttt{nombre} & VARCHAR(150) & NOT NULL & Denominación del insumo (ej. ``Harina de trigo'', ``Vaso desechable 16 oz''). \\
+\addlinespace
+\texttt{unidad\_medida} & VARCHAR(30) & NOT NULL & Unidad en que se expresa el stock (ej. ``kg'', ``L'', ``piezas''). \\
+\addlinespace
+\texttt{stock\_actual} & DECIMAL(10,3) & NOT NULL, DEFAULT 0 & Cantidad disponible en inventario en el momento de la consulta. \\
+\addlinespace
+\texttt{stock\_minimo} & DECIMAL(10,3) & NOT NULL, DEFAULT 0 & Umbral mínimo por debajo del cual se genera una alerta de reabastecimiento. \\
+\addlinespace
+\texttt{activo} & BOOLEAN & NOT NULL, DEFAULT TRUE & Estado lógico del insumo. Los insumos inactivos no se asignan a nuevas recetas. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{PRODUCTO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{4cm} p{2.5cm} p{3cm} X}
+\caption{\textsc{Tabla PRODUCTO de la base de datos.}} \label{tab:producto}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_producto} & UUID & PK, NOT NULL & Identificador único del producto del menú (UUID v4). \\
+\addlinespace
+\texttt{nombre} & VARCHAR(150) & NOT NULL & Nombre del artículo tal como aparece en el menú del cliente. \\
+\addlinespace
+\texttt{descripcion} & TEXT & NULL & Descripción breve para el módulo de cliente. \\
+\addlinespace
+\texttt{precio\_base} & DECIMAL(10,2) & NOT NULL, CHECK ($\ge$ 0) & Precio de venta estándar antes de aplicar promociones. \\
+\addlinespace
+\texttt{disponible} & BOOLEAN & NOT NULL, DEFAULT TRUE & Disponibilidad operativa. Un producto no disponible no aparece en el menú del cliente. \\
+\addlinespace
+\texttt{permite\_personalizacion} & BOOLEAN & NOT NULL, DEFAULT FALSE & Indica si el cliente puede modificar ingredientes al agregar el producto al carrito. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{PASO\_RECETA}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{4cm} p{2.5cm} p{3cm} X}
+\caption{\textsc{Tabla PASO\_RECETA de la base de datos.}} \label{tab:paso-receta}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_paso\_receta} & UUID & PK, NOT NULL & Identificador único del paso de receta (UUID v4). \\
+\addlinespace
+\texttt{id\_producto} & UUID & FK $\rightarrow$ PRODUCTO, NOT NULL & Producto al que pertenece este paso. \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NOT NULL & Estación de cocina responsable de ejecutar el paso. Determina en qué KDS aparece. \\
+\addlinespace
+\texttt{nombre} & VARCHAR(150) & NOT NULL & Denominación del paso (ej. ``Asar la carne'', ``Ensamblar el sándwich''). \\
+\addlinespace
+\texttt{orden} & INTEGER & NOT NULL, CHECK ($\ge$ 1) & Posición secuencial sugerida dentro de la receta, complementada por las dependencias en DAG. \\
+\addlinespace
+\texttt{duracion\_estimada\_seg} & INTEGER & NOT NULL, CHECK ($>$ 0) & Duración esperada del paso en segundos. Alimenta el cálculo de urgencia en el KDS. \\
+\addlinespace
+\texttt{activo} & BOOLEAN & NOT NULL, DEFAULT TRUE & Estado lógico. Los pasos inactivos no se copian a nuevas instantáneas de producción. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{CLIENTE}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla CLIENTE de la base de datos.}} \label{tab:cliente}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_cliente} & UUID & PK, NOT NULL & Identificador único del cliente registrado (UUID v4). \\
+\addlinespace
+\texttt{correo} & VARCHAR(254) & UNIQUE, NOT NULL & Dirección de correo electrónico usada como identificador de cuenta y para notificaciones SMTP. \\
+\addlinespace
+\texttt{nombre} & VARCHAR(150) & NOT NULL & Nombre del cliente para personalización de la interfaz. \\
+\addlinespace
+\texttt{hash\_contrasena} & TEXT & NOT NULL & Hash bcrypt de la contraseña del cliente. \\
+\addlinespace
+\texttt{cuenta\_verificada} & BOOLEAN & NOT NULL, DEFAULT FALSE & Estado de verificación. La cuenta debe verificarse por correo antes de poder realizar pedidos. \\
+\addlinespace
+\texttt{fecha\_registro} & TIMESTAMP WITH TIME ZONE & NOT NULL, DEFAULT NOW() & Marca temporal del registro. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{PEDIDO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla PEDIDO de la base de datos.}} \label{tab:pedido}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_pedido} & UUID & PK, NOT NULL & Identificador único del pedido (UUID v4). Se usa como base para el token QR. \\
+\addlinespace
+\texttt{id\_cliente} & UUID & FK $\rightarrow$ CLIENTE, NULL & Cliente que realizó el pedido. NULL si el pedido es anónimo (\texttt{es\_anonimo} = TRUE). \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NOT NULL & Estación de caja en la que se confirmó el pedido. \\
+\addlinespace
+\texttt{estado} & VARCHAR(20) & NOT NULL, CHECK (EN\_PREPARACION  $|$  PREPARADO  $|$  ENTREGADO  $|$  CANCELADO) & Estado actual en la máquina de estados del pedido. \\
+\addlinespace
+\texttt{total} & DECIMAL(10,2) & NOT NULL, CHECK ($\ge$ 0) & Monto total cobrado al cliente, calculado como suma de \texttt{ITEM\_PEDIDO.subtotal}. \\
+\addlinespace
+\texttt{metodo\_pago} & VARCHAR(50) & NOT NULL & Método de pago registrado al confirmar (ej. ``EFECTIVO'', ``TARJETA''). \\
+\addlinespace
+\texttt{es\_anonimo} & BOOLEAN & NOT NULL, DEFAULT FALSE & Indica si el pedido fue realizado sin cuenta de cliente. \\
+\addlinespace
+\texttt{ventana\_inicio} & TIME & NULL & Inicio de la ventana de recolección programada. Solo aplica cuando el sistema tiene ventanas activas. \\
+\addlinespace
+\texttt{ventana\_fin} & TIME & NULL & Fin de la ventana de recolección programada. \\
+\addlinespace
+\texttt{fecha\_creacion} & TIMESTAMP WITH TIME ZONE & NOT NULL, DEFAULT NOW() & Marca temporal de creación del pedido. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{ITEM\_PEDIDO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{4cm} p{2.5cm} p{3cm} X}
+\caption{\textsc{Tabla ITEM\_PEDIDO de la base de datos.}} \label{tab:item-pedido}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_item\_pedido} & UUID & PK, NOT NULL & Identificador único del ítem dentro del pedido (UUID v4). \\
+\addlinespace
+\texttt{id\_pedido} & UUID & FK $\rightarrow$ PEDIDO, NOT NULL & Pedido al que pertenece el ítem. \\
+\addlinespace
+\texttt{id\_producto} & UUID & FK $\rightarrow$ PRODUCTO, NOT NULL & Referencia trazable al catálogo de productos. \\
+\addlinespace
+\texttt{cantidad} & INTEGER & NOT NULL, CHECK ($\ge$ 1) & Número de unidades del producto incluidas en este ítem. \\
+\addlinespace
+\texttt{precio\_unitario\_snapshot} & DECIMAL(10,2) & NOT NULL & Precio del producto en el momento de confirmación del pedido. Inmutable por diseño (snapshot). \\
+\addlinespace
+\texttt{subtotal} & DECIMAL(10,2) & NOT NULL & Resultado de $\text{cantidad} \times \text{precio\_unitario\_snapshot}$. Calculado y persistido para eficiencia en reportes. \\
+\addlinespace
+\texttt{notas} & TEXT & NULL & Instrucciones especiales del cliente no capturables con los ingredientes parametrizados. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{INGREDIENTE\_ITEM\_PEDIDO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla INGREDIENTE\_ITEM\_PEDIDO de la base de datos.}} \label{tab:ingrediente-item-pedido}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_ingrediente\_item} & UUID & PK, NOT NULL & Identificador único de la personalización del ítem (UUID v4). \\
+\addlinespace
+\texttt{id\_item\_pedido} & UUID & FK $\rightarrow$ ITEM\_PEDIDO, NOT NULL & Ítem al que aplica esta personalización. \\
+\addlinespace
+\texttt{id\_insumo} & UUID & FK $\rightarrow$ INSUMO, NOT NULL & Insumo personalizado (solo los marcados como \texttt{es\_personalizable} en la receta). \\
+\addlinespace
+\texttt{cantidad} & DECIMAL(10,3) & NOT NULL, CHECK ($\ge$ 0) & Cantidad del insumo a usar. Cero cuando la acción es EXCLUIR. \\
+\addlinespace
+\texttt{accion} & VARCHAR(10) & NOT NULL, CHECK (INCLUIR $|$ EXCLUIR $|$ EXTRA) & Tipo de modificación solicitada por el cliente. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{CODIGO\_VERIFICACION\_QR}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{p{3cm} p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla CODIGO\_VERIFICACION\_QR de la base de datos.}} \label{tab:codigo-verificacion-qr}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_codigo\_qr} & UUID & PK, NOT NULL & Identificador único del código QR (UUID v4). \\
+\addlinespace
+\texttt{id\_pedido} & UUID & FK $\rightarrow$ PEDIDO, UNIQUE, NOT NULL & Pedido al que corresponde el QR. Relación 1:1; un pedido tiene un único QR vigente. \\
+\addlinespace
+\texttt{token} & VARCHAR(512) & UNIQUE, NOT NULL & Token opaco generado según RNFU-06 (UUID v4 o JWT [INFERENCIA: formato exacto no especificado]). \\
+\addlinespace
+\texttt{estado} & VARCHAR(10) & NOT NULL, CHECK (ACTIVO  $|$  CONSUMIDO  $|$  EXPIRADO) & Ciclo de vida del token. Solo los tokens ACTIVOS son válidos para entrega. \\
+\addlinespace
+\texttt{fecha\_generacion} & TIMESTAMP WITH TIME ZONE & NOT NULL & Momento en que se generó el token. \\
+\addlinespace
+\texttt{fecha\_expiracion} & TIMESTAMP WITH TIME ZONE & NOT NULL & Tiempo límite de validez del token (calculado al generar). \\
+\addlinespace
+\texttt{fecha\_uso} & TIMESTAMP WITH TIME ZONE & NULL & Momento en que el token fue consumido por el módulo de Entrega. NULL si aún no se usa. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{PEDIDO\_ACCESO\_ANONIMO}
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla PEDIDO\_ACCESO\_ANONIMO de la base de datos.}} \label{tab:pedido-acceso-anonimo}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_acceso\_anonimo} & UUID & PK, NOT NULL & Identificador único del acceso anónimo (UUID v4). \\
+\addlinespace
+\texttt{id\_pedido} & UUID & FK $\rightarrow$ PEDIDO, UNIQUE, NOT NULL & Pedido cuyo seguimiento se expone de forma anónima. \\
+\addlinespace
+\texttt{token} & VARCHAR(512) & UNIQUE, NOT NULL & Token opaco de acceso de un solo uso, entregado al cliente anónimo en caja. \\
+\addlinespace
+\texttt{fecha\_creacion} & TIMESTAMP WITH TIME ZONE & NOT NULL & Momento de generación del token de acceso anónimo. \\
+\addlinespace
+\texttt{fecha\_expiracion} & TIMESTAMP WITH TIME ZONE & NOT NULL & Tiempo límite de validez. El token expira cuando el pedido se entrega o cancela. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{PEDIDO\_ESTADO\_TIMESTAMP}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla PEDIDO\_ESTADO\_TIMESTAMP de la base de datos.}} \label{tab:pedido-estado-timestamp}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_timestamp} & UUID & PK, NOT NULL & Identificador único del registro de cambio de estado (UUID v4). \\
+\addlinespace
+\texttt{id\_pedido} & UUID & FK $\rightarrow$ PEDIDO, NOT NULL & Pedido cuyo estado cambió. \\
+\addlinespace
+\texttt{estado} & VARCHAR(20) & NOT NULL & Estado al que transitó el pedido en este momento. \\
+\addlinespace
+\texttt{id\_empleado} & UUID & FK $\rightarrow$ EMPLEADO, NULL & Empleado que realizó el cambio de estado. NULL si el cambio fue automático o iniciado por sistema. \\
+\addlinespace
+\texttt{fecha\_cambio} & TIMESTAMP WITH TIME ZONE & NOT NULL, DEFAULT NOW() & Marca temporal exacta del cambio de estado. Permite reconstruir el historial completo. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{PASO\_RECETA\_PEDIDO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla PASO\_RECETA\_PEDIDO de la base de datos.}} \label{tab:paso-receta-pedido}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_paso\_receta\_pedido} & UUID & PK, NOT NULL & Identificador único del paso en la instantánea de producción (UUID v4). \\
+\addlinespace
+\texttt{id\_item\_pedido} & UUID & FK $\rightarrow$ ITEM\_PEDIDO, NOT NULL & Ítem del pedido al que pertenece este paso. \\
+\addlinespace
+\texttt{id\_paso\_receta} & UUID & FK $\rightarrow$ PASO\_RECETA, NOT NULL & Referencia trazable al paso del catálogo del que se generó la instantánea. \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NOT NULL & Estación de cocina asignada (copiada del catálogo en el momento de confirmación). \\
+\addlinespace
+\texttt{nombre\_snapshot} & VARCHAR(150) & NOT NULL & Nombre del paso en el momento de la confirmación del pedido. Inmutable. \\
+\addlinespace
+\texttt{duracion\_estimada\_seg\_snapshot} & INTEGER & NOT NULL & Duración estimada copiada del catálogo al confirmar. Inmutable. \\
+\addlinespace
+\texttt{orden\_snapshot} & INTEGER & NOT NULL & Orden sugerido copiado del catálogo al confirmar. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{PASO\_PEDIDO\_ESTADO}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla PASO\_PEDIDO\_ESTADO de la base de datos.}} \label{tab:paso-pedido-estado}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_paso\_pedido\_estado} & UUID & PK, NOT NULL & Identificador único del estado de ejecución del paso (UUID v4). \\
+\addlinespace
+\texttt{id\_paso\_receta\_pedido} & UUID & FK $\rightarrow$ PASO\_RECETA\_PEDIDO, UNIQUE, NOT NULL & Paso de producción al que corresponde este estado. Relación 1:1. \\
+\addlinespace
+\texttt{id\_empleado\_asignado} & UUID & FK $\rightarrow$ EMPLEADO, NULL & Cocinero que tomó el paso. NULL si el paso aún no fue tomado. \\
+\addlinespace
+\texttt{estado} & VARCHAR(15) & NOT NULL, CHECK (PENDIENTE $|$ EN\_PROCESO  $|$  COMPLETADO), DEFAULT PENDIENTE & Estado de ejecución del paso. Alimenta la lógica de liberación de dependencias DAG. \\
+\addlinespace
+\texttt{fecha\_inicio} & TIMESTAMP WITH TIME ZONE & NULL & Momento en que el cocinero marcó el paso como iniciado. \\
+\addlinespace
+\texttt{fecha\_fin} & TIMESTAMP WITH TIME ZONE & NULL & Momento en que el cocinero marcó el paso como completado. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{CANCELACION\_ENTREGA}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla CANCELACION\_ENTREGA de la base de datos.}} \label{tab:cancelacion-entrega}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_cancelacion} & UUID & PK, NOT NULL & Identificador único del registro de cancelación (UUID v4). \\
+\addlinespace
+\texttt{id\_pedido} & UUID & FK $\rightarrow$ PEDIDO, UNIQUE, NOT NULL & Pedido que fue cancelado. Un pedido solo puede cancelarse una vez. \\
+\addlinespace
+\texttt{id\_motivo} & UUID & FK $\rightarrow$ MOTIVO\_ CANCELACION\_ ENTREGA, NOT NULL & Motivo seleccionado del catálogo normalizado de causas de cancelación. \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NOT NULL & Estación de entrega desde donde se procesó la cancelación. \\
+\addlinespace
+\texttt{observaciones} & TEXT & NULL & Notas adicionales opcionalmente capturadas por el operador de entrega. \\
+\addlinespace
+\texttt{fecha} & TIMESTAMP WITH TIME ZONE & NOT NULL, DEFAULT NOW() & Marca temporal de la cancelación. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{CORTE\_DE\_CAJA}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla CORTE\_DE\_CAJA de la base de datos.}} \label{tab:corte-de-caja}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_corte} & UUID & PK, NOT NULL & Identificador único del corte de caja (UUID v4). \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NOT NULL & Estación de caja sobre la que se realiza el corte. \\
+\addlinespace
+\texttt{id\_usuario} & UUID & FK $\rightarrow$ USUARIO, NOT NULL & Usuario Manager que autorizó o ejecutó el corte. \\
+\addlinespace
+\texttt{monto\_inicial} & DECIMAL(10,2) & NOT NULL & Efectivo declarado en apertura de turno. \\
+\addlinespace
+\texttt{monto\_final\_declarado} & DECIMAL(10,2) & NULL & Efectivo contado físicamente al cierre. NULL mientras el corte no se finaliza. \\
+\addlinespace
+\texttt{monto\_calculado} & DECIMAL(10,2) & NULL & Total calculado por el sistema a partir de ventas en efectivo del turno. \\
+\addlinespace
+\texttt{diferencia} & DECIMAL(10,2) & NULL & Resultado de $\text{monto\_final\_declarado} - \text{monto\_calculado}$. Positivo = sobrante; negativo = faltante. \\
+\addlinespace
+\texttt{fecha\_apertura} & TIMESTAMP WITH TIME ZONE & NOT NULL & Marca temporal de inicio del turno. \\
+\addlinespace
+\texttt{fecha\_cierre} & TIMESTAMP WITH TIME ZONE & NULL & Marca temporal de cierre. NULL mientras el corte está abierto. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{CONFIGURACION\_SISTEMA}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla CONFIGURACION\_SISTEMA de la base de datos.}} \label{tab:configuracion-sistema}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_configuracion} & UUID & PK, NOT NULL & Identificador único del parámetro de configuración (UUID v4). \\
+\addlinespace
+\texttt{clave} & VARCHAR(100) & UNIQUE, NOT NULL & Identificador de la configuración (ej. \texttt{umbral\_urgencia\_rojo}, \texttt{nombre\_cafeteria}, \texttt{imagen\_cafeteria}). \\
+\addlinespace
+\texttt{valor} & TEXT & NOT NULL & Valor del parámetro serializado como texto. El campo \texttt{tipo\_dato} indica cómo deserializarlo. \\
+\addlinespace
+\texttt{tipo\_dato} & VARCHAR(20) & NOT NULL, CHECK (STRING $|$ INTEGER $|$ DECIMAL $|$ BOOLEAN $|$ TIME) & Tipo semántico del valor almacenado. Permite al cliente deserializar correctamente. \\
+\addlinespace
+\texttt{descripcion} & VARCHAR(255) & NULL & Explicación del propósito del parámetro para el administrador. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{HISTORIAL\_DE\_MOVIMIENTOS}
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{2.5cm} p{3.5cm} X}
+\caption{\textsc{Tabla HISTORIAL\_DE\_MOVIMIENTOS de la base de datos.}} \label{tab:historial-de-movimientos}\\
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Nombre del campo} & \textbf{Tipo de dato} & \textbf{Restricciones} & \textbf{Descripción funcional} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{id\_historial} & UUID & PK, NOT NULL & Identificador único del evento auditado (UUID v4). \\
+\addlinespace
+\texttt{modulo} & VARCHAR(30) & NOT NULL & Módulo del sistema que generó el evento (ej. \texttt{MANAGER}, \texttt{CAJA}, \texttt{COCINA}, \texttt{ENTREGA}, \texttt{CLIENTE}). \\
+\addlinespace
+\texttt{accion} & VARCHAR(100) & NOT NULL & Descripción de la acción realizada (ej. \texttt{CREAR\_PRODUCTO}, \texttt{CAMBIAR\_ESTADO\_PEDIDO}). \\
+\addlinespace
+\texttt{id\_usuario} & UUID & FK $\rightarrow$ USUARIO, NULL & Usuario Manager o Cajero que ejecutó la acción. Nullable si el actor es un empleado o cliente. \\
+\addlinespace
+\texttt{id\_empleado} & UUID & FK $\rightarrow$ EMPLEADO, NULL & Empleado de cocina que ejecutó la acción. Nullable si el actor es un usuario o cliente. \\
+\addlinespace
+\texttt{id\_estacion} & UUID & FK $\rightarrow$ ESTACION, NULL & Estación desde la que se ejecutó la acción. Nullable si fue desde el módulo cliente. \\
+\addlinespace
+\texttt{id\_cliente} & UUID & FK $\rightarrow$ CLIENTE, NULL & Cliente que ejecutó la acción. Nullable si fue desde un puesto interno. \\
+\addlinespace
+\texttt{datos\_previos} & JSONB & NULL & Representación JSON del estado del registro antes del cambio. NULL para acciones de creación. \\
+\addlinespace
+\texttt{datos\_nuevos} & JSONB & NULL & Representación JSON del estado del registro después del cambio. NULL para acciones de eliminación. \\
+\addlinespace
+\texttt{fecha} & TIMESTAMP WITH TIME ZONE & NOT NULL, DEFAULT NOW() & Marca temporal exacta del evento auditado. \\
+\end{tabularx}
+\endgroup
+
+\subsubsection{TABLAS DE UNIÓN Y DETALLES COMPLEMENTARIAS}
+Las siguientes tablas completan el modelo; su estructura es sencilla y se describe brevemente:
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{l p{6cm} X}
+\caption{\textsc{Tablas de unión y detalles complementarias de la base de datos.}} \label{tab:tablas-union-detalles}\\
+\toprule
+\textbf{Tabla} & \textbf{Campos} & \textbf{Propósito} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Tabla} & \textbf{Campos} & \textbf{Propósito} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{3}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+\texttt{ESTACION\_ETIQUETA} & \texttt{id\_estacion} FK, \texttt{id\_etiqueta} FK (PK compuesta) & Relación M:N entre estaciones y etiquetas de clasificación. \\
+\addlinespace
+\texttt{INGREDIENTE\_PRODUCTO} & \texttt{id\_ingrediente\_producto} PK, \texttt{id\_producto} FK, \texttt{id\_insumo} FK, \texttt{cantidad\_default}, \texttt{es\_personalizable}, \texttt{es\_opcional} & Define la composición base de cada producto para personalización y descuento de inventario. \\
+\addlinespace
+\texttt{INSUMO\_DESECHABLE\_PRODUCTO} & \texttt{id\_insumo\_desechable} PK, \texttt{id\_producto} FK, \texttt{id\_insumo} FK, \texttt{cantidad} & Registra materiales no alimentarios asociados a un producto (vasos, bolsas, servilletas). \\
+\addlinespace
+\texttt{PRODUCTO\_PROMOCION} & \texttt{id\_producto} FK, \texttt{id\_promocion} FK (PK compuesta) & Relación M:N que vincula productos con las promociones aplicables. \\
+\addlinespace
+\texttt{DEPENDENCIA\_PASO} & \texttt{id\_paso\_receta} FK, \texttt{id\_paso\_receta\_previo} FK (PK compuesta) & Aristas del DAG de dependencias entre pasos de receta del catálogo. \\
+\addlinespace
+\texttt{INGREDIENTE\_PASO} & \texttt{id\_ingrediente\_paso} PK, \texttt{id\_paso\_receta} FK, \texttt{id\_insumo} FK, \texttt{cantidad} & Insumos consumidos en cada paso de receta del catálogo. \\
+\addlinespace
+\texttt{DEPENDENCIA\_PASO\_PEDIDO} & \texttt{id\_paso\_receta\_pedido} FK, \texttt{id\_paso\_receta\_pedido\_previo} FK (PK compuesta) & Instantánea inmutable del DAG de dependencias para el pedido en curso. \\
+\addlinespace
+\texttt{INGREDIENTE\_PASO\_PEDIDO} & \texttt{id\_ingrediente\_paso\_pedido} PK, \texttt{id\_paso\_receta\_pedido} FK, \texttt{id\_insumo} FK, \texttt{cantidad\_snapshot} & Insumos por consumir en cada paso de producción, congelados al confirmar el pedido. \\
+\addlinespace
+\texttt{AJUSTE\_CORTE\_CAJA} & \texttt{id\_ajuste} PK, \texttt{id\_corte} FK, \texttt{metodo\_pago}, \texttt{monto}, \texttt{descripcion} & Desglose de ventas por método de pago dentro de un corte de caja. \\
+\addlinespace
+\texttt{AJUSTE\_CORTE\_INVENTARIO} & \texttt{id\_ajuste\_inventario} PK, \texttt{id\_corte} FK, \texttt{id\_insumo} FK, \texttt{cantidad\_contada}, \texttt{cantidad\_sistema}, \texttt{diferencia} & Conciliación de inventario físico contra sistema para cada insumo al cierre de turno. \\
+\addlinespace
+\texttt{MOTIVO\_CANCELACION\_ENTREGA} & \texttt{id\_motivo} PK, \texttt{descripcion}, \texttt{activo} & Catálogo normalizado de causas de cancelación seleccionables en el módulo de Entrega. \\
+\addlinespace
+\texttt{CONFIGURACION\_METODO\_PAGO} & \texttt{id\_metodo\_pago} PK, \texttt{nombre} UNIQUE, \texttt{habilitado}, \texttt{descripcion} & Métodos de pago disponibles en el sistema, habilitables individualmente por el Manager. \\
+\end{tabularx}
+\endgroup
+
+\newpage
+\section{DIAGRAMAS DE SECUENCIA}
+Los diagramas de secuencia integrados en la presente documentación modelan la dimensión cronológica de los intercambios de mensajes entre los participantes de los procesos críticos del sistema. Bajo la notación UML 2.5, las líneas sólidas representan los mensajes síncronos, mientras que las líneas discontinuas simbolizan las respuestas correspondientes. La estructura de los bloques \textit{alt/else} representa los flujos alternativos y mutuamente excluyentes, derivados de las condiciones de negocio definidas, y los bloques \textit{loop} denotan la iteración sobre colecciones de entidades. La arquitectura de los participantes se segmenta en las capas definidas: capa de presentación (Frontend Next.js), capa de aplicación (API Gateway y servicios Express.js), capa de persistencia (PostgreSQL) y el canal de comunicación en tiempo real (WebSocket/SSE).
+
+\subsection{DS-01: CONFIRMACIÓN DE PEDIDO DESDE EL MÓDULO CLIENTE}
+El proceso de confirmación de pedido constituyó el flujo transaccional de mayor complejidad dentro del sistema, dado que involucró cuatro capas de validación secuencial (RN-CLI-018), la aplicación del patrón de inmutabilidad mediante instantáneas sobre precios e ingredientes (RN-MGR-021 y RN-MGR-023), el control de condiciones de carrera sobre la capacidad del slot de recolección (RN-CLI-017, RN-CAJ-021) y la inicialización del grafo de estados del KDS al término de la transacción.
+
+El diagrama expuso tres características de diseño determinantes. En primer lugar, la validación del token de sesión operó como guarda transversal en el API Gateway antes de que se invocara cualquier lógica de negocio, lo cual materializó el requisito RNFU-01 relativo al control de acceso por rol. En segundo lugar, las validaciones de existencias y capacidad de slot se ejecutaron de forma secuencial antes del inicio de la transacción de escritura. Este orden no resultó arbitrario, pues la consulta de existencias no requirió bloqueo exclusivo, mientras que la consulta de capacidad de slot emitió una sentencia SQL \texttt{SELECT FOR UPDATE}, la cual previno la condición de carrera identificada en los requisitos RN-CLI-017 y RN-CAJ-021. Finalmente, todas las operaciones de inserción que constituyeron el pedido, incluyendo las instantáneas de precios, la receta y la generación del token QR, se envolvieron en una única transacción atómica. En consecuencia, cualquier fallo en el proceso provocó un retroceso (\textit{rollback}) completo sin estados parciales persistidos, con lo cual se satisfizo el requisito RNFU-04.
+
+\begin{landscape}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.35\textwidth, inkscapelatex=false]{diagrams/DA-01/DA-01 Ciclo de Vida del Pedido.svg}
+    \caption{Diagrama de secuencia confirmación de pedido.}
+    \label{fig:diagrama-secuencia-confirmacion-pedido}
+\end{figure}
+\end{landscape}
+
+\subsection{DS-02: COMPLETAR PASO DE PREPARACIÓN Y EVALUACIÓN DEL GRAFO DE DEPENDENCIAS (DAG)}
+El presente proceso modela la transición de un paso al estado \texttt{COMPLETADO} dentro del módulo Cocina, operación que conlleva la evaluación recursiva del grafo de dependencias (DAG) para determinar la liberación de los pasos subsiguientes. Este flujo constituye la acción con mayor impacto transversal del sistema, debido a que su ejecución puede desencadenar la transición del pedido al estado \texttt{PREPARADO} y propagar notificaciones simultáneas hacia el módulo Entrega y el módulo Cliente.
+
+El diseño del proceso se sustentó en dos invariantes fundamentales. En primer lugar, se estableció una separación estricta de responsabilidades entre la transición de estado del paso, gestionada por \texttt{StepService}, y la evaluación del grafo de dependencias, a cargo de \texttt{DAGService}. Esta arquitectura permitió que el componente de evaluación operara como una entidad autónoma y reutilizable, lo cual facilitó su invocación durante la inicialización del pedido en el módulo Caja. En segundo lugar, se implementó la propagación selectiva de eventos mediante un canal de comunicación en tiempo real. Esta solución posibilitó la liberación de tareas en múltiples estaciones del KDS, el cambio de estado del pedido a \texttt{PREPARADO} y la actualización inmediata de la interfaz del usuario sin necesidad de sondeo (\textit{polling}) o recarga manual, con lo cual se satisfizo el requisito REQ-GLB-001 (RN-SYS-003).
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.55\textwidth, inkscapelatex=false]{diagrams/DA-02/DA-02 Flujo de Confirmación de Pedido con Validaciones Transaccionales.svg}
+    \caption{Diagrama de secuencia de completar paso de preparación.}
+    \label{fig:diagrama-secuencia-completar-paso}
+\end{figure}
+\subsection{DS-03: PROTOCOLO DE VERIFICACIÓN QR Y CONFIRMACIÓN DE ENTREGA}
+El protocolo de verificación mediante código QR constituyó la fase terminal del ciclo de vida del pedido. Este proceso requirió la coordinación de tres participantes distintos —el cliente, el operador de entrega y el hardware periférico— y la ejecución de cuatro condiciones de validación secuencial sobre el token (RN-ENT-014). El flujo transaccional culminó con la escritura atómica del estado \texttt{ENTREGADO} en la base de datos, operación que precedió obligatoriamente al renderizado de la confirmación visual (RN-ENT-017).
+
+El diseño del protocolo operó de manera simétrica para clientes autenticados (CLI-14) y anónimos (CLI-16). El servidor validó exclusivamente los atributos del \texttt{CodigoVerificacionQR.token} recibido, omitiendo cualquier distinción sobre el origen de la solicitud de generación o la necesidad de un token de sesión para procesar la validación dentro del módulo Entrega (RN-CLI-029). Esta estrategia de diseño garantizó la consistencia operativa independientemente del estado de autenticación del usuario.
+
+Respecto al ciclo de vida del token, se implementó una política de invalidación permanente ante cualquier condición de fallo, incluida la expiración del tiempo de vida (TTL). El token cambió invariablemente a un estado de \texttt{CONSUMIDO} o \texttt{EXPIRADO}, lo cual impidió su reutilización bajo cualquier circunstancia (RN-ENT-016). En consecuencia, esta restricción forzó al usuario a generar un nuevo código QR desde el módulo cliente (CLI-14) cuando el proceso de recolección requirió un reintento.
+
+\begin{landscape}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.25\textwidth, inkscapelatex=false]{diagrams/DA-03/DA-03 Evaluación del DAG y Propagación de Estado en el KDS.svg}
+    \caption{Diagrama de secuencia de protocolo de verificación de QR.}
+    \label{fig:diagrama-secuencia-verificacion-qr}
+\end{figure}
+\end{landscape}
+
+\subsection{DS-04: CREACIÓN DE PEDIDO PRESENCIAL EN MÓDULO CAJA CON TICKET DIGITAL}
+El flujo de creación de pedido en el Módulo Caja constituyó el segundo proceso transaccional de mayor complejidad dentro del sistema, cuya criticidad radicó en la gestión de dos tipos de pedido con bifurcaciones operativas distintas: \texttt{INMEDIATO} y \texttt{ANTICIPADO}. El diseño de este proceso se caracterizó por cuatro pilares estructurales: la ejecución del decremento atómico del inventario en el momento de la confirmación del pago (RN-CAJ-009), la generación condicional de un token de acceso anónimo para pedidos sin cuenta asociada (RN-CLI-025) ---el cual sustituyó integralmente al comprobante físico--- y la validación de capacidad de ventana mediante concurrencia con \texttt{SELECT FOR UPDATE} en pedidos anticipados (RN-CAJ-021). 
+
+El diagrama expuso una asimetría fundamental en el modelo de autenticación respecto al módulo Cliente. Mientras que este último operó bajo credenciales individuales por cuenta de usuario, el Módulo Caja autenticó mediante credenciales compartidas de estación (\texttt{CredencialEstacion}), con lo cual se vinculó la trazabilidad operativa al \texttt{id\_estacion} en lugar de a un individuo específico (RN-CAJ-002). 
+
+En cuanto a la integridad de los datos, el decremento de existencias se ejecutó dentro de la misma transacción atómica que creó el pedido. Esta arquitectura eliminó la existencia de estados intermedios inconsistentes en los cuales el sistema registraba el pedido sin haber procesado la reducción correspondiente del inventario (RN-CAJ-009). Asimismo, la generación del token de acceso anónimo operó bajo una lógica condicional; el servidor únicamente creó el registro en \texttt{PedidoAccesoAnonimo} cuando el atributo \texttt{Pedido.cliente\_id} resultó nulo. Este diseño transformó el ticket impreso en una URL de seguimiento digital, cumpliendo así con el requisito RN-CLI-025 sin imponer una carga administrativa de registro de cuentas. 
+
+Finalmente, la asignación de ventana en los pedidos anticipados funcionó como una transacción aislada que emitió su propio \texttt{SELECT FOR UPDATE}. Esta segmentación desacopló la resolución de la condición de carrera de la creación general del pedido. Como resultado, el sistema permitió que el modal de selección permaneciera activo para reintentos en caso de que la capacidad se agotara durante el intervalo entre la carga de la interfaz y la confirmación del usuario (RN-CAJ-021). 
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.75\textwidth, inkscapelatex=false]{diagrams/DA-04/DA-04 Ciclo Completo del Corte de Caja con Doble Reconciliación.svg}
+    \caption{Diagrama de secuencia de creación de pedido presencial.}
+    \label{fig:diagrama-secuencia-creacion-pedido-presencial}
+\end{figure}
+\subsection{DS-05: ALTA DE EMPLEADO Y FLUJO DE ONBOARDING}
+El proceso de alta de un nuevo empleado constituyó un flujo de trabajo multi-actor que involucró la intervención del Manager, el servidor SMTP como sistema externo de mensajería y la sesión del empleado durante la ejecución de su activación mediante un enlace de uso único. El diseño del sistema distinguió el modelo de autenticación del KDS, el cual requirió la identificación individual del personal, frente al modelo de credenciales compartidas empleado en los módulos de Caja y Entrega. Debido a esta arquitectura, el proceso de onboarding determinó la capacidad operativa del entorno de cocina. En cumplimiento con los requisitos RN-MGR-007 y RN-MGR-010, el sistema ejecutó validaciones estrictas sobre la compatibilidad del tipo de estación y la unicidad del correo electrónico antes de la persistencia de cualquier entidad. Asimismo, la asignación del valor \texttt{PENDIENTE\_CONTRASENA} al campo \texttt{Empleado.estado} garantizó, bajo el cumplimiento de RN-MGR-009, que ningún empleado autenticara su acceso sin haber completado previamente la secuencia de activación. 
+
+El diseño del flujo integró tres propiedades fundamentales derivadas de los requerimientos de seguridad y operación. En primer lugar, la arquitectura segregó la creación del empleado de la asignación de estación en dos transacciones independientes. Esta separación se implementó debido a que la validación de la incompatibilidad del tipo de estación (RN-MGR-007) requirió, como prerrequisito funcional, la disponibilidad del identificador del empleado (\texttt{id\_empleado}) recién generado. En segundo lugar, la comunicación con el servidor SMTP se orquestó fuera del alcance de la transacción de la base de datos. Esta estrategia aseguró que la operación de \texttt{COMMIT} precediera al envío del correo electrónico; en caso de producirse un fallo en el servicio de mensajería, el registro del empleado permaneció persistido, lo cual permitió al Manager solicitar el reenvío de la notificación sin incurrir en la duplicidad del alta. 
+
+En tercer lugar, el mecanismo de activación empleó un token opaco en el enlace de onboarding en lugar de exponer el identificador del empleado en la URL. Esta implementación siguió los principios de opacidad definidos en RN-CLI-027, con lo cual se mitigó eficazmente el riesgo de enumeración de identificadores de empleados mediante la ejecución de peticiones consecutivas hacia la ruta de activación. 
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.7\textwidth, inkscapelatex=false]{diagrams/DA-05/DA-05 Registro de Producto con Validación del Invariante de Distribución de Receta.svg}
+    \caption{Diagrama de secuencia de alta de empleado.}
+    \label{fig:diagrama-secuencia-alta-empleado}
+\end{figure}
+
+\subsection{DS-06: CORTE DE CAJA Y CIERRE DE TURNO}
+El proceso de corte de caja representó el punto de mayor complejidad en cuanto a la validación de la integridad financiera dentro del sistema. Su criticidad operativa residió en la implementación de un patrón de resolución iterativa, mediante el cual cada inconsistencia ---ya fuera de índole financiera o de inventario--- impidió el avance del proceso hasta su justificación explícita por parte del cajero, sin posibilidad de omisión. Se aplicó la fórmula de (RN-CAJ-016), la cual exigió al usuario justificar cada discrepancia mediante el registro de una entidad \texttt{AjusteCorteCaja}. De forma análoga, el control de inventario bloqueó el diálogo de confirmación de cierre ante la existencia de discrepancias entre el stock del sistema y el conteo físico, conforme a lo establecido en la restricción RN-CAJ-017. La confirmación final del cierre constituyó una operación irreversible que invalidó la sesión del usuario de manera atómica con el registro del evento de auditoría correspondiente (RN-CAJ-018). 
+
+El diseño del proceso integró tres propiedades técnicas distintivas que lo diferenciaron del resto de los flujos del sistema. En primer lugar, las fases de reconciliación financiera e inventario se ejecutaron de forma secuencial y no paralela; el sistema denegó el inicio del conteo de inventario hasta que las discrepancias de caja fueron subsanadas, lo cual garantizó la ausencia de inconsistencias silenciosas en ambas dimensiones. En segundo lugar, la invalidación de la sesión del cajero (RN-CAJ-018) se orquestó en el servidor tras la confirmación exitosa de la transacción de cierre. Si bien un fallo en la operación de \texttt{COMMIT} permitió la persistencia de la sesión para reintentos, el éxito de la transacción tornó la sesión irrecuperable, lo que aseguró la trazabilidad definitiva del evento. En tercer lugar, el resumen del turno incluyó de forma explícita los pedidos con estado \texttt{NO\_PAGADO}, lo cual permitió al cajero regularizar deudas pendientes mediante la interfaz de gestión de pagos (RN-CAJ-014) antes de formalizar el cierre, previniendo así la existencia de ingresos no registrados en el balance final del \texttt{CorteDeCaja}. 
+
+\begin{landscape}
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.35\textwidth, inkscapelatex=false]{diagrams/DA-06/DA-06 Algoritmo de Cálculo de Urgencia Dual en KDS y Módulo Entrega.svg}
+    \caption{Diagrama de secuencia de corte de caja y cierre de turno.}
+    \label{fig:diagrama-secuencia-corte-caja}
+\end{figure}
+\end{landscape}
+
+\subsection{DS-07: CANCELACIÓN DE PEDIDO DESDE ENTREGA CON PROPAGACIÓN ASÍNCRONA}
+El proceso de cancelación de un pedido desde el módulo Entrega constituyó el único flujo del sistema capaz de generar efectos de escritura en cascada sobre múltiples módulos de forma sincrónica dentro de una misma transacción, además de propagar notificaciones asíncronas diferenciadas según el estado del pedido al momento de la ejecución. La criticidad de este proceso residió en tres invariantes estructurales. En primer lugar, la justificación de la cancelación mediante un motivo obligatorio, normalizado contra el catálogo \texttt{MotivoCancelacionEntrega} previo a la persistencia, garantizó la trazabilidad operativa (RN-ENT-006). En segundo lugar, la captura del estado del pedido (\texttt{estado\_al\_cancelar}) se ejecutó dentro de la misma transacción mediante un bloqueo \texttt{FOR UPDATE}, operación indispensable para determinar la invalidación de los pasos en el KDS (RN-ENT-008, RN-ENT-009). Finalmente, la transición al estado \texttt{CANCELADO} operó como una condición terminal e irreversible, restringiendo cualquier modificación posterior desde cualquier interfaz del sistema (RN-ENT-007). 
+
+El diseño del diagrama expuso tres propiedades de alta consecuencia técnica. La primera fue la bifurcación de efectos secundarios determinada por el estado del pedido: una cancelación efectuada desde \texttt{EN\_PREPARACION} invalidó todos los registros \texttt{PasoPedidoEstado} con estatus \texttt{PENDIENTE} o \texttt{BLOQUEADO} ---ocasionando su remoción inmediata del display del KDS---, mientras que una cancelación desde \texttt{PREPARADO} no produjo efecto sobre el KDS, dado que los pasos completados se trataron como registros históricos inmutables (RN-ENT-008). La segunda propiedad concernió a la normalización del catálogo de motivos, la cual se ejecutó fuera del bloque \texttt{BEGIN TRANSACTION}; esta estrategia evitó que un bloqueo de fila en la tabla de motivos retrasara innecesariamente la cancelación del pedido (RN-ENT-006). La tercera fue la propagación condicional de eventos hacia el módulo Cliente: el servidor emitió el evento al Frontend Cliente exclusivamente cuando el atributo \texttt{Pedido.cliente\_id} poseyó un valor no nulo, lo cual evitó el procesamiento innecesario de notificaciones para pedidos anónimos originados desde el módulo Caja que carecían de una sesión de usuario activa. 
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1\textwidth, inkscapelatex=false]{diagrams/DA-07/DA-07 Flujo de Cancelación con Propagación Diferenciada por Estado del Pedido.svg}
+    \caption{Diagrama de secuencia de cancelación de pedido en la entrega.}
+    \label{fig:diagrama-secuencia-cancelacion-pedido}
+\end{figure}    
+

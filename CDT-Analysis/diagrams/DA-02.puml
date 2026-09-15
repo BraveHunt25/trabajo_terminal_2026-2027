@@ -1,0 +1,68 @@
+@startuml "DA-02 Flujo de Confirmación de Pedido con Validaciones Transaccionales"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+    ActivityBackgroundColor #FDFEFE
+    ActivityBorderColor #2C3E50
+}
+
+|Cliente|
+start
+:Finalizar pedido;
+
+|Sistema|
+:Validar token de sesión;
+if (¿Token válido?) then (No)
+    :Redirigir a CLI-01 (HTTP 401);
+    stop
+else (Sí)
+endif
+
+:Verificar CarritoSesion;
+if (¿Carrito no vacío?) then (No)
+    :Mostrar error (HTTP 400);
+    stop
+else (Sí)
+endif
+
+:Consultar stock_actual;
+if (¿Stock suficiente?) then (No)
+    :Mostrar error (HTTP 409);
+    stop
+else (Sí)
+endif
+
+:Bloquear capacidad (SlotService);
+if (¿Capacidad disponible > 0?) then (No)
+    :Redirigir a CLI-10 (HTTP 409);
+    stop
+else (Sí)
+endif
+
+|Base de Datos|
+:Iniciar transacción;
+:Insertar Pedido;
+:Insertar ItemPedido;
+:Insertar IngredienteItemPedido;
+:Actualizar stock_actual (Decremento);
+:Insertar PasoRecetaPedido;
+:Insertar PasoPedidoEstado;
+:Insertar CodigoVerificacionQR;
+:Confirmar transacción (COMMIT);
+
+|Sistema|
+fork
+    :Emitir notificación (Canal RT);
+fork again
+    :Vaciar CarritoSesion;
+end fork
+
+|Cliente|
+:Navegar a CLI-13;
+stop
+@enduml

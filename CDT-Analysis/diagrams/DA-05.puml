@@ -1,0 +1,86 @@
+@startuml "DA-05 Registro de Producto con Validación del Invariante de Distribución de Receta"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+    ActivityBackgroundColor #FDFEFE
+    ActivityBorderColor #2C3E50
+}
+
+|Manager|
+start
+:Ingresar datos base del producto;
+
+repeat
+    :Agregar ingrediente;
+    |Sistema|
+    if (¿Insumo es DESECHABLE?) then (Sí)
+        :Registrar en InsumoDesechable;
+    else (No)
+        if (¿Es opcional?) then (Sí)
+            :Habilitar campo precio_extra;
+        else (No)
+            :Deshabilitar campo precio_extra;
+        endif
+    endif
+repeat while (¿Agregar otro ingrediente?) is (Sí)
+
+repeat
+    |Manager|
+    :Crear paso de preparación;
+    
+    repeat
+        :Distribuir cantidades de ingredientes al paso;
+        |Sistema|
+        :Recalcular distribución de receta;
+        
+        if (¿Requiere predecesor?) then (Sí)
+            |Manager|
+            :Seleccionar paso predecesor;
+            |Sistema|
+            :Evaluar aciciclicidad (DFS);
+            if (¿Ciclo detectado?) then (Sí)
+                :Rechazar dependencia;
+            else (No)
+                :Registrar DependenciaPaso;
+            endif
+        endif
+    repeat while (¿Agregar otro predecesor?) is (Sí)
+
+    if (¿Reordenar pasos por arrastre?) then (Sí)
+        :Verificar orden topológico;
+        if (¿Orden violado?) then (Sí)
+            :Reubicar predecesor automáticamente;
+        endif
+    endif
+repeat while (¿Agregar otro paso?) is (Sí)
+
+repeat
+    |Sistema|
+    :Evaluar invariante de distribución completa;
+    if (¿Distribución completa?) then (No)
+        :Inhabilitar botón GUARDAR;
+        |Manager|
+        :Corregir distribución de ingredientes;
+    endif
+repeat while (¿Distribución incompleta?) is (Sí)
+
+|Base de Datos|
+fork
+    :Insertar Producto;
+    :Insertar IngredienteProducto;
+    :Insertar PasoReceta;
+    :Insertar IngredientePaso;
+    :Insertar EstacionPaso;
+    :Insertar DependenciaPaso;
+    :Confirmar transacción (COMMIT);
+end fork
+
+|Sistema|
+:Notificar éxito de registro;
+stop
+@enduml

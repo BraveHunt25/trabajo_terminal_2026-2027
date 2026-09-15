@@ -1,0 +1,66 @@
+@startuml "DA-07 Flujo de Cancelación con Propagación Diferenciada por Estado del Pedido"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+    ActivityBackgroundColor #FDFEFE
+    ActivityBorderColor #2C3E50
+}
+
+|Operador|
+start
+repeat
+    :Seleccionar pedido para cancelar;
+    :Ingresar motivo de cancelación;
+repeat while (¿Motivo no está vacío?) is (No)
+
+|Sistema|
+:Normalizar texto del motivo;
+
+|Base de Datos|
+:Consultar catálogo de motivos;
+if (¿Motivo existe?) then (No)
+    :Registrar nuevo motivo en catálogo;
+else (Sí)
+    :Reutilizar ID de motivo existente;
+endif
+
+:Iniciar transacción (BEGIN);
+:Bloquear fila de pedido (SELECT FOR UPDATE);
+
+if (¿Estado es terminal?) then (Sí)
+    :Deshacer transacción (ROLLBACK);
+    :Mostrar error (Estado inválido);
+    detach
+else (No)
+endif
+
+:Actualizar estado de pedido a CANCELADO;
+:Registrar cancelación;
+:Registrar historial de movimientos;
+
+if (¿Estado era EN_PREPARACION?) then (Sí)
+    :Actualizar pasos activos a CANCELADO;
+else (No)
+endif
+
+:Confirmar transacción (COMMIT);
+
+|Sistema (Canal RT)|
+fork
+    if (¿Estado era EN_PREPARACION?) then (Sí)
+        :Notificar KDS (Remover tarjetas);
+    endif
+fork again
+    if (¿Pedido tiene cliente asociado?) then (Sí)
+        :Notificar Módulo Cliente (Actualizar estado);
+    endif
+end fork
+
+|Operador|
+stop
+@enduml

@@ -1,0 +1,70 @@
+@startuml "DA-01 Ciclo de Vida del Pedido"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+}
+
+|Caja/Cliente|
+start
+:Confirmar Pedido;
+
+|Sistema|
+:Generar PasoRecetaPedido;
+:Inicializar PasoPedidoEstado;
+
+fork
+    |KDS|
+    :Notificar vía Canal RT;
+fork again
+    |Base de Datos|
+    :Persistir estados PENDIENTE o BLOQUEADO;
+end fork
+
+|Sistema|
+:Establecer estado EN\_PREPARACION;
+
+repeat
+    :Esperar evento;
+    if (¿Qué evento ocurrió?) then (KDS: Completar pasos)
+        |Sistema|
+        :Registrar PasoPedidoEstado COMPLETADO;
+        :Registrar PedidoEstadoTimestamp;
+        |KDS|
+        :Notificar Entrega y Cliente;
+        |Sistema|
+        :Establecer estado PREPARADO;
+        
+        if (¿Acción requerida?) then (Operador: Cancelar)
+            |Sistema|
+            :Registrar CancelacionEntrega;
+            :Transicionar estado CANCELADO;
+            stop
+        else (Validación QR)
+            |Sistema|
+            :Validar Token QR;
+            :Persistir timestamp_entrega;
+            :Registrar HistorialDeMovimientos;
+            :Notificar módulo Cliente vía RT;
+            :Establecer estado ENTREGADO;
+            stop
+        endif
+    
+    elseif (¿Evento recibido?) then (Operador: Cancelar desde EN\_PREPARACION)
+        |Sistema|
+        :Registrar CancelacionEntrega;
+        :Transicionar PasoPedidoEstado a CANCELADO;
+        |KDS|
+        :Notificar cancelación vía Canal RT;
+        |Sistema|
+        :Establecer estado CANCELADO;
+        stop
+    else (Ninguno)
+        :Continuar esperando;
+    endif
+repeat while (Estado es EN\_PREPARACION o PREPARADO)
+@enduml

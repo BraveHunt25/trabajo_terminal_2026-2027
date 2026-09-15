@@ -1,0 +1,142 @@
+@startuml "Arquitectura General"
+' ── Configuración Visual Global ───────────────────────────────────────────
+skinparam linetype ortho
+skinparam roundcorner 12
+skinparam Shadowing false
+skinparam padding 8
+skinparam nodesep 40
+skinparam ranksep 50
+skinparam defaultFontStyle bold
+
+' ── Estilos de Nodos ──────────────────────────────────────────────────────
+skinparam usecase {
+    BackgroundColor #dae8fc
+    BorderColor #dae8fc
+    FontColor #1a1a1a
+    FontStyle bold
+}
+skinparam component {
+    BackgroundColor #ffe6cc
+    BorderColor #ffe6cc
+    FontColor #1a1a1a
+    FontStyle bold
+}
+skinparam database {
+    BackgroundColor #f8cecc
+    BorderColor #f8cecc
+    FontColor #1a1a1a
+    FontStyle bold
+}
+skinparam rectangle {
+    BackgroundColor #d5e8d4
+    BorderColor #d5e8d4
+    FontColor #1a1a1a
+    FontStyle italic
+}
+
+' ── Estilo de Contenedores y Flechas ──────────────────────────────────────
+skinparam Package {
+    BorderColor transparent
+    FontColor #4a5568
+    FontStyle bold
+}
+skinparam Arrow {
+    FontColor #1a1a1a
+    FontStyle bold
+}
+
+' ── Actores Externos ──────────────────────────────────────────────────────
+usecase MGR_A as "Manager"
+usecase CAJ_A as "Cajero"
+usecase COC_A as "Cocinero"
+usecase ENT_A as "Op. de Entrega"
+usecase CLI_A as "Cliente / \nCliente Anónimo"
+
+[Lector QR\n(Hardware)] as QR_HW
+[Servidor SMTP\n(Externo)] as SMTP #e1d5e7/e1d5e7
+
+' ── Intranet ───────────────────────────────────────────────────────────────
+rectangle "Intranet — Red Local de la Cafetería" as INTRANET #fafafa/fafafa {
+    
+    rectangle "Capa de Presentación — Next.js" as FE_LAYER #f0fdf4/f0fdf4 {
+        rectangle FE_MGR as "Módulo Manager"
+        rectangle FE_CAJ as "Módulo Caja\n(POS)"
+        rectangle FE_COC as "Módulo Cocina\n(KDS)"
+        rectangle FE_ENT as "Módulo Entrega"
+    }
+
+    rectangle "Servidor On-Premise — Node.js + Express.js" as SRV_LAYER #fff7ed/fff7ed {
+        [Middleware de Autenticación\ny Autorización por Perfil] as AUTH
+        
+        rectangle "Capa de Lógica de Negocio" as LOGIC_LAYER #ffedd5/ffedd5 {
+            [Servicio Manager] as SVC_MGR
+            [Servicio Caja] as SVC_CAJ
+            [Servicio Cocina] as SVC_COC
+            [Servicio Entrega] as SVC_ENT
+            [Servicio Cliente] as SVC_CLI
+        }
+
+        [Canal de Tiempo Real\nWebSocket / SSE] as RT #fff2cc/fff2cc
+        [Scheduler] as SCHED
+    }
+
+    rectangle "Capa de Datos" as DATA_LAYER #fef2f2/fef2f2 {
+        database "PostgreSQL" as DB
+    }
+}
+
+' ── Puerto Público ─────────────────────────────────────────────────────────
+rectangle "Puerto Público Configurado" as PUBLIC_LAYER #edf2f7/edf2f7 {
+    rectangle FE_CLI as "Módulo Cliente\n(Next.js)"
+}
+
+' ── Alineación Estructural (Oculta para Guiar el Layout) ─────────────────
+FE_LAYER -[hidden]down-> AUTH
+AUTH -[hidden]down-> LOGIC_LAYER
+LOGIC_LAYER -[hidden]down-> DATA_LAYER
+
+' ── Relaciones: Actores ────────────────────────────────────────────────────
+MGR_A -down-> FE_MGR
+CAJ_A -left-> FE_CAJ
+COC_A -down-> FE_COC
+ENT_A -down-> FE_ENT
+CLI_A -down-> FE_CLI
+QR_HW -down-> FE_ENT : "escaneo"
+
+' ── Relaciones: Presentación -> Autenticación (HTTP REST - Azul) ──────────
+FE_MGR -down[#2b6cb0]-> AUTH
+FE_CAJ -down[#2b6cb0]-> AUTH
+FE_COC -down[#2b6cb0]-> AUTH
+FE_ENT -down[#2b6cb0]-> AUTH
+FE_CLI -down[#2b6cb0]-> AUTH
+
+' ── Relaciones: Autenticación -> Servicios (Azul) ─────────────────────────
+AUTH -down[#2b6cb0]-> SVC_MGR
+AUTH -down[#2b6cb0]-> SVC_CAJ
+AUTH -down[#2b6cb0]-> SVC_COC
+AUTH -down[#2b6cb0]-> SVC_ENT
+AUTH -down[#2b6cb0]-> SVC_CLI
+
+' ── Relaciones: Servicios -> Base de Datos (Rojo) ──────────────────────────
+SVC_MGR -down[#c53030]-> DB
+SVC_CAJ -down[#c53030]-> DB
+SVC_COC -down[#c53030]-> DB
+SVC_ENT -down[#c53030]-> DB
+SVC_CLI -down[#c53030]-> DB
+
+' ── Relaciones: Tiempo Real (Verde) ───────────────────────────────────────
+FE_COC -left[#2f855a]-> RT : "WebSocket"
+FE_ENT -left[#2f855a]-> RT
+FE_CLI -left[#2f855a]-> RT
+FE_CAJ -left[#2f855a]-> RT
+
+SVC_CAJ -right[#2f855a]-> RT
+SVC_COC -right[#2f855a]-> RT
+SVC_ENT -right[#2f855a]-> RT
+
+' ── Relaciones: Scheduler & Externos (Punteadas) ───────────────────────────
+SCHED -down[#718096]-> DB : "cron"
+SCHED -left[#718096]-> SVC_COC
+SVC_MGR -down[#718096]-> SMTP
+
+@enduml

@@ -1,0 +1,62 @@
+@startuml "DA-08 Activación Diferida y Encolamiento de Pedido Anticipado por Scheduler"
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #2C3E50
+    ArrowColor #2C3E50
+    FontName "Arial"
+    FontSize 12
+    DiamondBackgroundColor #F4F6F7
+    DiamondBorderColor #2C3E50
+    ActivityBackgroundColor #FDFEFE
+    ActivityBorderColor #2C3E50
+}
+
+|Scheduler|
+start
+:Activar scheduler (Intervalo configurado);
+
+|Base de Datos|
+:Consultar pedidos anticipados elegibles;
+
+if (¿Existen pedidos?) then (No)
+    |Scheduler|
+    :Registrar ciclo sin actividad;
+    stop
+else (Sí)
+endif
+
+repeat
+    |Scheduler|
+    :Extraer siguiente pedido;
+    
+    if (¿Es pedido huérfano?) then (Sí)
+        :Generar alerta de anomalía;
+    else (No)
+        |Base de Datos|
+        :Cargar pasos de receta;
+        :Iniciar transacción;
+        
+        repeat
+            :Evaluar paso actual;
+            if (¿Tiene predecesores en DAG?) then (Sí)
+                :Insertar paso como BLOQUEADO;
+            else (No)
+                :Insertar paso como PENDIENTE;
+            endif
+        repeat while (¿Existen más pasos?) is (Sí)
+        
+        :Confirmar transacción;
+        
+        fork
+            |Frontend Cocina|
+            :Notificar KDS vía Canal RT;
+        fork again
+            |Scheduler|
+            :Registrar encolamiento de pedido;
+        end fork
+    endif
+repeat while (¿Existen más pedidos en lote?) is (Sí)
+
+|Scheduler|
+stop
+@enduml
