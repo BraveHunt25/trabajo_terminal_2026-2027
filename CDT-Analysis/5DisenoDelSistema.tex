@@ -8,7 +8,7 @@ El Sistema de Gestión de Cocina se diseñó bajo un modelo de arquitectura de t
 La infraestructura consolidó la lógica de negocio, el almacenamiento persistente de datos y los servicios de comunicación en tiempo real en un servidor físico central. El acceso a dichos recursos se gestionó mediante interfaces diferenciadas: una red de intranet dedicada para los módulos operativos (Gestión, Caja, Cocina y Entrega), y un puerto de acceso expuesto bajo configuraciones de seguridad específicas para el Módulo Cliente.
 \begin{figure}[H]
     \centering
-    \includesvg[width=1\textwidth, inkscapelatex=false]{diagrams/ArquitecturaGeneral/Arquitectura General.svg}
+    \includesvg[width=0.4\textwidth, inkscapelatex=false]{diagrams/ArquitecturaGeneral/Arquitectura General.svg}
     \caption{Arquitectura del sistema completo.}
     \label{fig:arquitectura_sistema_completo}
 \end{figure}
@@ -1113,3 +1113,176 @@ El diseño del diagrama expuso tres propiedades de alta consecuencia técnica. L
     \label{fig:diagrama-secuencia-cancelacion-pedido}
 \end{figure}    
 
+\section{DISEÑO DE INTERFACES}
+El prototipo de interfaces fue desarrollado en Figma y contempla los siguientes flujos principales. 
+
+\subsection{FLUJO DEL CLIENTE}
+El cliente accede mediante autenticación con su correo institucional. La pantalla principal muestra el menú disponible organizado por categorías, con indicadores visuales de disponibilidad. El usuario selecciona sus productos, los agrega al carrito, elige el horario de entrega disponible dentro del turno activo, y confirma el pedido. Una pantalla de seguimiento permite consultar el estado en tiempo real.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-01 — Cliente-Login.svg}
+    \caption{Interfaz de inicio de sesión para el cliente.}
+    \label{fig:ui-cli-01}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de inicio de sesión. Presenta una estructura minimalista que incluye un formulario de autenticación con dos campos de captura principales: uno para ingresar el correo electrónico del usuario y otro para la contraseña asociada. En la parte inferior del bloque central se dispone de un botón de acción principal etiquetado como ``Iniciar sesión'' para procesar las credenciales, complementado con dos accesos directos en la base de la pantalla: uno para la recuperación de cuentas mediante la opción ``¿Olvidaste tu contraseña?'' y otro para redirigir a nuevos usuarios a través del enlace ``Registrarse''.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-02 — Cliente-Home.svg}
+    \caption{Interfaz principal para el cliente.}
+    \label{fig:ui-cli-02}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla principal o tablero de inicio. El diseño se estructura mediante un menú de navegación superior que permite al usuario explorar el catálogo de productos a través de diferentes categorías comerciales, tales como ``Paquetes'', ``Bebidas'', ``Comida'', ``Snacks'' y ``Postres''. En la sección central se despliegan de forma tabular las opciones destacadas o ``Paquetes del día'', donde cada artículo se presenta en tarjetas visuales independientes que detallan el nombre del combo, los componentes específicos de alimentos y bebidas que lo integran, su costo unitario y un botón interactivo para agregar el elemento al carrito de compra de manera directa.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-03 — Cliente-BusquedaResultados.svg}
+    \caption{Interfaz de búsqueda para el cliente.}
+    \label{fig:ui-cli-03}
+\end{figure}
+
+Esta interfaz ilustra la funcionalidad del motor de búsqueda integrado en el módulo del cliente. Al interactuar con el control de exploración, la pantalla despliega una barra de búsqueda en la sección superior para la introducción de texto libre, complementada por un historial de ``Búsquedas recientes'' en la parte inferior para agilizar la navegación. El cuerpo principal de la interfaz genera un listado dinámico con los resultados que coinciden con el criterio ingresado, organizando los productos disponibles en tarjetas individuales que muestran la fotografía del artículo, su nombre comercial, el precio unitario y un botón de acción rápida para agregar el producto directamente al carrito de compra.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-04 — Cliente-Promociones.svg}
+    \caption{Interfaz de catálogo de promociones para el cliente.}
+    \label{fig:ui-cli-04}
+\end{figure}
+
+Esta interfaz corresponde a la vista del catálogo filtrada específicamente para la sección de ``Promociones'' dentro del módulo del cliente. La pantalla mantiene la consistencia de navegación superior y el banner informativo de disponibilidad horaria, organizando los productos en una cuadrícula o \textit{grid} de tarjetas individuales dispuestas en tres columnas. Cada tarjeta detalla la imagen del platillo o combo, su nombre comercial, el precio correspondiente y un indicador de disponibilidad en la base; este último cambia de estado y color (como el ``Combo Asados'' marcado en rojo como ``No disponible'') para informar en tiempo real al usuario si el artículo puede ser añadido al carrito de compras en ese momento.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-05 — Cliente-Productos.svg}
+    \caption{Interfaz de detalles de la promoción seleccionada.}
+    \label{fig:ui-cli-05}
+\end{figure}
+
+Esta interfaz corresponde a la vista de detalle de un producto seleccionado, dentro del módulo del cliente. En la sección superior se incluye la opción de navegación ``Regresar'', acompañada por el nombre comercial de la promoción, su costo total y una breve descripción general de los artículos incluidos. El cuerpo principal de la pantalla desglosa el apartado ``Contenido'', organizando en tarjetas independientes cada uno de los elementos que integran el paquete, detallando sus ingredientes o método de elaboración junto con una imagen de referencia.
+
+En la parte inferior de la interfaz se integra una barra de herramientas operativa para la gestión del pedido. Esta sección incluye un selector numérico flanqueado por controles interactivos de incremento (``+'') y decremento (``-'') para parametrizar la cantidad de unidades deseadas. Asimismo, se disponen dos botones de acción principal en paralelo: ``Agregar a la orden'', para consolidar los artículos en el carrito de compras, y ``Quitar de la orden'', resaltado en color rojo para revertir la selección.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-06 — Cliente-DetalleCombo.svg}
+    \caption{Interfaz de catálogo de productos para el cliente.}
+    \label{fig:ui-cli-06}
+\end{figure}
+
+Esta interfaz corresponde a la vista del catálogo filtrada para la sección general de ``Productos'' dentro del módulo del cliente. El diseño conserva la estructura de navegación superior, la barra de búsqueda y el banner informativo que indica la disponibilidad de espacios por bloques horarios.
+
+Los artículos se organizan de manera simétrica en un formato de rejilla de tres columnas, donde cada tarjeta individual muestra la fotografía del platillo, su nombre comercial y el costo unitario. En la parte inferior de cada bloque se integra un validador de existencias en tiempo real; los productos listos para su adquisición se marcan con una verificación verde y la etiqueta ``Disponible'', mientras que aquellos agotados o fuera de inventario temporal se presentan atenuados en escala de grises con un indicador visual restrictivo en color rojo que cita ``No disponible'', inhabilitando su selección inmediata.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-07 — Cliente-DetalleComboIngredientes.svg}
+    \caption{Interfaz de personalización de producto para el cliente.}
+    \label{fig:ui-cli-07}
+\end{figure}
+
+Esta interfaz ilustra la vista detallada de los componentes e ingredientes de un producto y su parametrización de personalización. En la sección superior se observa el desglose del apartado ``Contenido'', el cual especifica de forma tabular los insumos base obligatorios de la receta estándar, detallando el nombre del ingrediente, la cantidad exacta y su unidad de medida correspondiente.
+
+Inmediatamente abajo se despliega la sección ``Extras'', un componente interactivo que permite al consumidor personalizar su pedido agregando aditamentos opcionales mediante casillas de verificación. Al seleccionar una variante (como ``Cebolla Caramelizada'' o ``Salsa BBQ''), el sistema habilita un selector numérico para ajustar de manera exacta la porción en gramos o mililitros, calculando e indicando simultáneamente el costo adicional que se sumará al importe de la orden antes de su confirmación final en la base de la pantalla.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-08 — Cliente-Carrito.svg}
+    \caption{Interfaz de carrito de compras para el cliente.}
+    \label{fig:ui-cli-08}
+\end{figure}
+
+Esta interfaz corresponde a la vista del ``Carrito de compras'' dentro del módulo del cliente. En la parte superior se ubica un control de navegación con la etiqueta ``Regresar''. El área central contiene una lista de tarjetas para los productos que el usuario ha seleccionado. Cada una de estas tarjetas incluye la fotografía del artículo correspondiente y controles interactivos con un selector numérico para modificar las cantidades mediante los botones ``+'', ``-'' o el icono de eliminación.
+
+En el extremo inferior se organiza la sección de liquidación, la cual presenta la etiqueta ``Total'' alineada al importe acumulado. Debajo de este balance se ubican dos botones de acción principal en paralelo: ``Vaciar carrito'', diseñado en color rojo, y ``Proceder al pago'', diseñado en color negro con un icono de tarjeta bancaria.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-09 — Cliente-AvisoContraEntrega.svg}
+    \caption{Interfaz de validación de condiciones de entrega.}
+    \label{fig:ui-cli-09}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de validación de condiciones de entrega dentro del flujo del carrito de compras del módulo del cliente. En la sección superior se sitúa el control de navegación "Regresar". El cuerpo central muestra un aviso con el encabezado "Recuerda que solo se aceptan pagos a contra entrega", seguido de un párrafo informativo sobre el compromiso con la comunidad, la puntualidad en la recolección y la prevención de penalizaciones. Justo debajo, se integran dos botones de opción interactivos para que el usuario elija entre las alternativas de "Aceptar" o "Rechazar" los términos expuestos. 
+
+En el extremo inferior se organiza la sección de liquidación, la cual expone la etiqueta "Total" alineada a un importe destacado. En la base se disponen dos botones de acción en paralelo: "Cancelar", diseñado con un icono de cruz sobre un fondo de color rojo, y "Seleccionar recolección", estructurado con un icono de calendario sobre un fondo negro. 
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-10 — Cliente-SeleccionHorario.svg}
+    \caption{Interfaz de selección de horarios para el cliente.}
+    \label{fig:ui-cli-10}
+\end{figure}
+
+En la sección superior se sitúa el control de navegación ``Regresar''. El cuerpo central presenta el encabezado ``Seleccione un horario para recolectar su pedido'', seguido de un listado vertical de tarjetas que representan los bloques de tiempo disponibles. Cada tarjeta muestra un rango horario específico y un indicador que detalla la cantidad de espacios disponibles en tiempo real, complementado con un icono de flecha para la selección del bloque.
+
+En el extremo inferior se organiza la sección de cierre, la cual expone la etiqueta ``Total'' junto al balance acumulado. En la base se disponen dos botones de acción en paralelo: ``Cancelar'', diseñado con un icono de cruz sobre un fondo de color rojo, y ``Ver el resumen'', estructurado con un icono de documento sobre un fondo negro.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-11 — Cliente-ResumenPedido.svg}
+    \caption{Interfaz de confirmación de resumen del pedido para el cliente.}
+    \label{fig:ui-cli-11}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de ``Resumen del pedido'' dentro del flujo final del carrito de compras. En la parte superior se sitúa el control de navegación ``Regresar''. El cuerpo principal organiza la información fija del proceso comenzando con el apartado de ``Contenido'', el cual despliega una lista vertical con las tarjetas de los artículos adquiridos, especificando para cada uno su fotografía, nombre, descripción o aditamentos seleccionados y la cantidad de unidades solicitadas en la base de cada tarjeta. Inmediatamente abajo se encuentra la sección de ``Método de pago'', la cual indica de forma textual la forma de liquidación seleccionada por el consumidor detallada como ``Tarjeta de débito'', seguida por el apartado de ``Horario seleccionado'' que muestra el bloque de tiempo previamente reservado por el usuario para acudir por su orden.
+
+En el extremo inferior se organiza la sección de cierre de la transacción, donde se presenta la etiqueta ``Total'' junto al balance acumulado. En la base de la interfaz se disponen dos botones de acción en paralelo, identificados como ``Cancelar'', diseñado con un icono de cruz sobre un fondo de color rojo, y ``Finalizar pedido'', estructurado con un icono de verificación sobre un fondo verde para consolidar el proceso en el sistema.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-12 — Cliente-ConfirmacionPedido.svg}
+    \caption{Interfaz de confirmación y comprobante de pedido.}
+    \label{fig:ui-cli-12}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de confirmación o comprobante tras procesar la orden. En la sección superior se sitúa un botón de navegación con la inscripción ``Regresar''. Inmediatamente abajo se despliega un mensaje de éxito que cita ``¡Pedido generado con éxito!'', acompañado por un identificador numérico de orden en tipografía de gran tamaño y el apartado ``Realizado el'' que detalla de forma textual la fecha y la hora del registro.
+
+El cuerpo principal organiza la información fija de la transacción comenzando con el bloque de ``Contenido'', el cual muestra una lista vertical con las tarjetas de los artículos seleccionados, especificando para cada uno su fotografía, nombre comercial, descripción o aditamentos seleccionados y la cantidad de unidades en la base de cada tarjeta. Debajo se encuentra la sección de ``Método de pago'' que indica la alternativa de liquidación registrada como ``Tarjeta de débito'', seguida por el apartado de ``Horario seleccionado'' que muestra el bloque de tiempo reservado para acudir por el pedido. En el extremo inferior se presenta la etiqueta ``Total'' junto al balance acumulado, concluyendo la interfaz con un botón de acción principal de ancho completo que cita ``Continuar'', diseñado con texto blanco sobre un fondo negro.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-13 — Cliente-PedidosPorRecolectar.svg}
+    \caption{Interfaz de recolección de pedido.}
+    \label{fig:ui-cli-13}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de seguimiento denominada "Pedidos por recolectar". En el extremo superior izquierdo se dispone el control de navegación con la inscripción "Regresar". El área central organiza de manera vertical las tarjetas informativas de los pedidos activos en el sistema, identificados con los folios numéricos. Cada bloque detalla de forma textual la fecha y hora exacta del registro bajo la etiqueta "Realizado el", acompañada por una barra de progreso horizontal en color azul y una pestaña inferior negra interactiva con la palabra "Recolectar" y un icono de flecha. En la base de la pantalla se mantiene fija la barra de navegación global con las secciones de "Menú", "Recolección" y "Perfil", resaltando la pestaña central en color negro. 
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-14 — Cliente-DetallePedidoRecoleccion.svg}
+    \caption{Interfaz de recolección y resumen de pedido.}
+    \label{fig:ui-cli-14}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de detalle y validación de una orden específica dentro del apartado de recolección. En el extremo superior izquierdo se dispone el control de navegación ``Regresar''. Inmediatamente abajo se expone el número de folio del pedido, seguido de un botón de acción principal que cita ``Escanear código'', el cual está estructurado con un icono de código QR sobre un fondo negro. Debajo se añade el indicador ``Realizado el'' que detalla de forma textual la fecha y hora del registro de la orden.
+
+El resto del cuerpo de la pantalla organiza la información de la transacción comenzando con el bloque de ``Contenido'', el cual muestra una lista vertical con las tarjetas de los artículos solicitados especificando para cada uno su fotografía, nombre comercial, descripción y la cantidad de unidades. Posteriormente se encuentra la sección de ``Método de pago'' que indica la alternativa de liquidación registrada como ``Tarjeta de débito'', seguida por el apartado de ``Horario seleccionado''. En el extremo inferior de la interfaz se presenta de manera fija la etiqueta ``Total'' alineada al importe acumulado.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-15 — Cliente-Perfil.svg}
+    \caption{Interfaz del perfil de usuario del cliente.}
+    \label{fig:ui-cli-15}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de ``Perfil'', la cual contiene los datos requeridos para poder realizar pedidos en el sistema con información personal. En la sección superior se sitúa una barra de búsqueda con la etiqueta ``Busca en el menú'', ubicada a la derecha por el icono circular del carrito de compras. Inmediatamente abajo se incluye el control de navegación ``Regresar''.
+
+El cuerpo central organiza los campos de datos personales del usuario mediante cajas de texto editables. Estas secciones corresponden a ``Nombre(s)'', ``Apellido(s)'', ``Correo(s)'', y el apartado de ``Contraseña'', la cual aparece encriptada con caracteres ocultos y dispone de un icono de ojo tachado en el extremo derecho para gestionar su visibilidad. En la base de la interfaz se mantiene fija la barra de navegación global que permite conmutar entre las pantallas de ``Menú'', ``Recolección'' y ``Perfil'', mostrando esta última pestaña seleccionada en color negro.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cliente/CLI-16 — Cliente-Recoleccion-ResumenDelPedido-Anonimo.svg}
+    \caption{Interfaz de recolección y resumen de pedido para usuario anónimo.}
+    \label{fig:ui-cli-16}
+\end{figure}
+
+Esta interfaz corresponde a la pantalla de detalle de la orden en el apartado de recolección para un usuario que navega de forma anónima. La diferencia principal radica en la sección superior, donde se omite el botón de regreso y se introduce una barra de progreso horizontal en color azul acompañada por el texto estático ``Tu pedido se está preparando''. Inmediatamente abajo se expone el número de folio, seguido del botón de acción principal ``Escanear código'' configurado con un icono de código QR sobre un fondo negro, y el texto indicativo ``Realizado el'' que detalla la fecha y hora de la transacción.
+
+El cuerpo de la pantalla mantiene la estructura estándar del flujo organizando la información en el bloque de ``Contenido'', el cual lista verticalmente los artículos adquiridos junto a sus respectivas fotografías, descripciones y cantidades en la base de cada tarjeta. En la sección posterior se detalla el ``Método de pago'' como ``Tarjeta de débito'' y el ``Horario seleccionado'' para la entrega. La interfaz concluye en el extremo inferior mostrando de manera fija la etiqueta ``Total'' alineada al importe acumulado.
+
+\subsection{FLUJO DEL PERSONAL DE CAJA}
