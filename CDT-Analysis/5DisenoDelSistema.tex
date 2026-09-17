@@ -1286,3 +1286,593 @@ Esta interfaz corresponde a la pantalla de detalle de la orden en el apartado de
 El cuerpo de la pantalla mantiene la estructura estándar del flujo organizando la información en el bloque de ``Contenido'', el cual lista verticalmente los artículos adquiridos junto a sus respectivas fotografías, descripciones y cantidades en la base de cada tarjeta. En la sección posterior se detalla el ``Método de pago'' como ``Tarjeta de débito'' y el ``Horario seleccionado'' para la entrega. La interfaz concluye en el extremo inferior mostrando de manera fija la etiqueta ``Total'' alineada al importe acumulado.
 
 \subsection{FLUJO DEL PERSONAL DE CAJA}
+La caja cuenta con una vista de panel donde se muestran los pedidos realizados. El personal puede crear pedidos, confirmar pagos, consultar el menú y las promociones disponibles. Las interfaces son consistentes en su diseño y le permiten al cajero realizar cortes de caja y de inventario.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-01 — Caja-Login.svg}
+    \caption{Interfaz de login para el personal de caja.}
+    \label{fig:ui-caj-01}
+\end{figure}
+
+La pantalla de inicio de sesión presenta el logotipo de la empresa en la parte superior, seguido del título ``Login''. Incluye un formulario con campos para ingresar las credenciales del usuario, acompañado de un enlace para la recuperación de contraseña y un botón para confirmar el acceso.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-01-A Onboarding.svg}
+    \caption{Interfaz de onboarding para el personal de caja.}
+    \label{fig:ui-caj-01-a}
+\end{figure}
+
+Esta interfaz incluye el logotipo de la empresa y un formulario para ingresar las credenciales de acceso de su perfil las cuales se establecerán con el botón ``Registrar''.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-02 — Caja-Home.svg}
+    \caption{Interfaz principal de personal de caja.}
+    \label{fig:ui-caj-02}
+\end{figure}
+
+La pantalla principal incluye un menú lateral de navegación que agrupa las secciones de Tablero, Menú (Productos y Promociones), Pedidos (Nuevo pedido e Historial), Inventario, Corte de caja, y opciones generales como Configuración, Ayuda y Logout. En la barra superior se dispone un botón de acceso rápido para crear nuevos pedidos, un ícono de notificaciones y la información del perfil activo, que dictamina el nombre del usuario y su rol en el sistema. El área central presenta el saludo junto a dos secciones informativas: una para productos no disponibles y otra que describe el estatus actual de insumos con bajo nivel de existencia.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-03 — Caja-Productos.svg}
+    \caption{Interfaz de productos para personal de caja.}
+    \label{fig:ui-caj-03}
+\end{figure}
+
+La pantalla de Productos conserva la estructura de navegación lateral y la barra superior descritas previamente. El contenido principal presenta una cuadrícula de tarjetas que resume los platillos disponibles en el menú, cada una con su imagen, nombre, precio y disponibilidad. Se incluye una barra de búsqueda con filtrado por nombre, ingrediente o etiqueta, junto a un control de ordenamiento. La sección finaliza con un componente de paginación para navegar entre el total de registros.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-04 — Caja-DetallesIngredientesDrawer.svg}
+    \caption{Detalles de ingredientes del producto para personal de caja.}
+    \label{fig:ui-caj-04}
+\end{figure}
+
+Sobre la pantalla de Productos se despliega un panel lateral con el detalle de un platillo, que dictamina su nombre, una breve descripción y el precio del producto. Dicho panel organiza su contenido mediante dos pestañas: Ingredientes y Receta. La pestaña activa presenta una tabla que enlista los ingredientes con su cantidad, unidad de medida, costo adicional y un indicador de opcionalidad.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-05 — Caja-DetallesRecetaDrawer.svg}
+    \caption{Detalles de la receta del producto para el personal de caja.}
+    \label{fig:ui-caj-05}
+\end{figure}
+
+La pestaña de Receta, dentro del mismo panel de detalle del platillo, describe el proceso de preparación mediante una serie de pasos numerados. Cada paso incluye dos elementos interactivos que corresponden a los ingredientes requeridos y la estación de trabajo asignada para dicha etapa. 
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-05-A — Caja-DetallesIngredientesPasoDialog.svg}
+    \caption{Interfaz de ingredientes por paso de receta.}
+    \label{fig:ui-caj-05-a}
+\end{figure}
+
+La pantalla muestra el modal del elemento interactivo de Ingredientes dentro de un paso de la receta, desplegando una tabla con el detalle de cada ingrediente, su cantidad y unidad de medida correspondiente.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-05-B — Caja-DetallesEstacionesPasoDialog.svg}
+    \caption{Interfaz con estaciones asociadas al paso de receta.}
+    \label{fig:ui-caj-05-b}
+\end{figure}
+
+La pantalla muestra el modal del elemento interactivo de Estación dentro de un paso de la receta, desplegando las estaciones de trabajo asociadas a dicha etapa de preparación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-06 — Caja-ListadodeInventario.svg}
+    \caption{Interfaz de inventario para el personal de caja.}
+    \label{fig:ui-caj-06}
+\end{figure}
+
+La pantalla de ``Inventario'' presenta una tabla que enlista los insumos registrados en el sistema, mostrando para cada uno su stock actual con controles para incrementar o reducir la cantidad, la unidad de medida y la fecha de última actualización. Incluye una barra de búsqueda, un control de filtrado y un botón para agregar nuevos insumos. Los registros con existencias bajas se destacan visualmente en color rojo. La sección finaliza con un componente de paginación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-07 — Caja-AccionInventarioDialog.svg}
+    \caption{Interfaz de detalles del insumo para el personal de caja.}
+    \label{fig:ui-caj-07}
+\end{figure}
+
+Sobre la pantalla de ``Inventario'' se despliega un modal para el ajuste de stock de un insumo, que dictamina la cantidad y unidad de medida actuales, junto a un selector para especificar el concepto del ajuste. Finaliza con botones para guardar o cancelar la operación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-08 — Caja-Promociones.svg}
+    \caption{Interfaz de promociones para el personal de caja.}
+    \label{fig:ui-caj-08}
+\end{figure}
+
+La pantalla de ``Promociones'' comparte la misma estructura que la de Productos, presentando una cuadrícula de tarjetas que resume los combos y promociones disponibles, cada una con su imagen, nombre, precio y estado de disponibilidad. Incorpora los mismos controles de búsqueda, ordenamiento y paginación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-08-A — Caja-DetallesComboDrawer.svg}
+    \caption{Interfaz de detalles de la promoción para el personal de caja.}
+    \label{fig:ui-caj-08-a}
+\end{figure}
+
+Sobre la pantalla de ``Promociones'' se despliega un panel lateral con el detalle de un combo, que incluye el precio de la promoción y una tabla con los productos que lo conforman, indicando cantidad y unidad de medida de cada uno. Adicionalmente, dictamina si la promoción es de carácter temporal mediante un indicador acompañado de campos para definir su fecha de inicio y fecha de fin.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-09 — Caja-NuevaOrden.svg}
+    \caption{Interfaz de creación de pedido sin objetos en el carrito.}
+    \label{fig:ui-caj-09}
+\end{figure}
+
+La pantalla de ``Nueva orden'' presenta una cuadrícula de tarjetas del menú, navegable mediante pestañas que permiten alternar entre Promociones y Productos, acompañada de una barra de búsqueda y paginación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-10 — Caja-NuevaOrdenCarrito.svg}
+    \caption{Interfaz de creación de pedidos con carrito.}
+    \label{fig:ui-caj-10}
+\end{figure}
+
+Esta pantalla muestra una derivación de la pantalla ``Nueva orden'' donde, en la parte inferior, se despliega el carrito de la orden activa, que enlista los artículos agregados con su cantidad, precio unitario y total acumulado, resaltando en color aquellos que incluyen cargos adicionales. Finaliza con el total general y botones para proceder al pago o cancelar la orden.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-11 — Caja-AgregarProductoDrawer.svg}
+    \caption{Interfaz de detalles de los ingredientes del producto.}
+    \label{fig:ui-caj-11}
+\end{figure}
+
+Sobre la pantalla de ``Nueva orden'' se despliega un panel de detalle del producto que extiende la funcionalidad descrita en la sección de Productos, incorporando controles adicionales orientados a la gestión del pedido. La tabla de ingredientes incluye controles de cantidad editables, la posibilidad de eliminar ingredientes individuales y un botón para agregar ingredientes extra. En la parte inferior se dictamina un selector de cantidad del producto y botones para agregarlo a la orden o quitarlo de ella.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-11-A — Caja-AgregarIngredienteDialog.svg}
+    \caption{Interfaz para agregar ingrediente extra al producto.}
+    \label{fig:ui-caj-11-a}
+\end{figure}
+
+Sobre la pantalla de ``Nueva orden'' se presenta un modal para seleccionar un ingrediente adicional, que incluye una barra de búsqueda y un listado de insumos disponibles con casillas de selección. Finaliza con botones para confirmar la adición o cancelar la operación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-12 — Caja-RecetaNuevoPedidoDrawer.svg}
+    \caption{Interfaz de detalles de receta del producto.}
+    \label{fig:ui-caj-12}
+\end{figure}
+
+Sobre la pantalla de "Nueva orden", la pestaña de Receta del panel de detalle presenta los pasos de preparación con sus elementos colapsables de ingredientes y estación, e incorpora un botón para agregar nuevos pasos En su botón de navegación enumera el número de ingredientes sin asociar a algún paso. Los controles de cantidad y gestión de la orden se mantienen visibles en la parte inferior.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-12-A — Caja-IngredientesRecetaPedidoDialog.svg}
+    \caption{Interfaz de asociación de ingrediente a paso de receta del producto.}
+    \label{fig:ui-caj-12-a}
+\end{figure}
+
+Sobre la pantalla de ``Nueva orden'' se despliega el modal de Ingredientes correspondiente a un paso de la receta, presentando una tabla editable donde se pueden configurar los ingredientes del paso, su cantidad y unidad de medida, con la opción de eliminar filas o añadir nuevas. Finaliza con botones para guardar o cancelar los cambios.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-12-B — Caja-EstacionesRecetaPedidoDialog.svg}
+    \caption{Interfaz de asociación de estación a paso de receta del producto.}
+    \label{fig:ui-caj-12-b}
+\end{figure}
+
+Sobre la pantalla de ``Nueva orden'' se despliega el modal de Estaciones asociadas correspondiente a un paso de la receta, donde se presentan las estaciones asignadas como elementos eliminables individualmente, junto a un botón para agregar nuevas. Finaliza con botones para guardar o cancelar los cambios.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-15 — Caja-AgregarComboDrawer.svg}
+    \caption{Interfaz de productos incluidos en promoción.}
+    \label{fig:ui-caj-15}
+\end{figure}
+
+Sobre la pantalla de ``Nueva orden'' se despliega el panel de detalle de una promoción, que extiende la funcionalidad descrita en la sección de Promociones e incorpora en la parte inferior un selector de cantidad junto a los botones para agregar o quitar el combo de la orden activa.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-13 — Caja-ResumendelPedido.svg}
+    \caption{Interfaz de resumen y pago de pedido para el personal de caja.}
+    \label{fig:ui-caj-13}
+\end{figure}
+
+La pantalla de ``Resumen del pedido'' presenta una tabla con los artículos agregados a la orden, indicando cantidad y precio de cada uno, con controles para ajustar o eliminar items individualmente. La sección de detalles dictamina el subtotal, cargos adicionales y el total a cobrar. Incluye interruptores para indicar si el pedido es para llevar y si se desea programar la entrega, así como un selector del método de pago con las opciones disponibles. Finaliza con un botón para proceder al pago.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-14 — Caja-ConfirmaciondePagoAlertDialog.svg}
+    \caption{Interfaz de confirmación de caja para el personal de caja.}
+    \label{fig:ui-caj-14}
+\end{figure}
+
+Sobre la pantalla de ``Resumen del pedido'' se despliega un modal de confirmación de pago que solicita verificar si la transacción fue completada según el método elegido, ofreciendo botones para confirmar el pago o cancelar el proceso.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/Nuevo pedido - Programación de entrega.svg}
+    \caption{Interfaz de programación para pedidos anticipados.}
+    \label{fig:ui-caj-programacion-entrega}
+\end{figure}
+
+Sobre la pantalla de ``Resumen del pedido'' se despliega un modal para programar el horario de entrega, que presenta bloques de tiempo seleccionables agrupados en disponibilidad inmediata y futura, indicando para cada franja los espacios disponibles. Finaliza con un botón para confirmar la programación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/Nuevo pedido - Ticket de pedido.svg}
+    \caption{Interfaz de ticket de pedido para el personal de caja.}
+    \label{fig:ui-caja-ticket-qr}
+\end{figure}
+
+Sobre la pantalla de ``Resumen del pedido'' se despliega un modal que presenta el código QR generado para la orden, acompañado del número de pedido y las instrucciones para que el cliente lo escanee. Incluye la URL asociada al código y botones para cancelar o continuar con el proceso.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-16 — Caja-HistorialdePedidos.svg}
+    \caption{Interfaz de historial de pedidos.}
+    \label{fig:ui-caj-16}
+\end{figure}
+
+La pantalla de ``Historial de pedidos'' presenta una tabla que enlista las órdenes registradas en el sistema, mostrando para cada una su identificador, fecha, contenido y método de pago utilizado. Incluye una barra de búsqueda con filtrado por identificador, productos o promociones, así como un control adicional de filtrado general.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-17 — Caja-PedidoHistorialDetalle.svg}
+    \caption{Interfaz de detalles de pedido en historial.}
+    \label{fig:ui-caj-17}
+\end{figure}
+
+La pantalla de detalle de un pedido comparte la estructura de ``Resumen del pedido'', presentando los artículos de la orden, el desglose de costos y el método de pago seleccionado. Se diferencia al mostrar el estado de pago del pedido y sustituir el botón de pago por uno para registrar el pago en caso de que este aún no haya sido completado.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-18 — Caja-HistorialPedidoIngredientesItemDrawer.svg}
+    \caption{Interfaz de ingredientes del pedido en historial.}
+    \label{fig:ui-caj-18}
+\end{figure}
+
+Sobre la pantalla de detalle del pedido se despliega un panel con la información del producto, equivalente al descrito en la sección de ``Productos'', presentando la tabla de ingredientes en modo de solo lectura sin los controles de edición ni gestión de orden.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-20-A — Caja-IngredientesRecetaItemDialog.svg}
+    \caption{Interfaz de ingredientes asociados a paso de receta en historial.}
+    \label{fig:ui-caj-20-a}
+\end{figure}
+
+Sobre la pantalla de detalle del pedido se presenta el panel del producto en su pestaña de Receta, con el modal de Ingredientes desplegado en modo de solo lectura, mostrando únicamente el ingrediente, cantidad y unidad de medida sin opciones de edición.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-20-B — Caja-EstacionRecetaItemDialog.svg}
+    \caption{Interfaz de estaciones asociadas a paso de receta en historial.}
+    \label{fig:ui-caj-20-b}
+\end{figure}
+
+Sobre la pantalla de detalle del pedido se presenta el modal de Estaciones asociadas en modo de solo lectura, enlistando únicamente las estaciones de trabajo correspondientes al paso de la receta sin opciones de edición.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-22 — Caja-CortedeCaja.svg}
+    \caption{Interfaz de corte de caja para fin de turno.}
+    \label{fig:ui-caj-22}
+\end{figure}
+
+La pestaña de Corte de caja dentro de ``Fin de turno'' presenta una tabla que enlista los métodos de pago registrados durante el turno, comparando la suma esperada contra la suma contabilizada para cada uno, resaltando en rojo las discrepancias detectadas. Cada fila dispone de controles para agregar ajustes positivos o negativos.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-22-A — Caja-AjusteCortedeCajaDialog.svg}
+    \caption{Interfaz de justificación de ajuste para corte de caja.}
+    \label{fig:ui-caj-22-a}
+\end{figure}
+
+Sobre la pantalla de ``Fin de turno'' en su pestaña de Corte de caja se despliega un modal de ajuste que solicita el monto a sumar y la justificación del movimiento, acompañado de una advertencia que dictamina que el ajuste quedará vinculado directamente al perfil activo. Finaliza con botones para guardar o cancelar.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-23 — Caja-CortedeInventario.svg}
+    \caption{Interfaz de corte de inventario.}
+    \label{fig:ui-caj-23}
+\end{figure}
+
+La pestaña de Corte de inventario presenta la misma tabla de insumos descrita en ``Inventario'', con sus controles de búsqueda, filtrado y ajuste de stock. Se diferencia por incluir en la parte superior los botones para finalizar o cancelar el cierre de turno.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-23-A — Caja-AjusteCortedeInventarioDialog.svg}
+    \caption{Interfaz de ajuste de inventario para corte de inventario.}
+    \label{fig:ui-caj-23-a}
+\end{figure}
+
+Sobre la pantalla de ``Fin de turno'' en su pestaña de Corte de inventario se despliega un modal de ajuste de stock equivalente al descrito en ``Inventario'', solicitando la cantidad, unidad de medida y concepto del ajuste. Finaliza con botones para guardar o cancelar la operación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-24-A — Caja-InconsistenciaCortedeInventarioAlertDialog.svg}
+    \caption{Interfaz de fin de turno exitoso.}
+    \label{fig:ui-caj-24-a}
+\end{figure}
+
+Sobre la pantalla de ``Fin de turno'' se despliega un modal de confirmación que solicita verificar la intención de finalizar el turno, advirtiendo que será necesario iniciar sesión nuevamente para continuar operando. Incluye botones para aceptar o cancelar la acción.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/caja/CAJ-24-B — Caja-FinalizarTurnoAlertDialog.svg}
+    \caption{Interfaz de fin de turno con conflictos.}
+    \label{fig:ui-caj-24-b}
+\end{figure}
+
+Sobre la pantalla de ``Fin de turno'' se despliega un modal de error que dictamina la imposibilidad de concluir el turno debido a inconsistencias pendientes en el corte de caja, ofreciendo únicamente un botón para aceptar y retomar el proceso de ajuste.
+
+\subsubsection{FLUJO DE LA ESTACIÓN DE ENTREGA}
+Estas interfaces se centran el cambio de estado de entrega de los pedidos y el registro de pagos para auxiliar procesos de la estación de caja. Su diseño independiente permite la rotación de personal en el punto crítico de entregar y verificar el proceso de entrega del pedido. 
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-01 — Entrega-Login.svg}
+    \caption{Interfaz de inicio de sesión de entrega.}
+    \label{fig:ui-ent-01}
+\end{figure}
+
+La pantalla corresponde a la interfaz de inicio de sesión de la plataforma. El sistema presenta un formulario de autenticación compuesto por dos campos de captura principales: uno para el nombre de usuario y otro para la contraseña asociada. Para la ejecución de acciones, la interfaz dispone de un botón de confirmación (``Login'') que inicia el proceso de validación de credenciales, además de incluir un enlace de recuperación para la gestión de contraseñas olvidadas.
+
+%%%%
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-02 — Entrega-Home.svg}
+    \caption{Interfaz de pedidos por entregar sin pedidos pendientes.}
+    \label{fig:ui-ent-02}
+\end{figure}
+
+Esta interfaz corresponde a la vista del módulo de entrega, denominada ``Pedidos por entregar''. Inmediatamente abajo se presenta el encabezado principal de la pantalla, seguido de una sección de filtrado etiquetada como ``Filtrar por:'', la cual despliega cuatro botones interactivos: ``En proceso'', ``Preparado'', ``No urgentes'' y ``Urgentes''. El área central de la interfaz expone de forma destacada el mensaje informativo ``No hay pedidos pendientes'', el cual se encuentra rodeado visualmente por contenedores lineales vacíos y atenuados distribuidos a lo largo del cuerpo principal.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-02 — Entrega-Home-Ordenes-Pendientes.svg}
+    \caption{Interfaz de pedidos por entregar.}
+    \label{fig:ui-ent-02-pendientes}
+\end{figure}
+
+Esta interfaz corresponde a la vista general con órdenes activas dentro del módulo del encargado, titulada ``Pedidos por entregar''. En la sección de filtrado, tras la etiqueta ``Filtrar por:'', se despliegan cinco botones interactivos: ``En proceso'', ``Preparado'', ``No urgentes'', ``Para llevar'' y ``Urgentes''. 
+
+El cuerpo principal organiza las órdenes mediante una cuadrícula de tarjetas individuales distribuidas en cuatro columnas. Los pedidos están identificados por folios numéricos. 
+
+Cada tarjeta incluye etiquetas de estado como ``En proceso'' o ``Preparado'' con diferentes códigos de color, un indicador de ``Tiempo transcurrido'' con un icono de reloj que detalla los minutos acumulados, y una barra horizontal de color en la parte superior del folio que varía entre azul, naranja, verde o amarillo. Algunas tarjetas incorporan adicionalmente un icono de bicicleta azul junto al número de pedido que indica si son o no para llevar siendo que se pueden comer en el establecimiento o no. En la base de cada bloque se disponen dos botones de acción: ``Cancelar entrega'' a la izquierda y ``Entregar'' a la derecha.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-02 — Entrega-Home-Ordenes-En-Proceso.svg}
+    \caption{Interfaz de pedidos por entregar con filtro ``En proceso''.}
+    \label{fig:ui-ent-02-en-proceso}
+\end{figure}
+
+Esta interfaz corresponde a la vista filtrada de pedidos en preparación. En la sección de filtrado, tras la etiqueta ``Filtrar por:'', se despliega una serie de botones interactivos donde resalta seleccionado el apartado ``En proceso''. 
+
+Cada tarjeta activa incluye indicadores de estado como ``En proceso'' con diferentes códigos de color y una barra horizontal superior que varía entre azul y naranja. Asimismo, muestran etiquetas de tiempo que detallan conceptos como ``Tiempo transcurrido'', ``Tiempo estimado'', ``Duración'', ``Tiempo registrado'' o ``Tiempo restante'', acompañadas por un icono de reloj con los minutos acumulados o pendientes. En la base de cada bloque activo se disponen dos botones de acción: ``Cancelar entrega'' a la izquierda y ``Entregar'' a la derecha.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-02 — Entrega-Home-Ordenes-Preparados.svg}
+    \caption{Interfaz de pedidos por entregar con filtro ``Preparado''.}
+    \label{fig:ui-ent-02-preparados}
+\end{figure}
+
+Esta interfaz corresponde a la vista filtrada de pedidos listos para entrega. En la sección de filtrado, tras la etiqueta ``Filtrar por:'', se despliega la serie de botones interactivos donde resalta seleccionado el apartado ``Preparado''. 
+
+Cada una de las tarjetas principales o activas incluye un indicador de estado destacado como ``Preparado'' en códigos de color verde o amarillo, una barra horizontal superior que hace juego con dicho estado y una etiqueta central de ``Tiempo transcurrido'' acompañada por un icono de reloj que detalla los minutos acumulados desde su procesamiento. En la base de cada uno de estos bloques en primer plano se disponen dos botones de acción interactivos en paralelo: ``Cancelar entrega'', diseñado con texto negro sobre un contenedor blanco de bordes lineales, y ``Entregar'', estructurado firmemente con texto blanco sobre un fondo negro sólido.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-02 — Entrega-Home-Ordenes-No-Urgentes.svg}
+    \caption{Interfaz de pedidos por entregar con filtro ``No urgente''.}
+    \label{fig:ui-ent-02-no-urgentes}
+\end{figure}
+
+Esta interfaz corresponde a la vista filtrada de pedidos catalogados como de prioridad normal o no inmediata. En la sección de filtrado, tras la etiqueta ``Filtrar por:'', se despliega la serie de botones interactivos donde resalta seleccionado el apartado ``No urgentes''. 
+
+Las tarjetas principales muestran estados como ``En proceso'' o ``Preparado'' con sus respectivos códigos de color, acompañados en la parte superior por una barra horizontal y en el centro por indicadores de tiempo que detallan conceptos como ``Tiempo transcurrido'', ``Tiempo estimado'', ``Duración'' o ``Tiempo registrado'' junto a un icono de reloj. En la base de cada bloque interactivo en primer plano se disponen dos botones de acción en paralelo: ``Cancelar entrega'' a la izquierda y el botón ``Entregar'' a la derecha.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-02 — Entrega-Home-Ordenes-Urgentes.svg}
+    \caption{Interfaz de pedidos por entregar con filtro ``Urgentes''.}
+    \label{fig:ui-ent-02-urgentes}
+\end{figure}
+
+Esta interfaz corresponde a la vista filtrada de pedidos de carácter prioritario o crítico. En la sección de filtrado, tras la etiqueta ``Filtrar por:'', se despliega la serie de botones interactivos donde resalta seleccionado en color rojo el apartado ``Urgentes''. 
+
+Las tarjetas prioritarias en primer plano muestran de forma diferenciada estados como ``En proceso'' con una barra horizontal e indicadores en color naranja, o ``Preparado'' con elementos visuales en color amarillo. Los bloques en estado de preparación incluyen de manera específica la etiqueta ``Tiempo restante'' acompañada por un icono de reloj con los minutos pendientes de finalización, mientras que los bloques listos presentan la etiqueta de ``Tiempo transcurrido''. En la base de cada uno de estos contenedores activos se disponen dos botones de acción en paralelo, identificados como ``Cancelar entrega'' a la izquierda, y ``Entregar'' a la derecha.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-03 — Entrega-CancelarEntregaModal.svg}
+    \caption{Interfaz de cancelación de pedido.}
+    \label{fig:ui-ent-03}
+\end{figure}
+
+Esta interfaz muestra una ventana emergente o modal de confirmación superpuesta en el centro de la vista general del módulo del encargado ``Pedidos por entregar''. La ventana modal cuenta con un icono de cruz en la esquina superior derecha para cerrar el cuadro de diálogo. 
+
+El cuerpo de la ventana emergente organiza los elementos necesarios para procesar una baja en el sistema. Del lado izquierdo se presenta la etiqueta ``Concepto de cancelación'' justo arriba de un menú desplegable interactivo. Del lado derecho se sitúa el encabezado ``Estado al momento de la cancelación'', acompañado inmediatamente abajo por una etiqueta indicativa con fondo negro que dicta ``En proceso''. La interfaz de la ventana concluye en su base con dos botones de acción dispuestos en paralelo: el botón de la izquierda cita ``Regresar'' y está diseñado con un contorno lineal fino, mientras que el de la derecha cita ``Aplicar cancelación''.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-04-B — Entrega-EntregarPedidoModal.svg}
+    \caption{Interfaz de cobro de pedido.}
+    \label{fig:ui-ent-04-b}
+\end{figure}
+
+Esta interfaz corresponde a un panel lateral que se despliega desde el extremo derecho, habilitándose en el momento en que se va a procesar la entrega y el cobro de un pedido. El fondo izquierdo de la pantalla principal se mantiene parcialmente visible por detrás de este componente. 
+
+El cuerpo del panel organiza el desglose detallado de la transacción mediante una estructura de lista que detalla los productos solicitados, especificando para cada uno su nombre, la cantidad de unidades y el costo correspondiente, incluyendo el desglose de aditamentos especiales en caso de que existan. Debajo del listado se encuentra la sección de resumen de cuenta, la cual contiene las etiquetas de balance para el subtotal y el monto total, incorporando en este último bloque sobre el estado de pago pendiente de la orden. 
+
+Posteriormente se sitúa el apartado para el método de pago, el cual dispone de opciones interactivas para registrar la forma de cobro en el sistema, permitiendo escoger entre las alternativas de efectivo o transferencia. La interfaz incluye un botón de acción principal de ancho completo diseñado para registrar el pago, consolidando así el cobro y la entrega final de la orden.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-05 — Entrega-ConfirmacionIdentidadModal.svg}
+    \caption{Interfaz de confirmación de identidad con QR.}
+    \label{fig:ui-ent-05}
+\end{figure}
+
+Esta interfaz presenta una ventana emergente o modal de ``Confirmación de identidad'' que se superpone en el centro de la pantalla sobre el panel lateral de cobro y la vista general del módulo del encargado. El resto de las interfaces en segundo plano aparecen difuminadas. 
+
+El cuerpo del contenedor central incluye el encabezado principal del proceso, acompañado inmediatamente abajo por la instrucción textual: ``Indíquele al cliente que escanee el QR con la app de la cafetería''. El elemento principal de la interfaz es un código QR de gran tamaño dispuesto de forma centralizada para que el usuario pueda escanearlo desde su dispositivo móvil y validar su orden de manera segura en el punto de entrega.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-06 — Entrega-ConfirmacionIdentidadExitosaModal.svg}
+    \caption{Interfaz de confirmación exitosa de identidad con QR.}
+    \label{fig:ui-ent-06}
+\end{figure}
+
+Esta interfaz presenta una ventana emergente o modal de ``Éxito'' que se superpone en el centro de la pantalla sobre el panel lateral de cobro y la vista general del módulo del encargado. 
+
+El cuerpo del contenedor incluye el encabezado principal ``Éxito'', acompañado inmediatamente abajo por la confirmación textual: ``La identidad se ha confirmado exitosamente. Puede entregar el pedido''. El elemento visual central y predominante es un icono de verificación o palomita en color verde, enmarcado dentro de un anillo circular grueso del mismo tono, el cual consolida visualmente que el proceso de autenticación del cliente ha concluido de forma correcta.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-07 — Entrega-ConfirmacionIdentidadFallidaModal.svg}
+    \caption{Interfaz de confirmación no exitosa de identidad con QR.}
+    \label{fig:ui-ent-07}
+\end{figure}
+
+Esta interfaz presenta una ventana emergente o modal de ``Error'' que se superpone en el centro de la pantalla sobre el panel lateral de cobro y la vista general del módulo del encargado. 
+
+El cuerpo del contenedor incluye el encabezado principal ``Error'', acompañado inmediatamente abajo por la indicación textual: ``Verifique que el número de pedido sea el adecuado e inténtelo de nuevo''. El elemento visual central y predominante es un icono de cruz o ``X'' en color rojo, enmarcado dentro de un anillo circular grueso del mismo tono, el cual consolida visualmente que el proceso ha fallado o no ha podido completarse correctamente en el sistema.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/entrega/ENT-04-A — Entrega-EntregarPedidoModal.svg}
+    \caption{Interfaz de pago en entrega no habilitado.}
+    \label{fig:ui-ent-04-a}
+\end{figure}
+
+Esta interfaz corresponde a una variante del panel lateral de cobro y entrega, la cual se despliega cuando el sistema detecta una restricción en la estación de trabajo actual. En la parte superior del panel se expone de forma destacada el identificador del pedido. 
+
+El cuerpo del panel organiza la lista de productos solicitados en una estructura de columnas que detalla el nombre del artículo, la cantidad y su costo individual. Abajo del listado se encuentra la sección de resumen de cuenta con los balances de subtotal y monto total, incorporando una etiqueta visual de advertencia en color rojo que señala el estado de la orden como pendiente de cobro. 
+
+Posteriormente se sitúa el apartado para el método de pago, el cual muestra las opciones de efectivo o transferencia desactivadas o en modo de lectura. La diferencia principal de esta pantalla radica en la sección inferior, donde se omite el botón de acción para procesar la transacción y se introduce en su lugar un mensaje de bloqueo en texto negro resaltado que dicta de forma explícita: ``No tenemos registrado el pago y no se han habilitado los pagos en esta estación. Canaliza al cliente a caja para revisar su pago.''.
+
+\subsubsection{INTERFAZ KDS (COCINA)}
+La interfaz KDS está diseñada para uso en pantallas de al menos 21 pulgadas posicionadas en la cocina. Muestra tarjetas de pedido con la estación asignada, los ítems a preparar, el tiempo transcurrido desde la recepción y el tiempo estimado de entrega. Las tarjetas cambian de color cuando el tiempo transcurrido supera el umbral configurado. El personal puede marcar pedidos como listos con un toque.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-01 — Login.svg}
+    \caption{Interfaz de inicio de sesión de cocina.}
+    \label{fig:ui-coc-01}
+\end{figure}
+
+La pantalla corresponde a la interfaz de inicio de sesión de la plataforma. El sistema presenta un formulario de autenticación compuesto por dos campos de captura principales: uno para el nombre de usuario y otro para la contraseña asociada. Para la ejecución de acciones, la interfaz dispone de un botón de confirmación (``Login'') que inicia el proceso de validación de credenciales, además de incluir un enlace de recuperación para la gestión de contraseñas olvidadas.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.4\textwidth]{images/cocina/COC-01-A — Onboarding.svg}
+    \caption{Interfaz de onboarding de nuevos empleados desde la interfaz de cocina.}
+    \label{fig:ui-coc-01-a}
+\end{figure}
+
+Esta interfaz es de la pantalla de registro de usuarios. Bajo un mensaje de bienvenida que solicita el establecimiento de credenciales, el sistema presenta un formulario compuesto por cuatro campos de entrada de datos: correo electrónico, nombre de usuario, contraseña y la confirmación de esta. Finalmente, en la parte inferior se dispone de un botón de acción principal etiquetado como ``Registrar'', el cual procesa los datos capturados para la creación y alta de la nueva cuenta en el sistema.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-02 — Cocina-Home.svg}
+    \caption{Interfaz principal de pedidos en encolados para el personal de cocina.}
+    \label{fig:ui-coc-02}
+\end{figure}
+
+Esta interfaz corresponde a la vista principal del módulo de gestión de cocina. En la cabecera se identifica al usuario activo con su respectivo rol (``Cocinero/a'') y un selector para alternar entre diferentes estaciones de trabajo. Debajo del encabezado, el sistema dispone de un componente de filtrado que permite clasificar las órdenes en ``No urgentes'' y ``Urgentes''. El cuerpo central de la pantalla presenta un estado vacío provisto de un indicador textual que notifica que ``No hay pedidos pendientes'', confirmando que la cola de trabajo se encuentra totalmente despachada en ese momento.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-02 — Cocina-Home-Ordenes-Pendientes.svg}
+    \caption{Interfaz con contenido activo de los pedidos en cola para el personal de cocina.}
+    \label{fig:ui-coc-02-home}
+\end{figure}
+
+Esta interfaz es por la vista activa del módulo de gestión de cocina para las estaciones de cocina, mostrando el flujo de trabajo con órdenes pendientes. El cuerpo principal organiza los pedidos en tarjetas individuales que detallan el nombre del platillo, su número de identificación único, un temporizador y el paso actual de la receta con sus respectivos ingredientes. Cada tarjeta cuenta con una barra de progreso que funge como indicador visual del avance de la preparación; conforme este indicador se aproxima al total, el sistema utiliza el color naranja para denotar que el platillo está próximo a concluir su proceso de elaboración. Cada módulo incluye un botón interactivo de ``Terminar paso'' para avanzar secuencialmente, mientras que en la parte inferior se despliega un panel colapsable denominado ``Resumen de pedidos'' que consolida de forma cuantitativa la carga total de trabajo y las especificaciones de los platillos en cola.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-02 — Cocina-Home-Ordenes-Pendientes-Resumen-Pedidos.svg}
+    \caption{Interfaz con el panel de ``Resumen de pedidos'' expandido.}
+    \label{fig:ui-coc-02-resumen-pedidos}
+\end{figure}
+
+Esta interfaz corresponde a la vista expandida del panel ``Resumen de pedidos'' dentro del módulo de gestión de cocina. Al desplegarse, el componente maximiza su área en pantalla para ofrecer una matriz detallada y consolidada de toda la carga de trabajo en la estación. Cada tipo de platillo en cola se organiza en bloques dinámicos que muestran cuantitativamente las porciones totales requeridas mediante un indicador numérico indexado. Asimismo, el sistema desglosa las especificaciones operativas de cada preparación, permitiendo al personal visualizar rápidamente si las órdenes deben elaborarse bajo la receta estándar (``Sin cambios'') o si presentan modificaciones específicas en su composición, tales como la adición de ingredientes extra.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-02 — Cocina-Home-Ordenes-Pendientes-Resumen-Pedidos-Filtro.svg}
+    \caption{Interfaz con un elemento resaltado dentro del panel ``Resumen de pedidos''.}
+    \label{fig:ui-coc-resumen-filtrado}
+\end{figure}
+
+Esta interfaz muestra el comportamiento del sistema ante la selección o enfoque de un elemento dentro del panel ``Resumen de pedidos''. Al interactuar con un bloque específico, la interfaz aplica un realce visual mediante un borde azul sobre la tarjeta del resumen y, simultáneamente, atenúa la opacidad del resto de los pedidos en la pantalla trasera (efecto de overlay o enfoque de contexto). Asimismo, las tarjetas de órdenes de trabajo individuales asociadas a dicho platillo permanecen con su opacidad al 100\%, permitiendo al operador aislar visualmente y localizar de forma inmediata la ubicación exacta en la cola de producción de los pedidos que componen esa variante seleccionada.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-06 — Cocina-DetallesDeLaRecetaModal.svg}
+    \caption{Interfaz de progreso de receta.}
+    \label{fig:ui-coc-06}
+\end{figure}
+
+Esta interfaz muestra el comportamiento del sistema ante la apertura de una ventana emergente o modal centrada en pantalla, la cual despliega el desglose detallado de la ``Receta'' para un platillo seleccionado. El componente superpone la información detallando de forma secuencial los pasos de preparación, las cantidades exactas de los ingredientes requeridos y la estación de trabajo específica asignada a cada tarea. Mientras esta ventana informativa permanece activa con casillas de verificación para el control del operador, el fondo de la aplicación aplica un efecto de desenfoque y atenuación de opacidad, aislando el contexto del tablero principal para concentrar la atención del usuario exclusivamente en la consulta de las instrucciones de elaboración.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-02 — Cocina-Home-Ordenes-Pendientes-Filtro-Urgentes.svg}
+    \caption{Interfaz con elementos ``Urgentes'' resaltados.}
+    \label{fig:ui-coc-02-urgentes}
+\end{figure}
+
+Esta interfaz ilustra el comportamiento del tablero de preparación al activar el filtro de ordenamiento por prioridad. Al interactuar con el botón ``Urgentes'' en el componente de filtrado superior, el cual cambia a un estado activo resaltado en color rojo, el sistema modifica la opacidad de los elementos en pantalla. De este modo, se mantiene la visibilidad al 100\% únicamente en las tarjetas de pedidos que presentan un estado de preparación avanzado o próximo a concluir (identificadas con barras y etiquetas naranjas), mientras que las órdenes con prioridad ordinaria o tiempos holgados se atenúan visualmente para facilitar al personal la identificación inmediata de las tareas críticas en la estación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-02 — Cocina-Home-Ordenes-Pendientes-Filtro-No-Urgentes.svg}
+    \caption{Interfaz con elementos ``No urgentes'' resaltados.}
+    \label{fig:ui-coc-02-no-urgentes}
+\end{figure}
+
+Esta interfaz ilustra el comportamiento del tablero de preparación cuando se aplica el filtro de ordenamiento por pedidos ordinarios. Al interactuar con el botón ``No urgentes'' en el componente de filtrado superior, el cual se muestra activo con un fondo gris oscuro, el sistema modifica la visualización de la pantalla reduciendo la opacidad de los pedidos que están marcados con prioridad naranja por estar próximos a concluir. De este modo, la interfaz mantiene con opacidad al 100\% únicamente aquellas órdenes estándar o con tiempos de preparación holgados, permitiendo al personal de cocina depurar visualmente la carga crítica y enfocarse de manera exclusiva en las tareas ordinarias de la estación.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-02-B — Cocina-HomeAsociarPersonal.svg}
+    \caption{Interfaz con variación para ``jefes de cocina''.}
+    \label{fig:ui-coc-02-b}
+\end{figure}
+
+Esta interfaz ilustra una variante del tablero de preparación con órdenes pendientes, adaptada específicamente para el rol de ``jefe de cocina''. A diferencia de la vista estándar de los cocineros, la cabecera del sistema integra un botón de acción global etiquetado como ``Asignar personal'', diseñado para la gestión y distribución de recursos humanos en las diferentes estaciones de trabajo. El resto de la interfaz mantiene la misma consistencia operativa, organizando los pedidos mediante tarjetas individuales con indicadores de avance y temporizadores, junto con el panel inferior colapsable que consolida el ``Resumen de pedidos'' en cola.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-03 — Cocina-GestionDePersonal.svg}
+    \caption{Interfaz principal de asignación de personal para cocina.}
+    \label{fig:ui-coc-03}
+\end{figure}
+
+Esta interfaz corresponde al módulo ``Gestión de personal'', al cual se accede tras interactuar con la opción de asignación exclusiva del rol directivo. En la parte superior se incluye una barra de navegación con la opción ``Regresar'' y un buscador parametrizado para filtrar por puesto, nombre o estación. El cuerpo principal organiza los recursos humanos en secciones de acuerdo con su jerarquía u ocupación, categorizándolos en bloques como ``Chef'' y ``Cocinero''. Dentro de cada categoría, el personal se presenta en tarjetas individuales que muestran el nombre completo del empleado, las estaciones que tiene habilitadas o asignadas (como ``Parrilla'' o ``Barra fría'') y un botón interactivo de ``Editar'' para modificar sus permisos o asignaciones dentro de la cocina.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-04 — Cocina-EditarPersonalDrawer.svg}
+    \caption{Interfaz con detalles y de asignación de personal a estaciones en cocina.}
+    \label{fig:ui-coc-04}
+\end{figure}
+
+Esta interfaz muestra una ventana emergente o modal superpuesta para la ``Edición de personal'' correspondiente a un empleado seleccionado. El formulario detalla el perfil operativo del usuario, permitiendo modificar su puesto, seleccionar su turno mediante casillas de verificación y gestionar las subestaciones o tareas asignadas (como ``Parrilla'', ``Barra fría'' o ``Salsas'') con controles interactivos para agregar nuevas áreas o ``Remover asignación''. Finalmente, en la sección inferior se incluye una configuración para determinar la ``Temporalidad de los cambios'', dando la opción de establecer modificaciones fijas o temporales con un selector numérico de días.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{images/cocina/COC-05 — Cocina-AsociarEstacion.svg}
+    \caption{Interfaz de asignación de personal.}
+    \label{fig:ui-coc-05}
+\end{figure}
+
+Esta interfaz ilustra el comportamiento del sistema al interactuar con el control para añadir áreas de trabajo dentro del flujo de edición de personal. Al accionar dicho control, se despliega una segunda ventana emergente anidada bajo el título ``Estaciones asociadas''. Este componente presenta un listado tabular parametrizado que desglosa las áreas operativas disponibles en el establecimiento (como ``Parrilla'', ``Caja'', ``Barra fría'' y ``Ensamblaje'') junto con su respectiva clasificación técnica en la columna ``Tipo''. El operador puede seleccionar una opción de la lista y presionar el botón interactivo ``Agregar'' ubicado en la parte inferior para consolidar el cambio, manteniendo el fondo previo atenuado para preservar la jerarquía de los procesos en ejecución.
+
+\subsubsection{LÓGICA DE PRIORIZACIÓN DE PEDIDOS}
+Se implementará el algoritmo MLFQ \cite{salomo2019multilevel} en donde se organizan en diferentes niveles de prioridad. Todos los pedidos nuevos ingresan con la prioridad más alta (Cola 0). Se usarán 2 quantums: el primero (Cola 0) tendrá una capacidad igual al tiempo ideal de preparación, si la suma del tiempo que toman todos los pasos en elaborarse es mayor a este quantum, se desplazará al siguiente quantum (Cola 1), siendo este el más bajo. De esta forma se le dará prioridad a aquellos que se puedan realizar en el tiempo ideal y se asegura el 83 \% de equidad de turnos.
+
+Con este algoritmo se finaliza la descripción del sistema.
