@@ -1,0 +1,87 @@
+@startuml "DS-08 Encolamiento Diferido de Pedidos Anticipados por Scheduler"
+' --- Configuración de Estilo Profesional (ESCOM/IPN) ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+participant "Scheduler (Daemon)" as SCH
+participant "SchedulerService" as SS
+participant "CocinaService" as COC
+participant "DAGService" as DAG
+database "PostgreSQL" as DB
+participant "Canal RT" as RT
+participant "Frontend Cocina" as KDS
+
+' --- PÁGINA 1: Detección de Órdenes ---
+box "Fase de Detección y Selección" #White
+    note over SCH: Intervalo de sondeo (Daemon)
+    SCH -> SS: triggerAdvanceOrderCheck()
+    activate SS
+    
+    SS -> DB: SELECT pedidos anticipados elegibles
+    note right of DB: Filtro: IDEMPOTENCIA (NOT EXISTS PasoPedidoEstado)\nRN-MGR-028: anticipación encolamiento
+    DB -->> SS: Lista de pedidos
+    
+    alt Ningún pedido elegible
+        SS -->> SCH: 0 procesos
+    else Existen pedidos
+        loop Para cada pedido P
+            alt P.ventana_recoleccion IS NULL
+                SS -> DB: INSERT INTO AlertaSistema (PEDIDO_HUERFANO)
+                note right: RN-CAJ-022: Gestión de excepciones
+            else P tiene ventana válida
+                SS -> COC: enqueuePedido(id_pedido)
+                activate COC
+            end
+        end
+    end
+    deactivate SS
+end box
+
+' --- PÁGINA 2: Procesamiento Transaccional ---
+box "Procesamiento Transaccional del DAG" #White
+    loop Para cada pedido (Continuación)
+        COC -> DB: SELECT snapshot pasos receta
+        DB -->> COC: Pasos
+        
+        group Transacción Atómica de DAG
+            loop Para cada PasoRecetaPedido
+                COC -> DAG: determineInitialState()
+                activate DAG
+                DAG -> DB: SELECT predecesores
+                DB -->> DAG: contador
+                
+                alt Sin predecesores (Raíz)
+                    DAG -->> COC: PENDIENTE
+                    COC -> DB: INSERT PasoPedidoEstado (PENDIENTE)
+                else Con predecesores
+                    DAG -->> COC: BLOQUEADO
+                    COC -> DB: INSERT PasoPedidoEstado (BLOQUEADO)
+                    note right: RN-COC-007: Timestamp NULL por bloqueo
+                end
+                deactivate DAG
+            end
+        end
+        note over COC, DB: COMMIT TRANSACTION
+        
+        ' --- Notificación post-commit ---
+        COC -> RT: emit(PEDIDO_ENCOLADO)
+        RT -->> KDS: Notifica tablero
+        COC -->> SS: OK
+        deactivate COC
+    end
+@enduml

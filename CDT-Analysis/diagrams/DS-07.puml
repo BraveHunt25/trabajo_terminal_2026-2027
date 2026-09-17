@@ -1,0 +1,86 @@
+@startuml "DS-07 Cancelación de Pedido desde Entrega con Propagación Asíncrona"
+' --- Configuración de Estilo Profesional (ESCOM/IPN) ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+actor "Op. de Entrega" as ENT
+participant "Frontend Entrega" as FE_ENT
+participant "API Gateway" as GW
+participant "CancelService" as CS
+database "PostgreSQL" as DB
+participant "Canal RT" as RT
+participant "Frontend Cocina" as KDS
+participant "Frontend Cliente" as FE_CLI
+
+' --- PÁGINA 1: Transacción y Persistencia ---
+box "Lógica de Cancelación Transaccional" #White
+    ENT -> FE_ENT: Confirma cancelación
+    activate FE_ENT
+    FE_ENT -> GW: POST /api/orders/{id}/cancel
+    activate GW
+    GW -> CS: cancelOrder(id, motivo)
+    activate CS
+    
+    ' Normalización fuera de transacción para evitar bloqueos
+    CS -> DB: SELECT motivo FROM MotivoCancelacion
+    alt Motivo inexistente
+        CS -> DB: INSERT INTO MotivoCancelacion
+    end
+    
+    group Transacción de Cancelación [RN-ENT-008, RN-ENT-009]
+        CS -> DB: SELECT estado, cliente_id ... FOR UPDATE
+        DB -->> CS: {estado, cliente_id}
+        
+        alt Estado Terminal
+            CS -->> GW: HTTP 409
+            note over CS, DB: ROLLBACK
+        else Estado Cancelable
+            CS -> DB: UPDATE Pedido (CANCELADO)
+            CS -> DB: INSERT CancelacionEntrega (Snapshot)
+            CS -> DB: INSERT HistorialDeMovimientos
+            
+            alt estado == EN_PREPARACION
+                CS -> DB: UPDATE PasoPedidoEstado (CANCELADO)
+            end
+        end
+    end
+    note over CS, DB: COMMIT TRANSACTION
+    deactivate CS
+end box
+
+' --- PÁGINA 2: Propagación Asíncrona ---
+box "Propagación de Eventos Asíncronos" #White
+    alt Cancelación exitosa
+        CS -> RT: emit(PEDIDO_CANCELADO)
+        deactivate GW
+        
+        ' Asincronía hacia KDS
+        RT -->> KDS: Elimina tarjetas canceladas
+        
+        ' Asincronía hacia Cliente (Condicional)
+        alt cliente_id IS NOT NULL
+            RT -->> FE_CLI: Actualiza estado a CANCELADO
+        end
+        
+        GW -->> FE_ENT: HTTP 200 OK
+    else Error
+        GW -->> FE_ENT: HTTP 409
+    end
+    deactivate FE_ENT
+end box
+@enduml

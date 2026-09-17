@@ -1,0 +1,317 @@
+@startuml "Modelo Entidad-Relación"
+' Configuración visual y espacio entre nodos
+hide circle
+skinparam linetype ortho
+skinparam nodesep 90
+skinparam ranksep 110
+
+' Personalización de estilo visual
+skinparam entity {
+  BackgroundColor White
+  BorderColor #2B2B2B
+  FontName Arial
+}
+
+' ══════════════════════════════════════════════
+' ENTIDADES
+' ══════════════════════════════════════════════
+
+' -- DOMINIO 1: AUTENTICACIÓN --
+entity "USUARIO" as USUARIO {
+  * id_usuario : uuid <<PK>>
+  --
+  * nombre_usuario : varchar <<UNIQUE>>
+  nombre_completo : varchar
+  rol : varchar <<ENUM>>
+}
+
+entity "EMPLEADO" as EMPLEADO {
+  * id_empleado : uuid <<PK>>
+  --
+  * id_usuario : uuid <<FK>>
+  nombre_completo : varchar
+}
+
+entity "TURNO" as TURNO {
+  * id_turno : uuid <<PK>>
+  --
+  descripcion : varchar
+}
+
+entity "ESTACION" as ESTACION {
+  * id_estacion : uuid <<PK>>
+  --
+  nombre : varchar
+  tipo : varchar <<ENUM>>
+}
+
+entity "CREDENCIAL_ESTACION" as CREDENCIAL_ESTACION {
+  * id_credencial : uuid <<PK>>
+  --
+  * id_estacion : uuid <<FK>>
+}
+
+entity "ASIGNACION_ESTACION" as ASIGNACION_ESTACION {
+  * id_asignacion : uuid <<PK>>
+  --
+  * id_empleado : uuid <<FK>>
+  * id_estacion : uuid <<FK>>
+  * id_turno : uuid <<FK>>
+}
+
+entity "ETIQUETA" as ETIQUETA {
+  * id_etiqueta : uuid <<PK>>
+  --
+  * nombre : varchar
+}
+
+entity "ESTACION_ETIQUETA" as ESTACION_ETIQUETA {
+  * id_estacion : uuid <<FK>>
+  * id_etiqueta : uuid <<FK>>
+}
+
+' -- DOMINIO 2: CATÁLOGO --
+entity "INSUMO" as INSUMO {
+  * id_insumo : uuid <<PK>>
+  --
+  nombre : varchar
+  stock_actual : decimal
+}
+
+entity "PRODUCTO" as PRODUCTO {
+  * id_producto : uuid <<PK>>
+  --
+  nombre : varchar
+  precio_base : decimal
+}
+
+entity "INGREDIENTE_PRODUCTO" as INGREDIENTE_PRODUCTO {
+  * id_ingrediente_producto : uuid <<PK>>
+  --
+  * id_producto : uuid <<FK>>
+  * id_insumo : uuid <<FK>>
+}
+
+entity "INSUMO_DESECHABLE_PRODUCTO" as INSUMO_DESECHABLE_PRODUCTO {
+  * id_insumo_desechable : uuid <<PK>>
+  --
+  * id_producto : uuid <<FK>>
+  * id_insumo : uuid <<FK>>
+}
+
+entity "PROMOCION" as PROMOCION {
+  * id_promocion : uuid <<PK>>
+  --
+  nombre : varchar
+}
+
+entity "PRODUCTO_PROMOCION" as PRODUCTO_PROMOCION {
+  * id_producto : uuid <<FK>>
+  * id_promocion : uuid <<FK>>
+}
+
+' -- DOMINIO 3: RECETAS --
+entity "PASO_RECETA" as PASO_RECETA {
+  * id_paso_receta : uuid <<PK>>
+  --
+  * id_producto : uuid <<FK>>
+  * id_estacion : uuid <<FK>>
+}
+
+entity "DEPENDENCIA_PASO" as DEPENDENCIA_PASO {
+  * id_paso_receta : uuid <<FK>>
+  * id_paso_receta_previo : uuid <<FK>>
+}
+
+entity "INGREDIENTE_PASO" as INGREDIENTE_PASO {
+  * id_ingrediente_paso : uuid <<PK>>
+  --
+  * id_paso_receta : uuid <<FK>>
+  * id_insumo : uuid <<FK>>
+}
+
+' -- DOMINIO 4: CLIENTES Y PEDIDOS --
+entity "CLIENTE" as CLIENTE {
+  * id_cliente : uuid <<PK>>
+  --
+  * correo : varchar
+}
+
+entity "PEDIDO" as PEDIDO {
+  * id_pedido : uuid <<PK>>
+  --
+  id_cliente : uuid <<FK>>
+  * id_estacion : uuid <<FK>>
+}
+
+entity "ITEM_PEDIDO" as ITEM_PEDIDO {
+  * id_item_pedido : uuid <<PK>>
+  --
+  * id_pedido : uuid <<FK>>
+  * id_producto : uuid <<FK>>
+}
+
+entity "INGREDIENTE_ITEM_PEDIDO" as INGREDIENTE_ITEM_PEDIDO {
+  * id_ingrediente_item : uuid <<PK>>
+  --
+  * id_item_pedido : uuid <<FK>>
+  * id_insumo : uuid <<FK>>
+}
+
+entity "CODIGO_VERIFICACION_QR" as CODIGO_VERIFICACION_QR {
+  * id_codigo_qr : uuid <<PK>>
+  --
+  * id_pedido : uuid <<FK>>
+}
+
+entity "PEDIDO_ACCESO_ANONIMO" as PEDIDO_ACCESO_ANONIMO {
+  * id_acceso_anonimo : uuid <<PK>>
+  --
+  * id_pedido : uuid <<FK>>
+}
+
+entity "PEDIDO_ESTADO_TIMESTAMP" as PEDIDO_ESTADO_TIMESTAMP {
+  * id_timestamp : uuid <<PK>>
+  --
+  * id_pedido : uuid <<FK>>
+}
+
+' -- DOMINIO 5: KDS (PRODUCCIÓN) --
+entity "PASO_RECETA_PEDIDO" as PASO_RECETA_PEDIDO {
+  * id_paso_receta_pedido : uuid <<PK>>
+  --
+  * id_item_pedido : uuid <<FK>>
+  * id_paso_receta : uuid <<FK>>
+  * id_estacion : uuid <<FK>>
+}
+
+entity "PASO_PEDIDO_ESTADO" as PASO_PEDIDO_ESTADO {
+  * id_paso_pedido_estado : uuid <<PK>>
+  --
+  * id_paso_receta_pedido : uuid <<FK>>
+}
+
+entity "DEPENDENCIA_PASO_PEDIDO" as DEPENDENCIA_PASO_PEDIDO {
+  * id_paso_receta_pedido : uuid <<FK>>
+  * id_paso_receta_pedido_previo : uuid <<FK>>
+}
+
+entity "INGREDIENTE_PASO_PEDIDO" as INGREDIENTE_PASO_PEDIDO {
+  * id_ingrediente_paso_pedido : uuid <<PK>>
+  --
+  * id_paso_receta_pedido : uuid <<FK>>
+  * id_insumo : uuid <<FK>>
+}
+
+' -- DOMINIO 6, 7, 8, 9: AUXILIARES Y AUDITORÍA --
+entity "MOTIVO_CANCELACION_ENTREGA" as MOTIVO_CANCELACION_ENTREGA {
+  * id_motivo : uuid <<PK>>
+}
+
+entity "CANCELACION_ENTREGA" as CANCELACION_ENTREGA {
+  * id_cancelacion : uuid <<PK>>
+  --
+  * id_pedido : uuid <<FK>>
+  * id_motivo : uuid <<FK>>
+}
+
+entity "CORTE_DE_CAJA" as CORTE_DE_CAJA {
+  * id_corte : uuid <<PK>>
+  --
+  * id_estacion : uuid <<FK>>
+  * id_usuario : uuid <<FK>>
+}
+
+entity "AJUSTE_CORTE_CAJA" as AJUSTE_CORTE_CAJA {
+  * id_ajuste : uuid <<PK>>
+  --
+  * id_corte : uuid <<FK>>
+}
+
+entity "AJUSTE_CORTE_INVENTARIO" as AJUSTE_CORTE_INVENTARIO {
+  * id_ajuste_inventario : uuid <<PK>>
+  --
+  * id_corte : uuid <<FK>>
+  * id_insumo : uuid <<FK>>
+}
+
+entity "HISTORIAL_DE_MOVIMIENTOS" as HISTORIAL_DE_MOVIMIENTOS {
+  * id_historial : uuid <<PK>>
+}
+
+' ══════════════════════════════════════════════
+' ESTRUCTURACIÓN DE ESPACIO (LÍNEAS INVISIBLES)
+' ══════════════════════════════════════════════
+USUARIO -[hidden]right- ESTACION
+ESTACION -[hidden]right- CLIENTE
+CLIENTE -[hidden]right- INSUMO
+PRODUCTO -[hidden]down- ITEM_PEDIDO
+
+' ══════════════════════════════════════════════
+' RELACIONES CON COLORES ÚNICOS E IRREPETIBLES
+' ══════════════════════════════════════════════
+
+' --- ZONA AUTENTICACIÓN / PERSONAL ---
+USUARIO -[#1565C0]down-|| EMPLEADO
+USUARIO -[#0288D1]down-o{ CORTE_DE_CAJA
+USUARIO -[#0097A7]right-o{ HISTORIAL_DE_MOVIMIENTOS
+
+EMPLEADO -[#2962FF]down-o{ ASIGNACION_ESTACION
+EMPLEADO -[#6A1B9A]left-o{ PASO_PEDIDO_ESTADO
+EMPLEADO -[#4527A0]down-o{ PEDIDO_ESTADO_TIMESTAMP
+
+TURNO -[#00695C]down-o{ ASIGNACION_ESTACION
+
+' --- ZONA ESTACION (Alta intersección) ---
+ESTACION -[#00838F]down-o{ ASIGNACION_ESTACION
+ESTACION -[#0277BD]left-o{ CREDENCIAL_ESTACION
+ESTACION -[#283593]down-o{ CORTE_DE_CAJA
+ETIQUETA -[#004D40]right-o{ ESTACION_ETIQUETA
+ESTACION -[#00796B]right-o{ ESTACION_ETIQUETA
+ESTACION -[#1B5E20]down-o{ PASO_RECETA
+ESTACION -[#AD1457]down-o{ PASO_RECETA_PEDIDO
+ESTACION -[#C2185B]down-o{ PEDIDO
+
+' --- ZONA CATÁLOGO / PRODUCTO / PROMOCIÓN ---
+PRODUCTO -[#2E7D32]down-o{ INGREDIENTE_PRODUCTO
+PRODUCTO -[#43A047]down-o{ INSUMO_DESECHABLE_PRODUCTO
+PRODUCTO -[#558B2F]right-o{ PASO_RECETA
+PRODUCTO -[#33691E]left-o{ PRODUCTO_PROMOCION
+PROMOCION -[#689F38]down-o{ PRODUCTO_PROMOCION
+
+PASO_RECETA -[#9E9D24]down-o{ INGREDIENTE_PASO
+PASO_RECETA -[#827717]right-o{ DEPENDENCIA_PASO
+
+' --- ZONA INSUMO (Alta intersección) ---
+INSUMO -[#00C853]up-o{ INGREDIENTE_PRODUCTO
+INSUMO -[#AEEA00]up-o{ INSUMO_DESECHABLE_PRODUCTO
+INSUMO -[#80D8FF]down-o{ INGREDIENTE_PASO
+INSUMO -[#FF6D00]down-o{ INGREDIENTE_ITEM_PEDIDO
+INSUMO -[#AA00FF]down-o{ INGREDIENTE_PASO_PEDIDO
+INSUMO -[#5D4037]down-o{ AJUSTE_CORTE_INVENTARIO
+
+' --- ZONA VENTAS / PEDIDOS ---
+CLIENTE -[#D84315]down-o{ PEDIDO
+PEDIDO -[#E65100]down-o{ ITEM_PEDIDO
+PRODUCTO -[#EF6C00]down-o{ ITEM_PEDIDO
+PEDIDO -[#F57C00]left-o| CODIGO_VERIFICACION_QR
+PEDIDO -[#FB8C00]left-o| PEDIDO_ACCESO_ANONIMO
+PEDIDO -[#E53935]right-o{ PEDIDO_ESTADO_TIMESTAMP
+PEDIDO -[#B71C1C]right-o| CANCELACION_ENTREGA
+MOTIVO_CANCELACION_ENTREGA -[#880E4F]down-o{ CANCELACION_ENTREGA
+
+ITEM_PEDIDO -[#FFAB00]down-o{ INGREDIENTE_ITEM_PEDIDO
+
+' --- ZONA KDS PRODUCCIÓN ---
+ITEM_PEDIDO -[#8E24AA]down-o{ PASO_RECETA_PEDIDO
+PASO_RECETA -[#D500F9]down-o{ PASO_RECETA_PEDIDO
+
+PASO_RECETA_PEDIDO -[#4A148C]down-o| PASO_PEDIDO_ESTADO
+PASO_RECETA_PEDIDO -[#C51162]right-o{ DEPENDENCIA_PASO_PEDIDO
+PASO_RECETA_PEDIDO -[#3F51B5]down-o{ INGREDIENTE_PASO_PEDIDO
+
+' --- ZONA CORTES DE CAJA E INVENTARIO ---
+CORTE_DE_CAJA -[#8D6E63]down-o{ AJUSTE_CORTE_CAJA
+CORTE_DE_CAJA -[#3E2723]down-o{ AJUSTE_CORTE_INVENTARIO
+
+@enduml

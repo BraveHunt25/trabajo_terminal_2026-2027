@@ -1,0 +1,98 @@
+@startuml "DS-03 Protocolo de Verificación QR y Confirmación de Entrega"
+' --- Configuración de Estilo Profesional (ESCOM/IPN) ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+    ParticipantPadding 10
+    BoxPadding 10
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+actor "Cliente" as CLI
+actor "Op. de Entrega" as ENT
+participant "Frontend Cliente" as FE_CLI
+participant "Frontend Entrega" as FE_ENT
+participant "Lector QR" as QR_HW
+participant "API Gateway" as GW
+participant "DispatchService" as DS
+participant "QRValidationService" as QV
+database "PostgreSQL" as DB
+participant "Canal RT" as RT
+
+    CLI -> FE_CLI: Abre CLI-14 (seguimiento)
+    activate FE_CLI
+    FE_CLI -> GW: POST /api/orders/{id}/qr-token
+    activate GW
+    GW -> QV: generateToken(id_pedido)
+    activate QV
+    QV -> DB: INSERT INTO CodigoVerificacionQR
+    note right of DB: Token opaco: no expone ID pedido (RN-CLI-022)
+    DB -->> QV: OK
+    QV -->> GW: {token_qr}
+    deactivate QV
+    GW -->> FE_CLI: {token_qr}
+    deactivate GW
+    FE_CLI -->> CLI: Renderiza QR
+    deactivate FE_CLI
+
+    ENT -> FE_ENT: Pulsa "Proceder con la entrega" (ENT-04-C)
+    activate FE_ENT
+    ENT -> QR_HW: Escanea código QR
+    QR_HW -->> FE_ENT: token_escaneado
+    
+    FE_ENT -> GW: POST /api/delivery/verify {token_escaneado}
+    activate GW
+    GW -> DS: verifyAndDeliver(token_escaneado)
+    activate DS
+    
+    DS -> QV: validateToken(token_escaneado)
+    activate QV
+    QV -> DB: SELECT ... FROM CodigoVerificacionQR
+    DB -->> QV: resultado
+    
+    alt Token no encontrado o estado ≠ ACTIVO
+        QV -->> DS: TOKEN_INVALIDO
+        DS -> DB: UPDATE CodigoVerificacionQR (CONSUMIDO)
+        DS -->> GW: HTTP 422
+        GW -->> FE_ENT: Error de validación
+    else Token validado (RN-ENT-014)
+        QV -> QV: Verifica ID y TTL (RN-ENT-015)
+        
+        alt Validación fallida
+            QV -->> DS: VALIDACION_FALLIDA
+            DS -> DB: UPDATE CodigoVerificacionQR (EXPIRADO)
+            DS -->> GW: HTTP 422
+        else Todas las validaciones OK
+            group Transacción Atómica [RN-ENT-017]
+                DS -> DB: UPDATE Pedido (ENTREGADO)
+                DS -> DB: UPDATE CodigoVerificacionQR (CONSUMIDO)
+                DS -> DB: INSERT HistorialDeMovimientos
+            end
+            
+            ' --- Notificaciones asíncronas ---
+            DS -> RT: emit(PEDIDO_ENTREGADO)
+            deactivate QV
+            
+            RT -->> FE_ENT: Confirma entrega
+            RT -->> FE_CLI: Actualiza estado
+            
+            DS -->> GW: HTTP 200
+            deactivate DS
+            GW -->> FE_ENT: HTTP 200
+            deactivate GW
+        end
+    end
+    deactivate FE_ENT
+@enduml

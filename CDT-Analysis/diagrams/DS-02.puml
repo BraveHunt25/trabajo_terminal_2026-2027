@@ -1,0 +1,99 @@
+@startuml "DS-02 Completar Paso de Preparación y Evaluación del Grafo de Dependencias (DAG)"
+' --- Configuración de Estilo Profesional (ESCOM/IPN) ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+actor "Cocinero" as COC
+participant "Frontend KDS" as FE
+participant "API Gateway" as GW
+participant "StepService" as STS
+participant "DAGService" as DAG
+database "PostgreSQL" as DB
+participant "Canal RT" as RT
+participant "Módulo Entrega" as ENT
+participant "Módulo Cliente" as FE_CLI
+
+' --- Inicio del flujo ---
+COC -> FE: Pulsa "Terminar paso" (COC-02)
+activate FE
+
+FE -> GW: PUT /api/steps/{id}/complete
+activate GW
+
+note over GW: Valida sesión y RN-COC-001
+
+GW -> STS: completeStep(id)
+activate STS
+
+group Transacción Atómica [RN-RNFU-04]
+    STS -> DB: SELECT estado
+    DB -->> STS: {estado}
+
+    alt Paso no PENDIENTE
+        STS -->> GW: HTTP 409 ESTADO_INVALIDO
+        note over STS, DB: ROLLBACK
+        GW -->> FE: Error estado
+    else Paso PENDIENTE
+        STS -> DB: UPDATE PasoPedidoEstado (COMPLETADO)
+        
+        STS -> DAG: evaluateDependents(id_paso)
+        activate DAG
+        
+        DAG -> DB: SELECT lista_pasos_dependientes
+        
+        loop Para cada paso dependiente Q
+            DAG -> DB: SELECT estados_predecesores(Q)
+            
+            alt Todos predecesores = COMPLETADO (RN-COC-006)
+                DAG -> DB: UPDATE PasoPedidoEstado[Q] (PENDIENTE)
+                note right: RN-COC-007: Timestamp de liberación
+            end
+        end
+        
+        DAG -> DB: SELECT COUNT(*) (pedidos_pendientes)
+        
+        alt Pedido completado (N=0)
+            DAG -> DB: UPDATE Pedido (PREPARADO)
+            DAG -->> STS: {pedido_preparado: true}
+        else Aún hay pendientes
+            DAG -->> STS: {pedido_preparado: false}
+        end
+        deactivate DAG
+        
+        note over STS, DB: COMMIT TRANSACTION
+    end
+end
+
+' --- Notificación y Propagación (Fuera de transacción) ---
+STS -> RT: emit(PASO_COMPLETADO, {id_paso, pasos_liberados})
+RT -->> FE: Actualiza UI (Elimina/Agrega tarjetas)
+
+alt Pedido PREPARADO
+    STS -> RT: emit(PEDIDO_PREPARADO)
+    RT -->> ENT: Notifica tablero Entrega
+    RT -->> FE_CLI: Actualiza progreso 100%
+end
+
+STS -->> GW: HTTP 200 OK
+deactivate STS
+
+GW -->> FE: HTTP 200
+deactivate GW
+deactivate FE
+
+@enduml

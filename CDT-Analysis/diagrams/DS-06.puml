@@ -1,0 +1,98 @@
+@startuml "DS-06 Corte de Caja y Cierre de Turno"
+' --- Configuración de Estilo Profesional (ESCOM/IPN) ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+actor "Cajero" as CAJ
+participant "Frontend Caja" as FE
+participant "API Gateway" as GW
+participant "CashCutService" as CCS
+participant "InventoryService" as IS
+database "PostgreSQL" as DB
+
+' --- PÁGINA 1: Reconciliación Financiera ---
+box "Reconciliación Financiera" #White
+    CAJ -> FE: Inicia corte (CAJ-22)
+    activate FE
+    FE -> GW: GET /api/cashcut/summary
+    activate GW
+    GW -> CCS: getShiftSummary(...)
+    activate CCS
+    
+    CCS -> DB: SELECT SUM(total) GROUP BY metodo_pago
+    note right: Fórmula RN-CAJ-015: Montos esperados
+    DB -->> CCS: Resultados
+    
+    CCS -->> GW: {resumen_turno}
+    deactivate CCS
+    GW -->> FE: Datos resumen
+    deactivate GW
+    
+    FE -->> CAJ: Muestra montos esperados
+    
+    CAJ -> FE: Ingresa conteos físicos
+    FE -> FE: Calcula diferencias (RN-CAJ-016)
+    
+    alt Existen diferencias
+        CAJ -> FE: Ingresa ajustes explicativos
+    end
+    deactivate FE
+end box
+
+' --- PÁGINA 2: Inventario y Cierre Atómico ---
+box "Reconciliación de Inventario y Cierre" #White
+    CAJ -> FE: Solicita lista inventario (CAJ-23)
+    activate FE
+    FE -> GW: GET /api/inventory/cut-list
+    activate GW
+    GW -> IS: getInventoryCutList(...)
+    activate IS
+    IS -> DB: SELECT stock_actual
+    DB -->> IS: Inventario
+    IS -->> GW: Lista insumos
+    deactivate IS
+    GW -->> FE: Lista de insumos
+    deactivate GW
+    
+    CAJ -> FE: Ingresa stock físico
+    
+    alt Diferencias no justificadas
+        note over FE: Botón confirmación deshabilitado (RN-CAJ-017)
+    else Diferencias justificadas
+        CAJ -> FE: Confirma cierre definitivo (CAJ-24-B)
+        FE -> GW: POST /api/cashcut/close
+        activate GW
+        GW -> CCS: closeTurn(...)
+        activate CCS
+        
+        group Transacción Atómica [RN-CAJ-018]
+            CCS -> DB: INSERT CorteDeCaja
+            CCS -> DB: UPDATE Turno SET estado=CERRADO
+            CCS -> DB: INSERT HistorialDeMovimientos
+        end
+        note over CCS, DB: COMMIT TRANSACTION
+        
+        CCS -> CCS: Invalida token sesión
+        CCS -->> GW: OK
+        deactivate CCS
+        GW -->> FE: 200 OK
+        FE -->> CAJ: Redirige a Login
+    end
+    deactivate FE
+end box
+@enduml

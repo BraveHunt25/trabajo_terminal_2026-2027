@@ -1,0 +1,304 @@
+% !TeX root = proyecto.tex
+%=========================================================
+\chapter{FACTIBILIDAD ECONÓMICA}
+El sistema contempla licencias de uso libre y sin restricciones para el desarrollo, sin embargo, se considerarán los costos de desarrollo asociados y de hardware para la implementación del sistema. En las cafeterías se tenían 3 estaciones en Gamaretzi, 12 estaciones en Uni Café y 6 estaciones en In Kafen. Así mismo, las 3 cafeterías contaban con una barra de entrega cada uno y ya contaban con servicios de luz, internet interno y una computadora fija que funge como POS. Por ello, en este estudio no se considerarán estos conceptos y para el hardware adquirido de operación solo se contemplará la depreciación de los nuevos equipos por adquirir: tabletas para las estaciones de cocina y entrega. La última consideración que se tomará en cuenta en el resto del estudio es que el periodo de la etapa producción del software es de 1 año, correspondiente al tiempo de contrato de concesión de los espacios de cafetería.
+
+Para iniciar, se contemplará el sueldo de 3 desarrolladores full stack que desarrollarían el producto, apoyos económicos de luz e internet definidos por la ley y la depreciación de los equipos de cómputo con los que se desarrolla la aplicación. Así mismo se contempla las credenciales de dominio de las 3 cafeterías y la depreciación de las tabletas adquiridas para la implementación, mismas que cuentan con los requisitos mínimos descritos en el capítulo de diseño.
+
+El costo total de operación mensual se puede desglosar en la siguiente tabla. Todos los precios mostrados se expresan en la moneda nacional (M.N.) y con la conversión de dólar a pesos mexicanos al día por \$ 17.40 M.N.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r}
+\caption{Costo Total de Operación Mensual.} \label{tab:costo_total_operacion_mensual}\\
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Equipo de cómputo ASUS TUF GAMING F15 RTX 3050 \cite{amazon2026asus} & \$ 450.41 & \$ 450.41 & \$ 450.41 \\
+\addlinespace
+Equipo de Cómputo MacBook Neo A16 Pro \cite{amazon2026apple} x 2 unidades con 2 años de depreciación & \$ 649.95 & \$ 649.95 & \$ 649.95 \\
+\addlinespace
+Tabletas para estaciones x tabletas totales \cite{amazon2026novojoy}, \cite{amazon2026xiaomi} & \$ 387.23 & \$ 2,199.45 & \$ 1,293.34 \\
+\addlinespace
+Apoyo establecido por la ley por consumo de luz \cite{conejo2024telework} x 3 personas & \$ 1,800.00 & \$ 2,400.00 & \$ 2,100.00 \\
+\addlinespace
+Servicio de internet 50 Mbps por desarrollo \cite{bluetelecomm2026internet}, \cite{mega2026internet} x 3 personas x 1 año & \$ 1,647.00 & \$ 2,190.00 & \$ 1,918.50 \\
+\addlinespace
+Dominio .com [35] \cite{donweb2026dominio} x mes x cafeterías & \$ 52.50 & \$ 88.88 & \$ 70.69 \\
+\addlinespace
+Sueldo de 3 desarrolladores full stack \cite{glassdoor2026sueldos} mensual & \$ 90,000.00 & \$ 156,000.00 & \$ 123,000.00 \\
+\addlinespace
+\midrule
+\textbf{Total} & \textbf{\$ 94,987.09} & \textbf{\$ 163,978.69} & \textbf{\$ 129,482.89} \\
+\end{tabularx}
+\endgroup
+
+Agregado a este costo, se contempla una inversión inicial dedicada a la adquisición de los dispositivos portátiles necesarias para interactuar en las estaciones.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r}
+\caption{Inversión inicial.} \label{tab:inversion_inicial_hardware}\\
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Tabletas para estaciones \cite{amazon2026novojoy}, \cite{amazon2026xiaomi} & \$ 15,489.10 & \$ 87,978.00 & \$ 51,733.55 \\
+\addlinespace
+\midrule
+\textbf{Total} & \textbf{\$ 15,489.10} & \textbf{\$ 87,978.00} & \textbf{\$ 51,733.55} \\
+\end{tabularx}
+\endgroup
+
+Para este estudio de factibilidad se considerará un valor promedio de consumo por ticket de cafetería de \$ 75.00 M.N. y, de acuerdo con la literatura discutida en el estado del arte, un margen de recuperación por implementar la solución digital del 60 \% con respecto al consumo total.
+
+Por lo tanto, el beneficio recaudado sería la que se muestra en la Tabla \ref{tab:beneficio_por_ticket}.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r}
+\caption{Beneficio por ticket.} \label{tab:beneficio_por_ticket}\\
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Beneficio & \$ 30.00 & \$ 60.00 & \$ 45.00 \\
+\end{tabularx}
+\endgroup
+
+Dado que no contamos con datos precisos de la cantidad de pedidos diarios que se hace en cada cafetería, se calculará el punto de equilibrio de tickets necesarios para solventar el costo del software. Bajo esta perspectiva, la cantidad de tickets mensuales que se deben cubrir (costo operativo mensual total / beneficio recuperado) por las 3 cafeterías se desglosa en la Tabla \ref{tab:punto_equilibrio_tickets_erroneos}.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r}
+\caption{Punto de equilibrio en tickets erróneos.} \label{tab:punto_equilibrio_tickets_erroneos}\\
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Tickets diarios por cafetería & 77.60 & 66.98 & 70.52 \\
+\end{tabularx}
+\endgroup
+
+Dado que las cafeterías suelen trabajar 5 días a la semana y el mes suele tener 4 semanas, se contemplan 20 días hábiles de venta en promedio con una tasa de error por uso soluciones lógicas de 68 \% con respecto a todos los tickets despachados. En la Tabla \ref{tab:tickets_diarios_por_cafeteria} se muestra el número de tickets diarios necesarios por cada cafetería considerando el porcentaje de tabletas digitales necesarias de cada cafetería (número de tabletas en cafetería / total de tabletas de las 3 cafeterías).
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r}
+\caption{Tickets diarios por cafetería.} \label{tab:tickets_diarios_por_cafeteria}\\
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Tickets diarios por cafetería & 77.60 & 66.98 & 70.52 \\
+\end{tabularx}
+\endgroup
+
+Se supondrá un número arbitrario de 100 tickets diarios que procese cada cafetería para demostrar el beneficio que provee el software ante un flujo relativamente bajo de pedidos con respecto a la cantidad de alumnos que están inscritos en las 3 unidades académicas. Si consideramos la cantidad de tickets restantes tras sustraer el número de tickets diarios procesados por el número de tickets calculados para solventar el costo del software y se multiplican por el beneficio tras implementar la solución digital, se obtienen las siguientes sumas diarias de beneficio diarias en la Tabla \ref{tab:beneficio_tickets_restantes_diarios}.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r}
+\caption{Beneficio por tickets restantes diarios.} \label{tab:beneficio_tickets_restantes_diarios}\\
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Beneficio por tickets restantes diarios & \$ 671.89 & \$ 1,980.91 & \$ 1,326.40 \\
+\end{tabularx}
+\endgroup
+
+De esta forma, el Tiempo de Retorno de Inversión (TRI) es en promedio de 39 días. Siendo un tiempo corto en comparación con el tiempo de servicio. Haciéndolo un desarrollo muy viable económicamente.
+
+Si el software se distribuyera entre las 3 cafeterías, se recomendaría un esquema híbrido de pago con una inversión inicial de la adquisición de las tabletas que deben adquirir los clientes para cubrir sus estaciones y la renta mensual del servicio por un año. Las rentas cubrirían los costos de desarrollo y la renta de los dominios en internet. Considerando los conceptos descritos al inicio de este anexo, la inversión inicial se desglosa en la Tabla \ref{tab:inversion_inicial_hibrida}.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r}
+\caption{Inversión inicial.} \label{tab:inversion_inicial_hibrida}\\
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Promedio} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{4}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Primer mes de renta (1 mes de desarrollo) & \$ 186,194.36 & \$ 319,880.36 & \$ 253,037.36 \\
+\addlinespace
+Inversión inicial de Hardware & \$ 15,489.10 & \$ 87,978.00 & \$ 51,733.55 \\
+\addlinespace
+\midrule
+\textbf{Total} & \textbf{\$ 201,683.46} & \textbf{\$ 407,858.36} & \textbf{\$ 304,770.91} \\
+\end{tabularx}
+\endgroup
+
+Para la venta se considerará un margen de ganancia del 15 \% sobre la inversión inicial. Al calcular el precio de venta comercial y el pago del resto de mensualidades, el precio total de venta, considerando el promedio, es de \$ 1,782,865.80 M.N., el cual se distribuirá entre las 3 cafeterías de acuerdo con las tabletas que incorporen. El desglose se puede observar en la Tabla \ref{tab:precio_venta_comercial_total}.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r r r r}
+\caption{Precio de venta comercial total por cafetería.} \label{tab:precio_venta_comercial_total}\\
+\toprule
+\textbf{Concepto} & \textbf{Gamaretzi} & \textbf{Uni Café} & \textbf{In Kafen} & \textbf{Total} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Concepto} & \textbf{Gamaretzi} & \textbf{Uni Café} & \textbf{In Kafen} & \textbf{Total} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{5}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Precio de Venta Inicial & \$ 65,191.64 & \$ 211,872.83 & \$ 81,489.55 & \$ 358,554.02 \\
+\addlinespace
+Renta & \$ 23,542.34 & \$ 76,512.62 & \$ 29,427.93 & \$ 129,482.89 \\
+\addlinespace
+Total por renta & \$ 258,965.78 & \$ 841,638.78 & \$ 323,707.22 & \$ 1,424,311.78 \\
+\addlinespace
+\midrule
+\textbf{Precio Final de Venta} & \textbf{\$ 324,157.42} & \textbf{\$ 1,053,511.61} & \textbf{\$ 405,196.77} & \textbf{\$ 1,782,865.80} \\
+\end{tabularx}
+\endgroup
+
+Para ofrecer una comparativa de la competitividad de los precios se desglosa la comparativa de precios por pantalla de los sistemas y características clave de cada uno.
+
+\begingroup
+\setlength{\LTleft}{\fill}
+\setlength{\LTright}{\fill}
+
+\begin{tabularx}{\textwidth}{X r c c c c c}
+\caption{Comparativa de costos por 1 año.} \label{tab:comparativa_costos_1_ano}\\
+\toprule
+\textbf{Alternativa} & \textbf{Costo por pantalla} & \textbf{Incluye Hardware} & \textbf{Hardware Esp.} & \textbf{Offline} & \textbf{KDS + POS} & \textbf{Cuotas extras} \\
+\midrule
+\endfirsthead
+
+\toprule
+\textbf{Alternativa} & \textbf{Costo por pantalla} & \textbf{Incluye Hardware} & \textbf{Hardware Esp.} & \textbf{Offline} & \textbf{KDS + POS} & \textbf{Cuotas extras} \\
+\midrule
+\endhead
+
+\midrule
+\multicolumn{7}{r}{\small Continúa en la página siguiente...} \\
+\endfoot
+\bottomrule
+\endlastfoot
+
+Alternativa desarrollada & \$ 81,039.35 & Sí & No & Sí & Sí & No \\
+\addlinespace
+Square & \$ 10,231.20 & No & No & Sí & No & Sí \\
+\addlinespace
+Lavu & \$ 20,671.20 & No & No & Sin info. & No & Sí \\
+\addlinespace
+Toast & \$ 14,407.20 & No & No & Sin info. & No & No \\
+\addlinespace
+Oracle MICROS & \$ 313,200.00 & Sí & Sí & Sin info. & Sí & Sí \\
+\addlinespace
+TouchBistro & \$ 14,407.20 & No & No & Sin info. & No & Sí \\
+\end{tabularx}
+\endgroup
+
+Aunque los productos competidores aparentemente sean más baratos, no incluyen los costos asociados por la adquisición e implementación del hardware necesario para su implementación. De esta forma se demuestra que el proyecto es viable económicamente y, por las características que se ofertan con este producto es una inversión viable a mediano y largo plazo y con un TIR muy corto.

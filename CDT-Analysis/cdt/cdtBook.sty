@@ -155,3 +155,26 @@
 %-----------------------------------------------------
 % use \cdtEmpty
 \newcommand{\cdtEmpty}{\hspace{10pt}}
+
+%=====================================================
+% Páginas con tamaño de papel propio (p. ej. diagramas muy anchos)
+% Uso: \begin{paginaAmpliada}{<ancho>}{<alto>} ... \end{paginaAmpliada}
+% Conserva los márgenes del documento; el área de texto crece con el papel.
+\makeatletter
+\newenvironment{paginaAmpliada}[2]{%
+  \clearpage
+  \begingroup
+  \addtolength{\textwidth}{\dimexpr#1-\paperwidth\relax}%
+  \addtolength{\textheight}{\dimexpr#2-\paperheight\relax}%
+  \setlength{\paperwidth}{#1}%
+  \setlength{\paperheight}{#2}%
+  \pdfpagewidth=\paperwidth
+  \pdfpageheight=\paperheight
+  \hsize=\textwidth \linewidth=\textwidth \columnwidth=\textwidth
+  \vsize=\textheight \@colht=\textheight \@colroom=\textheight
+  \headwidth=\textwidth
+}{%
+  \clearpage
+  \endgroup
+}
+\makeatother

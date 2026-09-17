@@ -1,0 +1,105 @@
+@startuml "DS-05 Alta de Empleado y Flujo de Onboarding"
+' --- Configuración de Estilo Profesional (ESCOM/IPN) ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+actor "Manager" as MGR
+participant "Frontend Manager" as FE
+participant "API Gateway" as GW
+participant "EmployeeService" as ES
+participant "StationService" as STS
+database "PostgreSQL" as DB
+participant "Servidor SMTP" as SMTP
+actor "Empleado (nuevo)" as EMP
+
+' --- PÁGINA 1: Alta y Asignación ---
+box "Proceso de Alta y Asignación" #White
+    MGR -> FE: Ingresa datos nuevo empleado
+    activate FE
+    FE -> GW: POST /api/employees
+    activate GW
+    GW -> ES: createEmployee(datos)
+    activate ES
+    
+    ES -> DB: SELECT count(*) WHERE correo=...
+    DB -->> ES: resultado
+
+    alt Correo Duplicado
+        ES -->> GW: HTTP 409
+        GW -->> FE: Error unicidad
+        FE -->> MGR: Notificación de error
+    else Correo Único
+        group Transacción de Alta [RN-MGR-009]
+            ES -> DB: INSERT Empleado (PENDIENTE_CONTRASENA)
+            ES -> DB: INSERT HistorialDeMovimientos
+        end
+        note over ES, DB: COMMIT TRANSACTION
+
+        ES -> SMTP: sendOnboardingEmail(token)
+        note right: Envío asíncrono (Fuera de Tx)
+        
+        ES -->> GW: HTTP 201
+        GW -->> FE: Empleado creado
+        deactivate ES
+        deactivate GW
+
+        ' --- Asignación de Estación ---
+        MGR -> FE: Asigna estación y tipo
+        FE -> GW: POST /api/employees/{id}/stations
+        activate GW
+        GW -> STS: assignStation(...)
+        activate STS
+        
+        STS -> DB: Valida incompatibilidad (RN-MGR-007)
+        alt Tipo Incompatible
+            STS -->> GW: HTTP 422
+            GW -->> FE: Error de asignación
+        else Compatible
+            STS -> DB: INSERT AsignacionEstacion
+            STS -->> GW: OK
+        end
+        deactivate STS
+        deactivate GW
+    end
+    deactivate FE
+end box
+
+' --- PÁGINA 2: Activación del Empleado ---
+box "Activación de Cuenta (Onboarding)" #White
+    EMP -> GW: GET /api/onboarding/{token}
+    activate GW
+    GW -> ES: validateOnboardingToken(token)
+    activate ES
+    ES -> DB: SELECT ... WHERE token=token
+    DB -->> ES: validez
+    
+    alt Token Inválido o Expirado
+        ES -->> GW: HTTP 410
+        GW -->> EMP: Error de activación
+    else Token Válido
+        EMP -> GW: POST /api/onboarding/{token}/set-password
+        GW -> ES: activateEmployee(password)
+        ES -> DB: UPDATE Empleado (ACTIVO)
+        ES -> DB: UPDATE OnboardingToken (USADO)
+        ES -->> GW: OK
+        GW -->> EMP: Redirige a Login KDS
+    end
+    deactivate ES
+    deactivate GW
+end box
+@enduml

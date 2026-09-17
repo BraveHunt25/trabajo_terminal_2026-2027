@@ -22,11 +22,22 @@
 \justifying
 \renewcommand{\listtablename}{Índice de tablas}
 \renewcommand{\tablename}{Tabla}
-\renewcommand{\thetable}{\arabic{table}}
+\renewcommand{\thetable}{\Roman{table}}
 \renewcommand{\thefigure}{\arabic{figure}}
+\captionsetup[table]{name=TABLA, labelsep=newline, justification=centering, textfont=sc}
+\captionsetup[figure]{name=Fig., labelsep=period}
 \makeatletter
 \@removefromreset{table}{chapter}
 \@removefromreset{figure}{chapter}
+\renewcommand*\l@table{\@dottedtocline{1}{1.5em}{4.5em}}
+% En el índice, los capítulos de anexos se muestran como "ANEXO A. TÍTULO"
+\newcommand{\anexosEnIndice}{%
+  \let\l@chapter@capitulo\l@chapter
+  \renewcommand*{\l@chapter}[2]{%
+    \begingroup
+    \renewcommand*{\numberline}[1]{ANEXO~####1.\hspace{0.5em}}%
+    \l@chapter@capitulo{##1}{##2}%
+    \endgroup}}
 \renewcommand{\contentsname}{ÍNDICE}
 \renewcommand{\tableofcontents}{%
   \if@twocolumn
@@ -87,11 +98,27 @@
 \include{4AnalisisDelSistema}
 
 %=========================================================
-% IN PROGRESS
+% DONE
 \include{5DisenoDelSistema}
 
 % Referencias bibliográficas
 \clearpage
 \input{6Referencias}
+
+% Anexos: numeración con letras y prefijo "ANEXO" en títulos e índice
+\appendix
+\titleformat{\chapter}[hang]
+  {\normalfont\bfseries\fontsize{12}{14}\selectfont\color{sectionColor}\raggedright}
+  {ANEXO\ \thechapter.}{0.5em}{\MakeUppercase}
+\addtocontents{toc}{\protect\anexosEnIndice}
+
+% DONE
+\include{A1Glosario}
+
+% DONE
+\include{A2FactibilidadEconomica}
+
+%DONE
+\include{A3ModeloEntidadRelacion}
 
 \end{document}

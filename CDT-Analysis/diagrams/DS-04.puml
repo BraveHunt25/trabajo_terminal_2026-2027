@@ -1,0 +1,115 @@
+@startuml "DS-04 Creación de Pedido Presencial en Módulo Caja con Ticket Digital"
+' --- Configuración de Estilo Profesional (ESCOM/IPN) ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+actor "Cajero" as CAJ
+participant "Frontend Caja" as FE
+participant "API Gateway" as GW
+participant "OrderService" as OS
+participant "InventoryService" as IS
+participant "SlotService" as SS
+database "PostgreSQL" as DB
+participant "Canal RT" as RT
+participant "Frontend Cocina" as KDS
+
+' --- PÁGINA 1: Transacción de Creación ---
+    CAJ -> FE: Confirma pago (CAJ-14)
+    activate FE
+
+    FE -> GW: POST /api/orders/pos/confirm
+    activate GW
+    
+    note over GW: Valida sesión (RN-CAJ-001)
+
+    alt Sesión Inválida
+        GW -->> FE: HTTP 401
+    else Sesión Válida
+        GW -> OS: createPOSOrder(...)
+        activate OS
+        
+        OS -> IS: validateStock(...)
+        activate IS
+        IS -> DB: SELECT stock_actual
+        DB -->> IS: stock_actual
+        
+        alt Stock Insuficiente
+            IS -->> OS: StockError
+            OS -->> GW: HTTP 409
+        else Stock Suficiente
+            group Transacción Atómica [RN-CAJ-009]
+                OS -> DB: INSERT Pedido
+                OS -> DB: INSERT ItemPedido (Snapshot)
+                OS -> DB: INSERT IngredienteItemPedido
+                
+                OS -> IS: decrementStock()
+                IS -> DB: UPDATE Insumo (Decremento)
+                
+                OS -> DB: INSERT PasoRecetaPedido
+                OS -> DB: INSERT PasoPedidoEstado
+                
+                alt Pedido Anónimo (cliente_id = NULL)
+                    OS -> DB: INSERT PedidoAccesoAnonimo
+                    note right: Token Opaco (RN-CLI-025)
+                end
+                
+                OS -> DB: INSERT HistorialDeMovimientos
+            end
+            
+            note over OS, DB: COMMIT TRANSACTION
+            
+            OS -> RT: emit(PEDIDO_ENCOLADO)
+            RT -->> KDS: Notifica nuevo pedido
+            
+            OS -->> GW: HTTP 201 (id_pedido)
+        end
+    end
+    deactivate OS
+    deactivate GW
+
+' --- PÁGINA 2: Lógica de Tipo de Pedido ---
+    alt Pedido ANTICIPADO [RN-CAJ-019]
+        GW -->> FE: HTTP 201 (Requiere ventana)
+        FE -->> CAJ: Abre modal selección de ventana
+        
+        CAJ -> FE: Selecciona ventana
+        FE -> GW: PUT /api/orders/{id}/slot
+        activate GW
+        GW -> SS: assignSlot(id, ventana_id)
+        activate SS
+        
+        SS -> DB: SELECT capacidad FROM VentanaRecoleccion FOR UPDATE
+        note right: Evita condición de carrera (RN-CAJ-021)
+        
+        alt Capacidad agotada
+            SS -->> GW: Error SlotCapacity
+            GW -->> FE: HTTP 409 (Reintento)
+        else Capacidad disponible
+            SS -> DB: UPDATE Pedido SET ventana
+            SS -->> GW: OK
+            GW -->> FE: OK (Navega a impresión)
+        end
+        deactivate SS
+        deactivate GW
+        
+    else Pedido INMEDIATO
+        GW -->> FE: HTTP 201
+        FE -->> CAJ: Emisión de Ticket
+    end
+    deactivate FE
+@enduml

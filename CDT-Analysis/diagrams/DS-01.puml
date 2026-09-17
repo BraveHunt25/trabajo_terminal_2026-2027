@@ -1,0 +1,117 @@
+@startuml "DS-01 Confirmación de Pedido desde el Módulo Cliente"
+' --- Configuración de Estilo Profesional ---
+skinparam {
+    Style strictuml
+    Sequence {
+        ArrowColor Black
+        ActorBorderColor Black
+        ParticipantBorderColor Black
+        ParticipantBackgroundColor White
+        LifeLineBorderColor Black
+        LifeLineBackgroundColor #F0F0F0
+        NoteBackgroundColor #F9F9F9
+        NoteBorderColor Black
+        BoxBackgroundColor White
+    }
+    ParticipantPadding 10
+    BoxPadding 10
+}
+
+autonumber "<b>[00]"
+
+' --- Definición de Participantes ---
+actor "Cliente" as CLI
+participant "Frontend Cliente" as FE
+participant "API Gateway" as GW
+participant "OrderService" as OS
+participant "InventoryService" as IS
+participant "SlotService" as SS
+participant "QRService" as QS
+database "PostgreSQL" as DB
+participant "Canal RT" as RT
+participant "Frontend Cocina" as KDS
+
+' --- Inicio del flujo ---
+CLI -> FE: Pulsa "Finalizar pedido" (CLI-11)
+activate FE
+
+FE -> GW: POST /api/orders/confirm {data}
+activate GW
+
+note over GW: Valida token sesión perfil CLIENTE (RN-SYS-004)
+
+alt Token inválido o expirado
+    GW -->> FE: HTTP 401 SESION_INVALIDA
+    FE -->> CLI: Redirige a CLI-01
+else Token válido
+    GW -> OS: confirmOrder(params)
+    activate OS
+    
+    group Transacción de Pedido [RN-RNFU-04]
+        OS -> IS: validateStock(items)
+        activate IS
+        IS -> DB: SELECT stock_actual FROM Insumo
+        DB -->> IS: stock_actual
+        
+        alt Stock insuficiente
+            IS -->> OS: StockError
+            deactivate IS
+            OS -->> GW: HTTP 409 STOCK_INSUFICIENTE
+            note over OS, DB: ROLLBACK
+            GW -->> FE: HTTP 409 {detalle}
+            FE -->> CLI: Notificación de error
+        else Stock disponible
+            IS -->> OS: OK
+            deactivate IS
+
+            OS -> SS: validateSlotCapacity(ventana_id)
+            activate SS
+            SS -> DB: SELECT capacidad FROM ventanas ... FOR UPDATE
+            DB -->> SS: capacidad_disponible
+            
+            alt capacidad = 0 (Condición de carrera)
+                SS -->> OS: SlotCapacityError
+                deactivate SS
+                OS -->> GW: HTTP 409 SLOT_SIN_CAPACIDAD
+                note over OS, DB: ROLLBACK
+                GW -->> FE: HTTP 409
+            else Capacidad disponible
+                SS -->> OS: OK
+                deactivate SS
+
+                ' --- Persistencia de datos ---
+                OS -> DB: INSERT Pedido, ItemPedido, Ingrediente
+                note right of DB: Inmutabilidad (RN-CLI-019, RN-MGR-023)
+                
+                OS -> IS: decrementStock()
+                OS -> DB: INSERT PasoRecetaPedido
+                OS -> DB: INSERT PasoPedidoEstado
+                note right of DB: Init DAG producción (RN-CAJ-012)
+                
+                OS -> QS: generateQRToken(id_pedido)
+                activate QS
+                QS -> DB: INSERT CodigoVerificacionQR
+                DB -->> QS: OK
+                QS -->> OS: token_qr
+                deactivate QS
+                
+                note over OS, DB: COMMIT TRANSACTION
+                
+                OS -> RT: emit(PEDIDO_ENCOLADO)
+                RT -->> KDS: Notifica nuevo pedido
+                
+                OS -->> GW: HTTP 201 Created
+            end
+        end
+    end
+    deactivate OS
+    
+    GW -->> FE: HTTP 201
+    FE -> FE: Vacía CarritoSesion (RN-CLI-020)
+    FE -->> CLI: Navega a CLI-13
+end
+
+deactivate GW
+deactivate FE
+
+@enduml
