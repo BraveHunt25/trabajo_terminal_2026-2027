@@ -1,0 +1,30 @@
+@startuml "Flujo presente del servicio en las cafeterías"
+skinparam Style strictuml
+skinparam SequenceMessageAlignment center
+
+actor "Cliente" as cliente
+actor "Cajero" as cajero
+participant "POS / Caja" as pos
+participant "Cocina" as cocina
+
+cliente -> cajero : 1. Indica el contenido del pedido
+cajero -> pos : 2. Ingresa pedido
+pos -> pos : 3. Calcula el monto total
+pos --> cajero : 4. Muestra total
+cliente -> cajero : 5. Entrega el pago
+cajero -> pos : 6. Registra el pago y emite comanda
+pos --> cajero : 7. Imprime comanda fisicamente
+cajero -> cocina : 8. Entrega comanda impresa
+cocina -> cocina : 9. Prepara el pedido
+
+alt Ruta 1: Entrega directa desde cocina
+    cocina -> cliente : 10. Llama al cliente
+    cliente -> cocina : 11. Recoge el pedido
+
+else Ruta 2: Entrega a través de caja
+    cocina -> cajero : 10. Entrega el pedido preparado
+    cajero -> cliente : 11. Llama al cliente
+    cliente -> cajero : 12. Recoge el pedido
+end
+
+@enduml
